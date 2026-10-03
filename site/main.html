@@ -6,8 +6,9 @@
   ■ フォルダの構成(この site フォルダごと GitHub Pages に置きます)
      site/
        main.html        ← このファイル
-       css/style.css    ← 見た目(色・文字・配置)
-       js/main.js       ← ページ切り替え・トップに戻る・画像拡大の動き
+       style.css    ← 見た目(色・文字・配置)
+       main.js       ← ページ切り替え・トップに戻る・画像拡大の動き
+       embed/           ← 埋め込みパーツの HTML を置く場所(色相環・表など。例: hue_wheel.html / weapon.html)
        img/             ← 画像置き場。rogo.webp(ロゴ)/ hero.webp(メイン画像)/ footer.webp(フッター画像)を入れる
 
   ■ ページを増やす手順(例: キャラ紹介 chara を足す)  ※ 触るのはこのファイルの2か所だけ
@@ -17,10 +18,12 @@
           <section class="page" id="p-chara" data-title="キャラ">
             <div class="wrap"><div class="sec">
               <div class="hn"><h2>キャラ</h2><span class="sub">character</span></div>
-              <div class="embed"> ここに中身 </div>
+              <div class="embed" data-include="embed/chara.html"></div>
             </div></div>
           </section>
         ・id は「p-」+ メニューの # のあとの名前にそろえる(href="#chara" → id="p-chara")
+        ・中身は embed/chara.html という別ファイルに書いて、data-include にそのファイル名を指定する
+          (<style> と HTML はそのまま動く / <script> は動かない / 文章だけなら embed の div の中に直接書いてもOK)
         ・メイン画像を出したいページは、wrap の前に <div class="hero"><img src="img/hero.webp" alt=""></div> を足す
      3. そのページだけ見た目を変えたいときは、css/style.css の一番下に書く。
      ※ js/main.js は、ページを増やしても書き換え不要です。
@@ -51,7 +54,7 @@
 <!-- ① ヘッダー: ロゴ画像(img/rogo.webp)+ ② メニュー -->
 <header class="site-header">
   <div class="wrap">
-    <h1><a href="#top"><img src="img/logo.webp" alt="TRPGいろいろ" width="500" height="60"></a></h1>
+    <h1><a href="#top"><img src="img/rogo.webp" alt="TRPGいろいろ" width="500" height="60"></a></h1>
 
     <!-- ② メニュー: ページを増やしたら <li> を1行足す。href="#名前" は、ページの id="p-名前" とそろえる -->
     <nav class="site-nav" aria-label="メインメニュー">
@@ -76,11 +79,8 @@
       <div class="sec">
         <!-- 見出し: h2 が日本語、sub が英字。ほかの見出しもこの形をコピー -->
         <div class="hn"><h2>キャラクター</h2><span class="sub">character</span></div>
-        <div class="embed">
-          <!-- ▼▼▼ ここに埋め込みパーツ(色相環など)を丸ごと貼り付け ▼▼▼ -->
-
-          <!-- ▲▲▲ ここまで ▲▲▲ -->
-        </div>
+        <!-- 埋め込みパーツ: embed フォルダの HTML のファイル名を書く(中身が自動で入ります) -->
+        <div class="embed" data-include="embed/hue_wheel.html"></div>
       </div>
     </div>
   </section>
@@ -90,11 +90,7 @@
     <div class="wrap">
       <div class="sec">
         <div class="hn"><h2>武器</h2><span class="sub">weapon</span></div>
-        <div class="embed">
-          <!-- ▼▼▼ ここに template_v7.html の中身(表・タブなど)を貼り付け ▼▼▼ -->
-
-          <!-- ▲▲▲ ここまで ▲▲▲ -->
-        </div>
+        <div class="embed" data-include="embed/weapon.html"></div>
       </div>
     </div>
   </section>
@@ -107,7 +103,7 @@
 <!-- クリックで拡大したい画像には class="zoomable" tabindex="0" を付ける(どこの画像でも使えます) -->
 <footer class="site-footer">
   <div class="wrap">
-    <img class="foot-img zoomable" src="img/footer.png" alt="" tabindex="0">
+    <img class="foot-img zoomable" src="img/footer.webp" alt="" tabindex="0">
     <p class="p">TRPGいろいろ</p>
   </div>
 </footer>
