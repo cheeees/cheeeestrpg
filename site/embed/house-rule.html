@@ -1,0 +1,585 @@
+<!--
+  ================================================================
+   汎用ページ(サイト埋め込み用・JavaScript不要)
+  ================================================================
+
+  ■ 使い方
+   1. このファイルの中身を、全部そのままコピーして埋め込み先に貼り付けます。
+   2. 内容を変えるときは、下の
+        「▼▼▼ ここから書き換え ▼▼▼」 〜 「▲▲▲ ここまで ▲▲▲」
+      の間だけを編集します。(上の <style> は見た目の部品なので触らなくて大丈夫です)
+   3. 色を変えたいときは、<style> の一番上にある「■ 色の設定」の色コードだけ書き換えます。
+   4. 「パーツ」(下の一覧)は、ブロックをコピーして増やす/消すだけで自由に組み合わせられます。
+      入れ子もOK(例: タブの中に表、表の下に開閉、開閉の中にタブ など)。
+
+  ■ パーツ一覧(HTMLに書く class 名)
+   見出し ........ <h2> 大見出し(文字が濃い茶色) / <h2 class="mid"> 中見出し / <h3> 小見出し / <h1 class="page-title"> ページタイトル
+                   ※ タブの中身(.tabpanel)の <h2> だけは、自動で「中見出し」の見た目になります
+   通常テキスト .. <p> 段落 / <p class="lead"> リード文 / <p class="mut"> 小さい補足 / <p class="mut inline"> 直前の文と同じ行に続ける補足 /
+                   <ul class="list"> 箇条書き / <ol class="list"> 番号つき / <hr> 区切り線
+   カード ........ <div class="card"> 枠つきの囲み / <div class="cols"> カードを横に並べる
+   囲みボックス .. <div class="box"> お知らせ / <div class="box alert"> 警告
+   開閉 .......... <details class="fold"> 〜 <summary>題名</summary><div class="fold-body">中身</div>
+                   (open を付けると最初から開く / class="fold pill" でボタン風)
+   タブ .......... <div class="tabset"> 〜 <div class="tabs">(タブのボタン) + <div class="tabpanels">(中身)
+                   ※ 最大12個 / グループごとに name="..." を変える / 最初に開くタブだけ checked
+   表 ............ <div class="table-wrap"><table> / td class="name"(名前列) / class="left"(左寄せ)
+                   <table class="fit"> + <div class="table-wrap fit">(スマホで横スクロールさせず収める)
+   画像 .......... <img class="img"> 普通の画像 / <label class="zoom"> タップで拡大
+   項目：内容 .... <dl class="kv"> 〜 <dt>項目名</dt><dd>内容</dd>(「：」は自動。項目名は右詰め・「：」は縦に揃う)
+   記号の説明 .... <ul class="legend"> 〜 <li><span class="sym">記号</span><span class="bar"></span><span class="desc">説明</span></li>
+                   ※ 項目：内容 と 記号の説明 は、注釈(.side)の外と中で見た目が自動で変わります(書き方は同じ)
+   サイド(注釈) .. <aside class="side"> を置きたい位置に書くだけ(囲み不要)。PCは「次のパーツ」の右隣/スマホは「次のパーツ」の上にボタン
+   画面幅で出し分け .. class="pc-only"(PCだけ) / class="sp-only"(スマホだけ) ※ どのパーツにも付けられる
+   スペーサー .... <div class="spacer"></div> 空白 / class="spacer xs"(極小) "spacer s"(小) "spacer l"(大) "spacer xl"(特大) / style="--h:100px"(自由な高さ)
+-->
+<style>
+/* ================================================================
+   ■ 色の設定   ← 色を変えたいときは、ここの色コードだけ書き換えてください
+   ================================================================ */
+#pg-root {
+  --main: #8e632b;        /* メインカラー: 見出しの文字・表のヘッダー・選択中のタブ */
+  --main-dark: #a77c43;   /* 表ヘッダーの枠線 */
+  --main-deep: #5c3c0f;   /* 大見出しの文字(メインカラーより濃い茶色) */
+  --accent: #ffd60a;      /* アクセント: 見出しの左の帯・注意ボックスの縁 */
+  --soft: #fff8d6;        /* 淡い背景: 注意ボックス・サイド */
+  --soft-line: #f1e3a0;   /* 淡い背景の枠線 */
+  --alert: #c0392b;       /* 警告ボックスの縁 */
+  --alert-bg: #fdeceb;    /* 警告ボックスの背景 */
+  --white: #ffffff;       /* 背景 */
+  --ink: #333333;         /* 本文の文字 */
+  --mut: #7a6f62;         /* 補足の文字 */
+  --line: #e6dccb;        /* 枠線 */
+  --zebra: #fffdf3;       /* 表の縞(偶数行) */
+  --hover: #fff1b0;       /* マウスを乗せたとき */
+  --img-bg: #faf6ee;      /* 画像セルの背景 */
+  --red: #c0392b;      /* 強調カラー・赤 */
+  --blue: #2a7fbf;       /* 強調カラー・青*/
+}
+
+/* ================================================================
+   ■ 共通(ここから下は基本さわらなくてOK)
+   ================================================================ */
+#pg-root,
+#pg-root * { box-sizing: border-box; }
+#pg-root button { font: inherit; }
+#pg-root {
+  margin: 0; background: var(--white); color: var(--ink); text-align: left;
+  font-family: system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", "Yu Gothic", Meiryo, sans-serif;
+}
+#pg-root .container { max-width: 1000px; margin: 0; padding: 18px; }
+/* 見えない入力欄(タブ・開閉・サイドの切り替えに使う部品)。画面の固定位置に置いて、押してもスクロールが飛ばないようにしている */
+#pg-root .tab input,
+#pg-root .side-toggle input,
+#pg-root .zoom input { position: fixed; top: 0; left: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+
+/* ================================================================
+   ■ パーツ【見出し・通常テキスト】 h1 / h2(大) / h2.mid(中) / h3(小) / p / ul / ol / hr / .mut / .lead
+   ================================================================ */
+#pg-root .page-title { font-size: 22px; margin: 0 0 6px; color: var(--main); }
+#pg-root .lead { font-size: 14px; line-height: 1.8; color: var(--mut); margin: 0 0 16px; }
+/* 大見出し: 中見出しと同じ形で、文字色だけ濃い茶色(--main-deep) */
+#pg-root h2 { font-size: 18px; margin: 28px 0 12px; padding: 1px 0 1px 10px; color: var(--main-deep); border-left: 5px solid var(--accent); }
+/* 中見出し: h2 に class="mid" を付ける(タブの中身の h2 は、付けなくても自動でこの見た目) */
+#pg-root h2.mid,
+#pg-root .tabpanel h2 { font-size: 17px; margin: 24px 0 10px; padding: 1px 0 1px 10px; color: var(--main); border-left: 5px solid var(--accent); }
+#pg-root h3 { font-size: 15px; margin: 12px 0 8px; color: var(--main); }
+#pg-root p { font-size: 14px; line-height: 1.8; margin: 0 0 8px; }
+#pg-root ul.list,
+#pg-root ol.list { font-size: 14px; line-height: 1.8; margin: 0 0 12px; padding-left: 1.5em; }
+#pg-root .mut { color: var(--mut); font-size: 12px; margin-bottom: 4px; }  /* 0 にすればほぼ空白なし */
+#pg-root .mut2 { color: var(--mut); font-size: 12px; margin-bottom: 0px; }
+#pg-root hr { border: 0; border-top: 1px solid var(--line); margin: 20px 0; }
+#pg-root strong { color: var(--ink); }
+#pg-root .card > h2:first-child,
+#pg-root .tabpanel > h2:first-child,
+#pg-root .fold-body > h2:first-child { margin-top: 0; }
+#pg-root .c-red  { color: var(--red); }
+#pg-root .c-blue { color: var(--blue); }
+#pg-root .c-brown { color: var(--main); }
+#pg-root p + .mut { margin-top: -8px; }
+#pg-root p:has(+ p.mut.inline) { display: inline; }
+#pg-root p.mut.inline { display: inline; margin: 0 0 0 .5em; }
+#pg-root p.mut.inline::after { content: ""; display: block; margin-bottom: 8px; }
+#pg-root p.mut2.inline { display: inline; margin: 0 0 0 .5em; }
+#pg-root p.mut2.inline::after { content: ""; display: block; margin-bottom: 0px; }
+
+/* ================================================================
+   ■ パーツ【カード】 .card(枠つきの囲み) / .cols(カードを横に並べる。狭い画面では自動で縦並び)
+   ================================================================ */
+#pg-root .card { background: var(--white); border: 1px solid var(--line); border-radius: 16px; padding: 12px 14px; margin: 0 0 16px; box-shadow: 0 4px 18px #00000012; }
+#pg-root .card.t2 { background: var(--soft); }
+#pg-root .card.split { display: grid; grid-template-columns: 1fr 1fr; gap: 12px;   padding-left: 18px; padding-right: 18px; }
+#pg-root .card.s dl.kv { font-size: 10px; }
+
+#pg-root .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin: 0 0 16px; }
+#pg-root .cols > .card { margin: 0; }
+
+/* 箱の先頭の上余白を消す(.box と .card を追加。.fold-body と .tabpanel は h3 が先頭のときの保険) */
+#pg-root .card > :first-child,
+#pg-root .box > :first-child,
+#pg-root .fold-body > :first-child,
+#pg-root .tabpanel > :first-child { margin-top: 0; }
+
+/* カードの末尾の下余白を消す(.box などと同じ) */
+#pg-root .card > :last-child { margin-bottom: 0; }
+
+/* dd の中の最後の要素(p.mut など)の下余白を消す */
+#pg-root dl.kv dd > :last-child { margin-bottom: 0; }
+
+/* ================================================================
+   ■ パーツ【囲みボックス】 .box(お知らせ) / .box.alert(警告)
+   ================================================================ */
+#pg-root .box { background: var(--soft); border: 1px solid var(--soft-line); border-left: 6px solid var(--accent); border-radius: 12px; padding: 12px 16px; margin: 0 0 16px; font-size: 14px; line-height: 1.8; }
+#pg-root .box > :last-child { margin-bottom: 0; }
+#pg-root .box.alert { background: var(--alert-bg); border-color: #f2c4c0; border-left-color: var(--alert); }
+
+/* ================================================================
+   ■ パーツ【開閉(表示・非表示)】 <details class="fold">  ※ open を付けると最初から開く
+   ================================================================ */
+#pg-root details.fold { margin: 0 0 12px; }
+#pg-root details.fold > summary {
+  list-style: none; cursor: pointer; display: flex; align-items: center; gap: 8px; padding: 8px 14px;
+  border: 1px solid var(--line); border-radius: 12px; background: var(--white); color: var(--main); font-size: 14px; font-weight: 700; user-select: none; transition: .15s ease;
+}
+#pg-root details.fold > summary::-webkit-details-marker { display: none; }
+#pg-root details.fold > summary::after { content: "▼"; margin-left: auto; font-size: 11px; transition: transform .2s ease; }
+#pg-root details.fold > summary:hover { background: var(--soft); }
+#pg-root details.fold[open] > summary { background: var(--main); border-color: var(--main); color: var(--white); border-radius: 12px 12px 0 0; }
+#pg-root details.fold[open] > summary::after { transform: rotate(180deg); }
+#pg-root details.fold > .fold-body { padding: 14px; border: 1px solid var(--line); border-top: 0; border-radius: 0 0 12px 12px; background: var(--white); }
+#pg-root details.fold > .fold-body > :last-child { margin-bottom: 0; }
+/* ボタン風(class="fold pill"): 小さな丸いボタンで開閉 */
+#pg-root details.fold.pill > summary { width: fit-content; border-radius: 999px; padding: 6px 16px; }
+#pg-root details.fold.pill[open] > summary { border-radius: 999px; }
+#pg-root details.fold.pill > .fold-body { margin-top: 6px; border-top: 1px solid var(--line); border-radius: 12px; }
+
+/* ================================================================
+   ■ パーツ【タブ】 .tabset(最大12タブ。入れ子もOK)
+   ================================================================ */
+#pg-root .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 14px; }
+#pg-root .tab { display: inline-block; user-select: none; padding: 6px 15px; border: 1px solid var(--line); border-radius: 999px; background: var(--white); color: var(--mut); font-size: 13px; cursor: pointer; transition: .15s ease; }
+#pg-root .tab:hover { background: var(--soft); color: var(--main); border-color: var(--accent); }
+#pg-root .tab:has(input:checked) { background: var(--main); border-color: var(--main); color: var(--white); font-weight: 700; }
+#pg-root .tab:has(input:focus-visible) { outline: 2px solid var(--main); outline-offset: 2px; }
+#pg-root .tabpanel { background: var(--white); border: 1px solid var(--line); border-radius: 16px; padding: 18px; box-shadow: 0 4px 18px #00000012; }
+#pg-root .tabpanel > :last-child { margin-bottom: 0; }
+
+/* ================================================================
+   ■ パーツ【表】 .table-wrap > table  /  td.name(左寄せ・太字の名前列)  /  td.left(左寄せ)  /  table.fit(スマホで縮めて収める)
+   ================================================================ */
+#pg-root .table-wrap { overflow-x: auto; margin: 0 0 16px; }
+#pg-root table { border-collapse: collapse; width: 100%; font-size: 14px; }
+#pg-root th,
+#pg-root td { border: 1px solid var(--line); padding: 6px 8px; text-align: center; vertical-align: middle; }
+#pg-root th { background: var(--main); color: var(--white); border-color: var(--main-dark); font-weight: 700; white-space: nowrap; }
+#pg-root tbody tr:nth-child(even) { background: var(--zebra); }
+#pg-root td.name { text-align: left; font-weight: 700; min-width: 160px; }
+#pg-root td.left { text-align: left; }
+#pg-root .img-cell { width: 110px; min-width: 110px; background: var(--img-bg); }
+#pg-root .img-cell img { max-width: 100px; max-height: 65px; object-fit: contain; display: block; margin: 0 auto; border-radius: 4px; }
+#pg-root .img-cell img[src=""] { display: none; }
+
+/* ================================================================
+   ■ パーツ【画像】 .img(普通の画像) / <label class="zoom">(タップで拡大)
+   ================================================================ */
+#pg-root .img { max-width: 100%; height: auto; display: block; border-radius: 8px; margin: 0 0 12px; }
+#pg-root .zoom { display: inline-block; cursor: zoom-in; margin: 0 0 12px; max-width: 100%; }
+#pg-root .zoom img { max-width: 100%; height: auto; display: block; border-radius: 8px; }
+#pg-root .zoom:has(input:checked) img {
+  position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000;
+  max-width: 94vw; max-height: 90vh; width: auto; height: auto; background: var(--white);
+  box-shadow: 0 0 0 100vmax #000000cc; cursor: zoom-out;
+}
+
+/* ================================================================
+   ■ パーツ【項目：内容の並び】 dl.kv > dt(項目名) + dd(内容)
+   ・項目名は右詰め、「：」は自動で付いて縦に揃う。dt と dd は1つずつ交互に書く
+   ・ここは注釈の「外」(白い背景)用の見た目。注釈(.side-body)の中は、あとの「注釈の中の見た目」で上書きされる
+   ================================================================ */
+#pg-root dl.kv { display: grid; grid-template-columns: max-content 1fr; column-gap: 0; row-gap: 0; margin: 0 0 4px; font-size: 14px; line-height: 1.8; }
+#pg-root dl.kv dt { display: flex; justify-content: flex-end; padding: 3px .4em 3px 0; border-bottom: 1px dotted var(--line); font-weight: 700; color: var(--main); }
+#pg-root dl.kv dt::after { content: "："; }
+#pg-root dl.kv dd { margin: 0; min-width: 0; padding: 3px 0; border-bottom: 1px dotted var(--line); color: var(--ink); }
+#pg-root dl.kv > :nth-last-child(-n+2) { border-bottom: 0; }
+/* class="kv plain": 仕切りの点線を消す */
+#pg-root dl.kv.plain dt,
+#pg-root dl.kv.plain dd { border-bottom: 0; }
+
+/* ================================================================
+   ■ パーツ【記号の説明リスト】 ul.legend > li > .sym / .bar / .desc
+   ・ここは注釈の「外」(白い背景)用の見た目。注釈の中は「注釈の中の見た目」で上書きされる
+   ================================================================ */
+#pg-root ul.legend { --symw: 3.6em; --barw: 2.4em; display: grid; grid-template-columns: fit-content(50%) var(--barw) 1fr; column-gap: .5em; margin: 0 0 16px; padding: 0; list-style: none; font-size: 14px; line-height: 1.8; color: var(--ink); }
+#pg-root ul.legend li { display: grid; grid-template-columns: subgrid; grid-column: 1 / -1; align-items: start; padding: 3px 0; border-bottom: 1px dotted var(--line); }
+#pg-root ul.legend li:last-child { border-bottom: 0; }
+#pg-root ul.legend .sym { min-width: var(--symw); font-weight: 700; color: var(--main); white-space: nowrap; }
+#pg-root ul.legend .sym.right { text-align: right; white-space: normal; }
+#pg-root ul.legend .bar { height: 1px; margin-top: .9em; background: var(--main); opacity: .6; }
+/* 説明の中の補足(<p class="mut"> でも <span class="mut"> でもOK) */
+#pg-root ul.legend .desc p,
+#pg-root ul.legend .desc .mut { display: block; margin: 0; }
+/* 説明の文字のすぐ後ろに続けたいとき: <p class="mut inline"> */
+#pg-root ul.legend .desc p.mut.inline,
+#pg-root ul.legend .desc .mut.inline { display: inline; margin: 0 0 0 .5em; }
+#pg-root ul.legend .desc p.mut.inline::after { content: none; }
+/* class="ul plain": 仕切りの点線を消す */
+#pg-root ul.legend.plain li { border-bottom: 0; }
+
+/* ================================================================
+   ■ パーツ【サイド(注釈)】 <aside class="side"> を、置きたい位置にそのまま書く(囲み不要)
+   ・PC(幅1000px以上): 書いた位置の「次のパーツ」の右隣に並ぶ。「✕」で閉じると、ボタンだけが右寄せで残る
+   ・スマホ(それ以下): 書いた位置の「次のパーツ」の上に小さなボタンが出る(スクロールしても上に残る)。押すと、ボタンの下に重ねて開く
+   ・横に並ぶのは「次のパーツ」1つだけ。その次のパーツからは、サイドの下で全幅に戻る
+   ================================================================ */
+#pg-root .side { position: sticky; top: 0; z-index: 50; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; margin: 0 0 10px; padding: 6px 0 0; pointer-events: none; }
+#pg-root .side > * { pointer-events: auto; }
+#pg-root .side-toggle {
+  width: fit-content; display: flex; align-items: center; gap: 8px; padding: 6px 14px; border: 1px solid var(--main); border-radius: 999px;
+  background: var(--white); color: var(--main); font-size: 13px; font-weight: 700; cursor: pointer; user-select: none; transition: .15s ease; box-shadow: 0 2px 8px #00000022;
+}
+#pg-root .side-toggle:hover { background: var(--soft); }
+#pg-root .side-toggle .mark { display: inline-block; font-size: 11px; transition: transform .2s ease; }
+#pg-root .side-toggle .mark::after { content: "▼"; }
+#pg-root .side-body {
+  width: 100%; max-height: min(45vh, 360px); overflow-y: auto; margin: 0; padding: 14px 18px;
+  background: var(--soft); border: 1px solid var(--soft-line); border-left: 6px solid var(--accent); border-radius: 16px; box-shadow: 0 4px 18px #00000012;
+}
+#pg-root .side-body > :last-child { margin-bottom: 0; }
+#pg-root .side-body h3 { margin: 0 0 8px; font-size: 16px; }
+#pg-root .side-body h3 ~ h3 { margin-top: 16px; }
+#pg-root .side-body ul { margin: 0 0 8px; padding: 0; list-style: none; font-size: 13px; line-height: 1.8; color: var(--mut); }
+#pg-root .side-body p { color: var(--mut); font-size: 13px; }
+/* ■ 注釈の中の見た目(黄色い背景の上: 控えめな色・小さめ・区切り線なし) */
+#pg-root .side-body dl.kv { margin: 0 0 8px; font-size: 13px; line-height: 1.8; color: var(--mut); }
+#pg-root .side-body dl.kv dt { padding: 0 .3em 0 0; border-bottom: 0; color: var(--ink); }
+#pg-root .side-body dl.kv dd { padding: 0; border-bottom: 0; color: var(--mut); }
+#pg-root .side-body ul.legend { margin: 0 0 8px; font-size: 13px; line-height: 1.8; color: var(--mut); }
+#pg-root .side-body ul.legend li { padding: 0; border-bottom: 0; }
+#pg-root .side-body ul.legend .sym { color: var(--ink); }
+
+/* ================================================================
+   ■ パーツ【スペーサー(空白)】 <div class="spacer"></div>
+   ・大きさ: xs(極小 3px) / s(小 8px) / 何も付けない(中 24px) / l(大 48px) / xl(特大 80px)
+   ・好きな高さにするとき: style="--h:100px"
+
+   ・class名の後ろにindentを記載すると左が空く  <div class="spacer indent">
+      indent(1文字分) / indent.m(2文字分) / indent.l(3文字分)
+   ================================================================ */
+#pg-root .spacer { height: var(--h, 24px); }
+#pg-root .spacer.xs { --h: 3px; }
+#pg-root .spacer.s { --h: 8px; }
+#pg-root .spacer.l { --h: 48px; }
+#pg-root .spacer.xl { --h: 80px; }
+
+#pg-root .indent { margin-left: 1em; }
+#pg-root .indent.m { margin-left: 2em; }
+#pg-root .indent.l { margin-left: 3em; }
+
+/* ================================================================
+   ■ パーツ【画面幅で出し分け】 .pc-only(PCだけ表示) / .sp-only(スマホだけ表示)
+   ================================================================ */
+@media (max-width: 650px) { #pg-root .pc-only { display: none !important; } }
+@media (min-width: 651px) { #pg-root .sp-only { display: none !important; } }
+
+/* ================================================================
+   ■ スマホ用の調整(幅650px以下)
+   ================================================================ */
+@media (max-width: 650px) {
+#pg-root .container { padding: 10px; }
+#pg-root .card,
+#pg-root .tabpanel { padding: 10px; border-radius: 12px; }
+#pg-root .img-cell { width: 48px; min-width: 0; }
+#pg-root .img-cell img { max-width: 44px; max-height: 40px; }
+/* 表を画面幅に収める: <table class="fit">(数字中心の表向け。文字が小さくなり、長い語は折り返される) */
+#pg-root .table-wrap.fit { overflow-x: visible; }
+#pg-root table.fit { font-size: 11px; }
+#pg-root table.fit th,
+#pg-root table.fit td { padding: 4px 2px; word-break: break-all; }
+#pg-root table.fit th { white-space: normal; }
+#pg-root table.fit td.name { min-width: 0; }
+/* サイド(注釈)をさらに小さく */
+#pg-root .side-toggle { padding: 5px 12px; font-size: 12px; }
+#pg-root .side-body { max-height: min(38vh, 280px); padding: 8px 10px; border-radius: 12px; }
+#pg-root .side-body h3 { font-size: 12px; margin: 0 0 3px; }
+#pg-root .side-body h3 ~ h3 { margin-top: 8px; }
+#pg-root .side-body ul { font-size: 11px; line-height: 1.5; }
+#pg-root .side-body p { font-size: 11px; line-height: 1.5; }
+/* 注釈の外(白い背景)の「項目：内容」「記号の説明」 */
+#pg-root dl.kv { font-size: 13px; line-height: 1.7; }
+#pg-root ul.legend { font-size: 13px; line-height: 1.7; }
+#pg-root ul.legend { --symw: 18em; --barw: 1.4em; }
+/* 注釈の中はさらに小さく */
+#pg-root .side-body dl.kv { font-size: 11px; line-height: 1.5; }
+#pg-root .side-body ul.legend { font-size: 11px; line-height: 1.5; }
+#pg-root .side-body ul.legend { --symw: 3em; --barw: 1.2em; }
+}
+
+/* ================================================================
+   ■ PC用の調整(幅1000px以上): サイドを本文の右横に常駐させる
+   ================================================================ */
+@media (min-width: 1000px) {
+#pg-root .container:has(.side) { max-width: 1760px; }
+/* サイドを右に浮かせる。「次のパーツ」が残りの幅で右隣に並ぶ(続けて置いたサイドは縦に積まれる) */
+#pg-root .side { position: static; float: right; clear: right; width: clamp(270px, 24vw, 440px); margin: 0 0 16px 16px; padding: 0; }
+/* 次のパーツが、サイドの下に潜り込まず「残りの幅」に収まるようにする */
+#pg-root .page-title,
+#pg-root h2,
+#pg-root h3,
+#pg-root p,
+#pg-root ul.list,
+#pg-root ol.list,
+#pg-root hr,
+#pg-root .card,
+#pg-root .box,
+#pg-root .tabset,
+#pg-root details.fold { display: flow-root; }
+/* 「次のパーツ」の、そのまた次のパーツからは、サイドの下に回り込ませて全幅に戻す */
+#pg-root .side + :not(.side) + * { clear: right; }
+#pg-root .side-body { max-height: 75vh; padding: 14px 18px; }
+#pg-root .side-body ul { font-size: 13px; line-height: 1.7; }
+#pg-root .side-body dl.kv { font-size: 13px; line-height: 1.7; }
+#pg-root .side-body ul.legend { --symw: 3.6em; --barw: 2.2em; }
+}
+
+/* ================================================================
+   ■ 開閉・タブの動き(「:has」という新しいCSSを使います。
+      古いブラウザでは動かない代わりに、中身が全部そのまま表示されます)
+   ================================================================ */
+@supports selector(:has(*)) {
+  #pg-root .tabpanel { display: none; }
+  #pg-root .tabset:has(> .tabs > .tab:nth-child(1) input:checked) > .tabpanels > .tabpanel:nth-child(1) { display: block; }
+  #pg-root .tabset:has(> .tabs > .tab:nth-child(2) input:checked) > .tabpanels > .tabpanel:nth-child(2) { display: block; }
+  #pg-root .tabset:has(> .tabs > .tab:nth-child(3) input:checked) > .tabpanels > .tabpanel:nth-child(3) { display: block; }
+  #pg-root .tabset:has(> .tabs > .tab:nth-child(4) input:checked) > .tabpanels > .tabpanel:nth-child(4) { display: block; }
+  #pg-root .tabset:has(> .tabs > .tab:nth-child(5) input:checked) > .tabpanels > .tabpanel:nth-child(5) { display: block; }
+  #pg-root .tabset:has(> .tabs > .tab:nth-child(6) input:checked) > .tabpanels > .tabpanel:nth-child(6) { display: block; }
+  #pg-root .tabset:has(> .tabs > .tab:nth-child(7) input:checked) > .tabpanels > .tabpanel:nth-child(7) { display: block; }
+  #pg-root .tabset:has(> .tabs > .tab:nth-child(8) input:checked) > .tabpanels > .tabpanel:nth-child(8) { display: block; }
+  #pg-root .tabset:has(> .tabs > .tab:nth-child(9) input:checked) > .tabpanels > .tabpanel:nth-child(9) { display: block; }
+  #pg-root .tabset:has(> .tabs > .tab:nth-child(10) input:checked) > .tabpanels > .tabpanel:nth-child(10) { display: block; }
+  #pg-root .tabset:has(> .tabs > .tab:nth-child(11) input:checked) > .tabpanels > .tabpanel:nth-child(11) { display: block; }
+  #pg-root .tabset:has(> .tabs > .tab:nth-child(12) input:checked) > .tabpanels > .tabpanel:nth-child(12) { display: block; }
+  /* スマホ: 最初は閉じていて、ボタンで開く */
+  @media (max-width: 999px) {
+    #pg-root .side-body { display: none; position: absolute; top: 100%; left: 0; right: 0; width: auto; margin-top: 4px; }
+    #pg-root .side:has(.side-toggle input:checked) .side-body { display: block; }
+    #pg-root .side:has(.side-toggle input:checked) .side-toggle { background: var(--main); color: var(--white); }
+    #pg-root .side:has(.side-toggle input:checked) .side-toggle .mark { transform: rotate(180deg); }
+  }
+  /* PC: 最初から開いていて、ボタンで閉じる */
+  @media (min-width: 1000px) {
+    #pg-root .side-toggle { background: var(--main); color: var(--white); }
+    #pg-root .side-toggle .mark::after { content: "✕"; }
+    #pg-root .side:has(.side-toggle input:checked) { float: none; width: auto; margin: 0 0 8px; align-items: flex-end; }
+    #pg-root .side:has(.side-toggle input:checked) .side-body { display: none; }
+    #pg-root .side:has(.side-toggle input:checked) .side-toggle { background: var(--white); color: var(--main); }
+    #pg-root .side:has(.side-toggle input:checked) .side-toggle .mark::after { content: "＋"; }
+  }
+}
+</style>
+<div id="pg-root">
+<div class="container">
+
+<!-- ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼ ここから書き換え ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼ -->
+
+      <!-- ┌─ パーツ【タブ】 ───────────────────────────
+           ・タブのボタン(label.tab)と中身(section.tabpanel)は「同じ順番」で並べます。
+           ・name="tabs-A" は、このタブのグループ名。別のタブグループを作るときは tabs-B など別の名前にします。
+           ・最初に開いておくタブのボタンにだけ checked を付けます。
+           ・タブを増やすときは、label.tab と section.tabpanel を1組ずつ増やします(最大12)。
+           ─────────────────────────────────────────────┘ -->
+      <div class="tabset">
+        <div class="tabs">
+          <label class="tab"><input type="radio" name="tabs-1" checked=""><span>判定</span></label>
+          <label class="tab"><input type="radio" name="tabs-1"><span>戦闘</span></label>
+          <label class="tab"><input type="radio" name="tabs-1"><span>発狂</span></label>
+          <label class="tab"><input type="radio" name="tabs-1"><span>成長</span></label>
+          <label class="tab"><input type="radio" name="tabs-1"><span>CS作成</span></label>
+        </div>
+        <div class="tabpanels">
+
+          <!-- タブ1　判定の中身 -->
+          <section class="tabpanel">
+            <h2 class="mid">判定</h2>
+              <p>CCB使用</p>
+                <dl class="kv">
+                  <dt>1～5</dt><dd><span class="c-blue">クリティカル(決定的成功)</span></dd>
+                  <dt>96～100</dt><dd><span class="c-red">ファンブル(致命的失敗)</span></dd>
+                </dl>
+              <p class="mut">※SANc、アイデアロールは除外<br>　技能値100の場合、99までは<span class="c-blue">成功</span>、100ファンブルのみ<span class="c-red">失敗</span>扱い</p>
+      　　 <div class="spacer xs"></div>
+              <p><span class="c-blue">クリティカル</span>なら追加情報などプラスの処理、<span class="c-red">ファンブル</span>ならSANやHP減少などマイナスの処理をします<br>戦闘処理は戦闘タブに記載</p>
+ 
+          <div class="spacer s"></div>
+
+            <h2 class="mid">クリティカルチケット</h2>
+              <p>追加情報がなかったり、クリティカルがもったいない！と思えばクリチケを配布します</p>
+             <div class="box indent">
+                <dl class="kv">
+                  <dt>効果</dt><dd>失敗を成功に、致命的失敗を失敗に(1ランクアップ)<br>もしくは振り直し<br><p class="mut">※成功を決定的成功にするのは不可</p></dd>
+                </dl>
+            </div>
+            <p>シナリオ終了時に余っていたら、自由成長1回or1d3のSAN回復に変換可能</p>
+          </section>
+
+          <!-- タブ2　戦闘の中身 -->
+          <section class="tabpanel">
+            <h2 class="mid">戦闘</h2>
+            <ul class="list">
+               <li>DEX順に行動<br>同DEXのPCがいた場合は1d100を振って出目が高かった方が先に行動<br><p class="mut">※同DEXのPCとNPCがいた場合はPCが先行する</p></li>
+               <li>1Rにつき行動は1回<br>回避は1行動に含まないため、何度でも回避してよい</li>
+               <li>距離によるダメージの減衰・増加は考慮しない<p class="mut">※超遠距離、超近距離など例外を設けることもある</p></li>
+               <li>銃火器ラウンドは不採用のため、他行動と同じように扱う<br>1Rに複数回攻撃出来る武器を使用する場合は、1巡した後に2回目以降の攻撃判定を行う</li>
+               <li>貫通ルールはクリティカルとスペシャルで置き換えのため、未採用</li>
+            </ul>
+      　　 <div class="spacer xs"></div>
+            <dl class="kv">
+               <dt>ディレイ</dt><dd>自分のターンを後回しにする。<br>ディレイ者が複数いる場合はディレイ者の中でDEX順。</dd>
+               <dt>庇う</dt><dd>自分のターンを犠牲にしてDEXロール。<br>成功で庇ったPCが受けるダメージを肩代わりする。</dd>
+               <dt>受け流し</dt><dd>近接戦攻撃にのみ有効。成功すればダメージを無効化することができる。1Rにつき1回のみ、行動とは別カウント。<br>武器を使用して受け流しを行うと武器の耐久値が減る。越えた分はダメージを食らう。<br>武器の攻撃を素手で受け流すことはできないが、＜組みつき＞に2連続成功することで受け流しとすることが出来る。<br><p class="mut">※素手なら＜こぶし＞、ショットガンなら＜ショットガン＞など受け流しに用いる技能を振る</p></dd>
+               <dt>ノックアウト</dt><dd>成功で対象者を気絶させることができる。行動前に宣言すること。<br>＜こぶし＞＜キック＞＜組みつき＞＜頭突き＞あるいは鈍器を用いる。<br>与えたダメージと対象者のHPで対抗ロールを行い、成否を判断する。<br><p class="mut">※成功の場合、1/3のダメージを与えて気絶させることができる。失敗すれば、ダメージはそのまま相手に与えられる。</p></dd>
+            </dl>
+
+           <div class="spacer s"></div>
+
+            <h2 class="mid">CF処理</h2>
+            <dl class="kv plain">
+               <dt><span class="c-blue">クリティカル</span></dt><dd>ダメージ2倍&amp;必中、反撃など</dd>
+               <dt>スペシャル</dt><dd>ダメージ補正、次回技能値補正など</dd>
+               <dt><span class="c-red">ファンブル</span></dt><dd>回避不能、被ダメージ、武器耐久値減少、故障など</dd>
+            </dl>
+            <p>その時の状況に合わせて良い感じに処理します。</p>
+          </section>
+
+          <!-- タブ3　発狂の中身 -->
+          <section class="tabpanel">
+            <h2 class="mid">一時的発狂</h2>
+              <p>一度のSANcで5以上減少後、アイデアロールに成功した場合発生！<br>期間は10d+4ラウンド。</p><p class="mut">※1ラウンド12秒ほど、大体でいいよ</p><p></p>
+            <div class="table-wrap"><table>
+              <thead><tr><th>1d10</th><th>症状</th></tr></thead>
+              <tbody>
+                <!-- 1行 = 1つの <tr>。名前の列は td class="name"(左寄せ・太字)、他は普通の <td> -->
+                <tr><td>1</td><td class="left">気絶あるいは金切り声の発作</td></tr>
+                <tr><td>2</td><td class="left">パニック状態で逃げ出す</td></tr>
+                <tr><td>3</td><td class="left">肉体的なヒステリー<br class="sp-only">あるいは感情の噴出<br class="sp-only"><p class="mut2 inline">(大笑い、大泣きなど)</p></td></tr>
+                <tr><td>4</td><td class="left">早口でぶつぶつ言う意味不明の会話<br class="sp-only">あるいは多弁症</td></tr>
+                <tr><td>5</td><td class="left">その場に釘付けになってしまうような極度の恐怖症</td></tr>
+                <tr><td>6</td><td class="left">殺人癖あるいは自殺癖</td></tr>
+                <tr><td>7</td><td class="left">幻覚あるいは妄想</td></tr>
+                <tr><td>8</td><td class="left">反響動作あるいは反響言語<br class="sp-only"><p class="mut2 inline">(周りの動作や発言を反復する)</p></td></tr>
+                <tr><td>9</td><td class="left">奇妙なもの、異様なものを食べたがる</td></tr>
+                <tr><td>10</td><td class="left">昏迷<br class="sp-only"><p class="mut2 inline">(胎児のような姿勢をとる、物事を忘れる)</p>あるいは緊張症<br class="sp-only"><p class="mut2 inline">(我慢はできるが意志も興味もない<br class="sp-only">/強制的に単調な行動はとらせられても自発的に行動できない)</p></td></tr>
+              </tbody>
+            </table></div>
+
+           <div class="spacer s"></div>
+
+            <h2 class="mid">不定の狂気</h2>
+              <p>SANの1/5が減った場合発症。期間は1d10×10時間or1d6か月。<br>次のシナリオで回復してもいいものとする。</p>
+              <p class="mut">※一時的発狂と併発する。ただ、処理の関係上発症タイミングを遅らせたり、お持ち帰りにすることもある。</p>
+            <div class="table-wrap"><table>
+              <thead><tr><th>1d10</th><th>症状</th></tr></thead>
+              <tbody>
+                <!-- 1行 = 1つの <tr>。名前の列は td class="name"(左寄せ・太字)、他は普通の <td> -->
+                <tr><td>1</td><td class="left">健忘症<br class="sp-only"><p class="mut2 inline">(親しい者のことを最初に忘れる<br class="sp-only">/知的な技能が働かない)</p>あるいは昏迷/緊張症</td></tr>
+                <tr><td>2</td><td class="left">激しい恐怖症<br class="sp-only"><p class="mut2 inline">(逃げ出しても恐怖の対象が見え続ける)</p></td></tr>
+                <tr><td>3</td><td class="left">幻覚</td></tr>
+                <tr><td>4</td><td class="left">奇妙な性的嗜好<br class="sp-only"><p class="mut2 inline">(露出症、過剰性欲、奇形愛好症など)</p></td></tr>
+                <tr><td>5</td><td class="left">フェティッシュ<br class="sp-only"><p class="mut2 inline">(あるものに対して異常なまでに執着する)</p></td></tr>
+                <tr><td>6</td><td class="left">制御不能のチック、震え、<br class="sp-only">会話や文章で人と交流出来なくなる</td></tr>
+                <tr><td>7</td><td class="left">心因性の視覚障害、難聴、<br class="sp-only">四肢の機能障害</td></tr>
+                <tr><td>8</td><td class="left">短時間の心因反応<br class="sp-only"><p class="mut2 inline">(支離滅裂、妄想、常軌を逸した振る舞い、幻覚など)</p></td></tr>
+                <tr><td>9</td><td class="left">一時的偏執症</td></tr>
+                <tr><td>10</td><td class="left">強迫症<br class="sp-only"><p class="mut2 inline">(手を洗い続ける、祈る、特定のリズムで歩く、割れ目をまたがない、銃をチェックし続けるなど)</p></td></tr>
+              </tbody>
+            </table></div>
+         </section>
+
+          <!-- タブ4　成長の中身 -->
+          <section class="tabpanel">
+            <h2 class="mid">成長</h2>
+              <ul class="list">
+               <li><strong><span class="c-blue">クリティカル</span><span class="c-brown">/</span><span class="c-red">ファンブル</span></strong><br>→シナリオ終了後に成長判定</li>
+               <li><strong><span class="c-brown">初期値成功</span></strong><br>→即時1d10の成長</li>
+              </ul>
+            <div class="box indent">
+              <h3>成長の仕方</h3>
+                <dl class="kv plain">
+                  <dt>①</dt><dd>成長させたい技能を振ります</dd>
+                  <dt>②</dt><dd><span class="c-red">失敗</span>なら1d8<br>
+                                                 <span class="c-blue">成功</span>なら1d3<br>
+                                                <strong><span class="c-blue">クリティカル</span></strong>なら1d5　成長！</dd>
+                </dl>
+              <p class="mut">※クリチケはこれ1回分を行う権利に変換できます</p>
+            </div>
+            <p>技能値上限は「100」。どれだけ成長してもこれ以上にはならない</p><p class="mut">※100まで取っても100のみ失敗扱いになる</p>
+           <div class="spacer xs"></div>
+            <h3>マスターボーナス</h3>
+              <p>技能値が「90」を超えると、技能を極めてHAPPYになるので<strong>2d6のSAN回復ボーナス</strong>をもらえる</p>
+          </section>
+
+          <!-- タブ5　CSの中身 -->
+          <section class="tabpanel">
+            <h2 class="mid">CS作成</h2>
+             <p>振り直しは<strong>何度でもOK！</strong>同じダイスで決定した数値は入れ替え可能</p>
+             <p class="mut">※3d6は2d6+6に代替可能</p>
+             <ul class="legend">
+               <li><span class="sym right">STR、CON、POW、DEX、APP</span><span class="bar" aria-hidden="true"></span><span class="desc">3d6</span></li>
+               <li><span class="sym right">SIZ、INT</span><span class="bar" aria-hidden="true"></span><span class="desc">2d6+6</span></li>
+               <li><span class="sym right">EDU</span><span class="bar" aria-hidden="true"></span><span class="desc">3d6+6</span></li>
+             </ul>
+            <div class="cols">
+              <div class="card t2 split s sp-only">
+                <div>
+                  <dl class="kv">
+                    <dt>STR💪</dt><dd>筋力</dd>
+                    <dt>CON🏃</dt><dd>耐久力</dd>
+                    <dt>POW❤️</dt><dd>精神力</dd>
+                    <dt>DEX✍️</dt><dd>器用さ/俊敏さ</dd>
+                  </dl>
+                </div>
+                <div>
+                  <dl class="kv">
+                  <dt>APP✨</dt><dd>容姿</dd>
+                  <dt>INT🧠</dt><dd>かしこさ</dd>
+                  <dt>SIZ🙎</dt><dd>体格</dd>
+                  <dt>EDU📖</dt><dd>教育受けた度</dd>
+                  </dl>
+                </div></div>
+
+              <div class="card t2 split pc-only">
+                <div>
+                  <dl class="kv">
+                    <dt>STR💪</dt><dd>筋力</dd>
+                    <dt>CON🏃</dt><dd>耐久力</dd>
+                    <dt>POW❤️</dt><dd>精神力</dd>
+                    <dt>DEX✍️</dt><dd>器用さ/俊敏さ</dd>
+                  </dl>
+                </div>
+                <div>
+                  <dl class="kv">
+                  <dt>APP✨</dt><dd>容姿</dd>
+                  <dt>INT🧠</dt><dd>かしこさ</dd>
+                  <dt>SIZ🙎</dt><dd>体格</dd>
+                  <dt>EDU📖</dt><dd>教育受けた度</dd>
+                  </dl>
+                </div></div>
+           </div>
+      <div class="spacer"></div>
+             <ul class="list">
+              <li><strong><span class="c-brown">職業技能</span></strong><br>無茶苦茶でなければオリジナル職業や自己解釈による改変も可能としています</li>
+              <li><strong><span class="c-brown">技能値上限</span></strong><br>特に設けていませんが、「85」あたりを目安にするのをおすすめしています</li>
+              <li><strong><span class="c-brown">英語初期値</span></strong><br>日本の探索者の場合、一般教育を受けていればEDU×2を初期値にして良いです</li>
+              <li><strong><span class="c-brown">特徴表</span></strong><br>サプリ未所持なので持ち込みは要相談！</li>
+              <li><strong><span class="c-brown">持ち物</span></strong><br>事前に申請していないものも、自然なら持っていて良いです</li>
+             </ul>
+          </section></div>
+
+        </div>
+      </div>
+      <!-- └─ タブここまで ─┘ -->
+
+<!-- ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲ ここまで書き換え ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲ -->
+
+</div>
