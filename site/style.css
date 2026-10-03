@@ -49,27 +49,32 @@ a { color: var(--main); }
 .nav-check:focus-visible + .nav-btn { outline: 3px solid var(--accent); }
 @media (max-width: 767px) {
   .site-header .wrap { display: block; }
-  .nav-btn { display: block; }
-  .nav-list { display: none; flex-direction: column; gap: 0; margin-top: 10px; text-align: left; background: #fffffff2; }
-  .nav-check:checked ~ .nav-list { display: flex; }
-  .nav-list li { margin: 0 0 10px; }
-  .nav-list a { padding: 10px 8px; border-left: 2px solid var(--main); }
-  .nav-list a[aria-current="page"] { border-left-color: var(--accent); }
-  .nav-list a::before, .nav-list a::after { display: none; }
-  .nav-check:checked + .nav-btn::before { top: 20px; transform: rotate(45deg); }
-  .nav-check:checked + .nav-btn span { opacity: 0; }
-  .nav-check:checked + .nav-btn::after { top: 20px; transform: rotate(-45deg); }
+  /* スマホ: 三本線にせず、メニューを横一列・中央揃えで並べる(多くて入りきらないときは折り返す) */
+  .site-nav { margin: 10px 0 0; }
+  .nav-btn { display: none; }
+  .nav-list { flex-wrap: wrap; justify-content: center; gap: 4px 12px; }
 }
 
 /* ■ ページ切り替え(JavaScript が動くとき、選んだページだけ表示) */
 .js .page { display: none; }
-.js .page.on { display: block; animation: page-in .45s ease-out both; }
-/* 切り替え時: ふわっと下から現れる(display が none→block になるたびに再生される) */
+.js .page.on { display: block; animation: page-in .5s cubic-bezier(.2, .7, .2, 1) both; }
+/* 切り替え時: ページ全体がふわっと下から現れ、見出しが左からスッと入る */
 @keyframes page-in {
-  from { opacity: 0; transform: translateY(14px); }
+  from { opacity: 0; transform: translateY(28px); }
   to   { opacity: 1; transform: none; }
 }
-@media (prefers-reduced-motion: reduce) { .js .page.on { animation: none; } }
+.js .page.on .hn { animation: hn-in .6s .12s cubic-bezier(.2, .7, .2, 1) both; }
+@keyframes hn-in {
+  from { opacity: 0; transform: translateX(-32px); }
+  to   { opacity: 1; transform: none; }
+}
+/* 埋め込みパーツ(embed)は読み込みが終わってから中身が入るので、入った瞬間にもふわっと出す */
+.embed.loaded { animation: embed-in .5s ease-out both; }
+@keyframes embed-in {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) { .js .page.on, .js .page.on .hn, .embed.loaded { animation: none; } }
 
 /* ■ メイン画像(上下に切り取り線風の縁) */
 .hero { position: relative; height: clamp(170px, 36vw, 400px); background: #eee; }
@@ -104,7 +109,30 @@ main { min-height: 50vh; }
 .to-top.show { opacity: 1; pointer-events: auto; }
 .to-top:hover { background: var(--deep); transform: translateY(-3px); }
 .to-top svg { width: 22px; height: 22px; }
-@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .to-top, .nav-list a::before, .nav-list a::after, .nav-btn * { transition: none; } }
+
+/* ■ 右下のメニューボタン(トップに戻るボタンの上。少しスクロールすると一緒に現れる)
+   押すとページの一覧が開く。一覧は上のメニューから自動で作られる(main.js) */
+.fab-menu { display: none; position: fixed; right: 16px; bottom: calc(16px + 48px + 14px + env(safe-area-inset-bottom)); z-index: 91; opacity: 0; pointer-events: none; transition: opacity .2s; }
+.js .fab-menu { display: block; }
+.fab-menu.show { opacity: 1; pointer-events: auto; }
+.fab-btn { position: relative; display: block; width: 48px; height: 48px; padding: 0; border: 0; cursor: pointer; border-radius: 50%; background: var(--main); box-shadow: 0 0 0 3px var(--accent), 0 4px 14px #5b2e0a55; transition: background .15s, transform .15s; }
+.fab-btn:hover { background: var(--deep); transform: translateY(-3px); }
+.fab-btn span, .fab-btn::before, .fab-btn::after { content: ""; position: absolute; left: 14px; right: 14px; height: 3px; border-radius: 2px; background: #fff; transition: .2s; }
+.fab-btn::before { top: 14px; } .fab-btn span { top: 22.5px; } .fab-btn::after { top: 31px; }
+.fab-btn[aria-expanded="true"]::before { top: 22.5px; transform: rotate(45deg); }
+.fab-btn[aria-expanded="true"] span { opacity: 0; }
+.fab-btn[aria-expanded="true"]::after { top: 22.5px; transform: rotate(-45deg); }
+.fab-list { position: absolute; right: 0; bottom: calc(100% + 12px); margin: 0; padding: 8px; min-width: 150px; list-style: none; background: #fffffff2; border: 2px solid var(--main); border-radius: 12px; box-shadow: 0 6px 20px #5b2e0a40; transform-origin: bottom right; animation: fab-pop .18s ease-out; }
+.fab-list[hidden] { display: none; }
+.fab-list a { display: block; padding: 9px 12px; color: #000; text-decoration: none; font-size: .85rem; line-height: 1.2; border-left: 3px solid transparent; border-radius: 4px; }
+.fab-list small { display: block; margin-top: 3px; opacity: .5; font-size: .7rem; }
+.fab-list a:hover { background: #ffd60a33; }
+.fab-list a[aria-current="page"] { border-left-color: var(--accent); background: #ffd60a1f; font-weight: 700; }
+@keyframes fab-pop {
+  from { opacity: 0; transform: translateY(8px) scale(.96); }
+  to   { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .to-top, .fab-menu, .fab-btn, .fab-btn span, .fab-btn::before, .fab-btn::after, .nav-list a::before, .nav-list a::after, .nav-btn * { transition: none; } .fab-list { animation: none; } }
 
 /* ■ ページ専用の見た目  ★ ここに書き足す
    各ページの section には id="p-名前" が付いています。
