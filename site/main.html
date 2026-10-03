@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<!--
+  ================================================================
+   TRPGいろいろ  ─  site/main.html(ページの中身・メニュー・フッター)
+  ================================================================
+  ■ フォルダの構成(この site フォルダごと GitHub Pages に置きます)
+     site/
+       main.html        ← このファイル
+       css/style.css    ← 見た目(色・文字・配置)
+       js/main.js       ← ページ切り替え・トップに戻る・画像拡大の動き
+       img/             ← 画像置き場。rogo.webp(ロゴ)/ hero.webp(メイン画像)/ footer.webp(フッター画像)を入れる
+
+  ■ ページを増やす手順(例: キャラ紹介 chara を足す)  ※ 触るのはこのファイルの2か所だけ
+     1. 「② メニュー」の ★ の位置に1行足す:
+          <li><a href="#chara">キャラ<small>character</small></a></li>
+     2. 「③ 本文」の ★ の位置に、ページのかたまりを足す:
+          <section class="page" id="p-chara" data-title="キャラ">
+            <div class="wrap"><div class="sec">
+              <div class="hn"><h2>キャラ</h2><span class="sub">character</span></div>
+              <div class="embed"> ここに中身 </div>
+            </div></div>
+          </section>
+        ・id は「p-」+ メニューの # のあとの名前にそろえる(href="#chara" → id="p-chara")
+        ・メイン画像を出したいページは、wrap の前に <div class="hero"><img src="img/hero.webp" alt=""></div> を足す
+     3. そのページだけ見た目を変えたいときは、css/style.css の一番下に書く。
+     ※ js/main.js は、ページを増やしても書き換え不要です。
+     ※ ページのアドレスは  main.html#chara  のようになります。
+
+  ■ 画像: img フォルダに rogo.webp・hero.webp・footer.webp を入れると表示されます。
+     拡張子が違うとき(.png など)は、下の3か所の src の拡張子を書き換えてください。
+-->
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#8e632b">
+<title>TRPGいろいろ</title>
+<meta name="description" content="TRPGのキャラクターや武器などをまとめたページです。">
+<meta property="og:type" content="website">
+<meta property="og:title" content="TRPGいろいろ">
+<!-- フォント(元サイトと同じ: 本文 Noto Sans JP / 見出し WDXL Lubrifont JP N / フッター Hachi Maru Pop) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto+Sans+JP|WDXL+Lubrifont+JP+N|Hachi+Maru+Pop&display=swap">
+<script>document.documentElement.className = "js";</script>
+<!-- 見た目は css/style.css、動きは js/main.js(ページ末尾で読み込み) -->
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ① ヘッダー: ロゴ画像(img/rogo.webp)+ ② メニュー -->
+<header class="site-header">
+  <div class="wrap">
+    <h1><a href="#top"><img src="img/logo.webp" alt="TRPGいろいろ" width="500" height="60"></a></h1>
+
+    <!-- ② メニュー: ページを増やしたら <li> を1行足す。href="#名前" は、ページの id="p-名前" とそろえる -->
+    <nav class="site-nav" aria-label="メインメニュー">
+      <input type="checkbox" id="nav-check" class="nav-check">
+      <label for="nav-check" class="nav-btn" aria-label="メニューを開く"><span></span></label>
+      <ul class="nav-list">
+        <li><a href="#top" aria-current="page">トップ<small>Top</small></a></li>
+        <li><a href="#weapon">武器<small>weapon</small></a></li>
+        <!-- ★ 新しいページのメニューはここに足す(上の手順1) -->
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<!-- ③ 本文: ページごとに <section class="page"> を1つ。コピーして増やす -->
+<main>
+
+  <!-- ── ページ: トップ(id は p-top 固定。最初に表示されるページ) ── -->
+  <section class="page on" id="p-top" data-title="トップ">
+    <div class="hero"><img src="img/hero.webp" alt=""></div>
+    <div class="wrap">
+      <div class="sec">
+        <!-- 見出し: h2 が日本語、sub が英字。ほかの見出しもこの形をコピー -->
+        <div class="hn"><h2>キャラクター</h2><span class="sub">character</span></div>
+        <div class="embed">
+          <!-- ▼▼▼ ここに埋め込みパーツ(色相環など)を丸ごと貼り付け ▼▼▼ -->
+
+          <!-- ▲▲▲ ここまで ▲▲▲ -->
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── ページ: 武器(メニューの href="#weapon" と対応) ── -->
+  <section class="page" id="p-weapon" data-title="武器">
+    <div class="wrap">
+      <div class="sec">
+        <div class="hn"><h2>武器</h2><span class="sub">weapon</span></div>
+        <div class="embed">
+          <!-- ▼▼▼ ここに template_v7.html の中身(表・タブなど)を貼り付け ▼▼▼ -->
+
+          <!-- ▲▲▲ ここまで ▲▲▲ -->
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ★ 新しいページはここに足す(上の手順2)。上の <section class="page"> 〜 </section> をコピーして、id・data-title・中身を変える -->
+
+</main>
+
+<!-- ④ フッター: 飾り画像(img/footer.webp。クリックで拡大)とサイト名 -->
+<!-- クリックで拡大したい画像には class="zoomable" tabindex="0" を付ける(どこの画像でも使えます) -->
+<footer class="site-footer">
+  <div class="wrap">
+    <img class="foot-img zoomable" src="img/footer.png" alt="" tabindex="0">
+    <p class="p">TRPGいろいろ</p>
+  </div>
+</footer>
+
+<!-- 画像の拡大表示(共通。クリック・Esc で閉じる) -->
+<div class="lightbox" id="lightbox" hidden><img alt=""></div>
+
+<!-- トップに戻るボタン(全ページ共通) -->
+<button type="button" class="to-top" id="to-top" aria-label="ページの先頭へ戻る">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+</button>
+
+<script src="js/main.js" defer></script>
+</body>
+</html>
