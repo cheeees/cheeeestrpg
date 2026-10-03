@@ -1,0 +1,498 @@
+<!-- 武器一覧（サイト埋め込み用）: このファイルの中身を全部そのまま貼り付けてください（JavaScript不要） -->
+<style>
+  
+#wl-root {
+    --brown: #8e632b;        
+    --yellow: #ffd60a;       
+    --white: #ffffff;        
+    --ink: #333333;          
+    --mut: #7a6f62;         
+    --line: #e6dccb;         
+    --soft: #fff8d6;         
+    --zebra: #fffdf3;        
+    --hover: #fff1b0;        
+    --img-bg: #faf6ee;       
+  }
+#wl-root,
+#wl-root * { box-sizing: border-box; }
+#wl-root button { font: inherit; }
+#wl-root {
+    margin: 0; background: var(--white); color: var(--ink); text-align: left;
+    font-family: system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", "Yu Gothic", Meiryo, sans-serif;
+  }
+#wl-root .container { max-width: 1000px; margin: 0; padding: 18px; }
+#wl-root .notes {
+    background: var(--soft); border: 1px solid #f1e3a0; border-left: 6px solid var(--yellow);
+    border-radius: 16px; padding: 16px 20px; margin: 0 0 16px; text-align: left;
+    box-shadow: 0 4px 18px #00000012;
+  }
+#wl-root .notes h3 { margin: 0 0 8px; font-size: 16px; color: var(--brown); }
+#wl-root .notes ul { margin: 0; padding: 0; list-style: none; font-size: 13px; line-height: 1.8; color: var(--mut); text-align: left; }
+#wl-root .notes h3.legend-title { margin-top: 16px; }
+#wl-root .notes dl.kv { display: grid; grid-template-columns: max-content 1fr; column-gap: .3em; row-gap: 0; margin: 0; font-size: 13px; line-height: 1.8; color: var(--mut); text-align: left; }
+#wl-root .notes dl.kv dt { display: flex; justify-content: flex-end; gap: 0; font-weight: 700; color: var(--ink); }
+#wl-root .notes dl.kv dt::after { content: "："; }
+#wl-root .notes dl.kv dd { margin: 0; min-width: 0; }
+#wl-root .notes ul.legend li { display: grid; grid-template-columns: 3.6em 2.4em 1fr; column-gap: .5em; align-items: start; }
+#wl-root .notes ul.legend .sym { font-weight: 700; color: var(--ink); white-space: nowrap; }
+#wl-root .notes ul.legend .bar { height: 1px; margin-top: .9em; background: var(--brown); opacity: .6; }
+#wl-root .notes strong { color: var(--ink); }
+/* ---- 項目・注釈(スマホ/狭い画面: 画面上に固定した小さなボタン→押すと下に小さく開く) ---- */
+#wl-root .notes-dock { position: sticky; top: 0; z-index: 50; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; margin: 0 0 10px; padding: 6px 0 0; pointer-events: none; }
+#wl-root .notes-dock > * { pointer-events: auto; }
+#wl-root .notes-toggle {
+    width: fit-content; display: flex; align-items: center; gap: 8px; padding: 6px 14px;
+    border: 1px solid var(--brown); border-radius: 999px; background: var(--white); color: var(--brown);
+    font-size: 13px; font-weight: 700; cursor: pointer; user-select: none; transition: .15s ease; box-shadow: 0 2px 8px #00000022;
+  }
+#wl-root .notes-toggle:hover { background: var(--soft); }
+#wl-root .notes-toggle .arrow { display: inline-block; transition: transform .2s ease; font-size: 11px; }
+#wl-root #wl-notes-t:checked ~ .notes-dock .notes-toggle { background: var(--brown); color: var(--white); }
+#wl-root #wl-notes-t:checked ~ .notes-dock .notes-toggle .arrow { transform: rotate(180deg); }
+#wl-root #wl-notes-t:focus-visible ~ .notes-dock .notes-toggle { outline: 2px solid var(--brown); outline-offset: 2px; }
+#wl-root .notes-dock .notes { display: none; position: absolute; top: 100%; left: 0; right: 0; width: auto; margin: 4px 0 0; max-height: min(45vh, 360px); overflow-y: auto; }
+#wl-root #wl-notes-t:checked ~ .notes-dock .notes { display: block; }
+#wl-root .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 14px; }
+#wl-root .wl-r { position: fixed; top: 0; left: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+#wl-root .tab {
+    display: inline-block; user-select: none; appearance: none; padding: 6px 15px; border: 1px solid var(--line); border-radius: 999px;
+    background: var(--white); color: var(--mut); font-size: 13px; cursor: pointer;
+    transition: .15s ease;
+  }
+#wl-root .tab:hover { background: var(--soft); color: var(--brown); border-color: var(--yellow); }
+#wl-root .panel { display: none; background: var(--white); border: 1px solid var(--line); border-radius: 16px; padding: 18px; box-shadow: 0 4px 18px #00000012; }
+#wl-root h2 { font-size: 17px; margin: 24px 0 10px; padding: 1px 0 1px 10px; color: var(--brown); border-left: 5px solid var(--yellow); }
+#wl-root .panel h2:first-child { margin-top: 0; }
+#wl-root #wl-r-melee:checked ~ .tabs label[for="wl-r-melee"] { background: var(--brown); border-color: var(--brown); color: var(--white); font-weight: 700; }
+#wl-root #wl-r-melee:checked ~ #panel-melee { display: block; }
+#wl-root #wl-r-melee:focus-visible ~ .tabs label[for="wl-r-melee"] { outline: 2px solid var(--brown); outline-offset: 2px; }
+#wl-root #wl-r-pistol:checked ~ .tabs label[for="wl-r-pistol"] { background: var(--brown); border-color: var(--brown); color: var(--white); font-weight: 700; }
+#wl-root #wl-r-pistol:checked ~ #panel-pistol { display: block; }
+#wl-root #wl-r-pistol:focus-visible ~ .tabs label[for="wl-r-pistol"] { outline: 2px solid var(--brown); outline-offset: 2px; }
+#wl-root #wl-r-rifle:checked ~ .tabs label[for="wl-r-rifle"] { background: var(--brown); border-color: var(--brown); color: var(--white); font-weight: 700; }
+#wl-root #wl-r-rifle:checked ~ #panel-rifle { display: block; }
+#wl-root #wl-r-rifle:focus-visible ~ .tabs label[for="wl-r-rifle"] { outline: 2px solid var(--brown); outline-offset: 2px; }
+#wl-root #wl-r-shotgun:checked ~ .tabs label[for="wl-r-shotgun"] { background: var(--brown); border-color: var(--brown); color: var(--white); font-weight: 700; }
+#wl-root #wl-r-shotgun:checked ~ #panel-shotgun { display: block; }
+#wl-root #wl-r-shotgun:focus-visible ~ .tabs label[for="wl-r-shotgun"] { outline: 2px solid var(--brown); outline-offset: 2px; }
+#wl-root #wl-r-smg:checked ~ .tabs label[for="wl-r-smg"] { background: var(--brown); border-color: var(--brown); color: var(--white); font-weight: 700; }
+#wl-root #wl-r-smg:checked ~ #panel-smg { display: block; }
+#wl-root #wl-r-smg:focus-visible ~ .tabs label[for="wl-r-smg"] { outline: 2px solid var(--brown); outline-offset: 2px; }
+#wl-root #wl-r-heavy:checked ~ .tabs label[for="wl-r-heavy"] { background: var(--brown); border-color: var(--brown); color: var(--white); font-weight: 700; }
+#wl-root #wl-r-heavy:checked ~ #panel-heavy { display: block; }
+#wl-root #wl-r-heavy:focus-visible ~ .tabs label[for="wl-r-heavy"] { outline: 2px solid var(--brown); outline-offset: 2px; }
+#wl-root .table-wrap { overflow-x: auto; }
+#wl-root table { border-collapse: collapse; width: 100%; font-size: 14px; }
+#wl-root th,
+#wl-root td { border: 1px solid var(--line); padding: 6px 8px; text-align: center; vertical-align: middle; }
+#wl-root th { background: var(--brown); color: var(--white); border-color: #a77c43; font-weight: 700; white-space: nowrap; }
+#wl-root tbody tr:nth-child(even) { background: var(--zebra); }
+#wl-root .gun-name { text-align: left; font-weight: 700; min-width: 160px; }
+#wl-root .img-cell { position: relative; width: 110px; min-width: 110px; height: 70px; background: var(--img-bg); }
+#wl-root .img-cell img { max-width: 100px; max-height: 65px; object-fit: contain; display: block; margin: 0 auto; border-radius: 4px; }
+#wl-root .img-cell img[src=""] { display: none; }
+#wl-root .wl-zc { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+#wl-root .wl-zl { display: block; cursor: zoom-in; }
+@media (max-width: 650px) {
+#wl-root .container { padding: 10px; }
+#wl-root .panel { padding: 10px; border-radius: 12px; }
+#wl-root .notes { border-radius: 12px; padding: 12px 14px; }
+#wl-root .notes ul.legend li { grid-template-columns: 3.4em 1.6em 1fr; }
+#wl-root .table-wrap { overflow-x: visible; }
+#wl-root table { font-size: 11px; }
+#wl-root th,
+#wl-root td { padding: 4px 2px; word-break: break-all; }
+#wl-root th { white-space: normal; }
+#wl-root .gun-name { min-width: 0; }
+#wl-root .img-cell { width: 48px; min-width: 0; height: auto; }
+#wl-root .img-cell img { max-width: 44px; max-height: 40px; }
+#wl-root table.no-img .img-cell,
+#wl-root table.no-img th:first-child { display: none; }
+  }
+#wl-root .img-cell .wl-lb { display: none; position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 1000; align-items: center; justify-content: center; background: #000000cc; cursor: zoom-out; padding: 16px; }
+#wl-root .img-cell .wl-zc:checked ~ .wl-lb { display: flex; }
+#wl-root .img-cell .wl-lb img { max-width: 100%; max-height: 100%; width: auto; height: auto; margin: 0; object-fit: contain; border-radius: 6px; background: #fff; box-shadow: 0 8px 40px #00000099; }
+
+/* ---- スマホ: 注釈をさらに小さく ---- */
+@media (max-width: 650px) {
+#wl-root .notes-toggle { padding: 5px 12px; font-size: 12px; }
+#wl-root .notes-dock .notes { max-height: min(38vh, 280px); padding: 8px 10px; }
+#wl-root .notes h3 { font-size: 12px; margin: 0 0 3px; }
+#wl-root .notes h3.legend-title { margin-top: 8px; }
+#wl-root .notes ul { font-size: 11px; line-height: 1.5; }
+#wl-root .notes dl.kv { font-size: 11px; line-height: 1.5; }
+#wl-root .notes ul.legend li { grid-template-columns: 3em 1.2em 1fr; }
+  }
+/* ---- PC(幅1000px以上): 表の右横に常駐表示。右上のボタンで閉じる/開く ---- */
+@media (min-width: 1000px) {
+#wl-root .container { max-width: 1760px; display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 16px; align-items: start; }
+#wl-root .tabs { grid-column: 1; grid-row: 1; }
+#wl-root .panel { grid-column: 1; grid-row: 2; }
+#wl-root .notes-dock { grid-column: 2; grid-row: 1 / span 2; align-self: start; top: 8px; width: clamp(270px, 24vw, 440px); flex-direction: column; margin: 0; padding: 0; }
+#wl-root .notes-dock .notes { display: block; position: static; width: 100%; margin: 0; max-height: calc(100vh - 70px); padding: 14px 18px; }
+#wl-root .notes h3 { font-size: 14px; }
+#wl-root .notes ul { font-size: 13px; line-height: 1.7; }
+#wl-root .notes dl.kv { font-size: 13px; line-height: 1.7; }
+#wl-root .notes ul.legend li { grid-template-columns: 3.6em 2.2em 1fr; }
+#wl-root .notes-toggle { background: var(--brown); color: var(--white); }
+#wl-root .notes-toggle .arrow { display: none; }
+#wl-root .notes-toggle::after { content: "✕"; font-size: 11px; }
+#wl-root #wl-notes-t:checked ~ .notes-dock { width: auto; }
+#wl-root #wl-notes-t:checked ~ .notes-dock .notes { display: none; }
+#wl-root #wl-notes-t:checked ~ .notes-dock .notes-toggle { background: var(--white); color: var(--brown); }
+#wl-root #wl-notes-t:checked ~ .notes-dock .notes-toggle::after { content: "＋"; }
+  }
+</style>
+<div id="wl-root">
+<div class="container">
+<input type="checkbox" id="wl-notes-t" class="wl-r">
+  <!-- ===== 項目・注釈(スマホ=上に固定のボタン / PC=表の右横に常駐) ===== -->
+  <div class="notes-dock">
+    <label for="wl-notes-t" class="notes-toggle"><span>項目・注釈の意味</span><span class="arrow">▼</span></label>
+  <div class="notes" id="notesCard">
+    <h3>■ 武器ステータス項目の意味</h3>
+    <dl class="kv">
+      <dt>技能</dt><dd>判定に使用する基本技能値（初期値）。「投擲」「拳銃」など技能名が書かれている場合は、その技能で判定する。</dd>
+      <dt>ダメージ</dt><dd>命中時に与えるダメージのダイス。デカいと強い。「db」はダメージボーナス。</dd>
+      <dt>基本射程</dt><dd>命中率に補正を受けずに攻撃できる最大の距離（メートル）。「タッチ」は接触距離。</dd>
+      <dt>1R回数</dt><dd>1戦闘ラウンド中に攻撃（射撃）できる回数。「2」なら1ラウンドに2回、「1/4」は4ラウンドに1回攻撃可能という意味。</dd>
+      <dt>装弾数</dt><dd>弾倉（マガジン）やシリンダーに装填できる最大の弾薬数。</dd>
+      <dt>耐久力</dt><dd>武器自体が耐えられる耐久値。</dd>
+      <dt>故障</dt><dd>ダイスロールでこの数値以上の目を出すと銃詰まり（ジャム）や故障が発生する値。「0」は故障しないことを示す。</dd>
+      <dt>弾薬</dt><dd>使用する弾丸の規格・種類。</dd>
+    </dl>
+    <h3 class="legend-title">■ 注釈の意味</h3>
+    <ul class="legend">
+      <li><span class="sym">*</span><span class="bar" aria-hidden="true"></span><span class="desc">貫通ができる。</span></li>
+      <li><span class="sym">**</span><span class="bar" aria-hidden="true"></span><span class="desc">馬の勢いでのダメージボーナス</span></li>
+      <li><span class="sym">***</span><span class="bar" aria-hidden="true"></span><span class="desc">耐久力の減らし方は"溺れ・窒息"のルールを適用</span></li>
+      <li><span class="sym">****</span><span class="bar" aria-hidden="true"></span><span class="desc">手で射撃するためには最低STR16・SIZ16が必要</span></li>
+      <li><span class="sym">*****</span><span class="bar" aria-hidden="true"></span><span class="desc">軽対戦車兵器、使い捨て</span></li>
+      <li><span class="sym">+</span><span class="bar" aria-hidden="true"></span><span class="desc">ゼロ射程のルールを適応しない</span></li>
+      <li><span class="sym">++</span><span class="bar" aria-hidden="true"></span><span class="desc">貫通すると四肢のうち任意の1本をもぎ取る</span></li>
+    </ul>
+  </div>
+  </div>
+
+
+  <!-- ===== 注意書き ===== -->
+
+  <!-- ===== タブ ===== -->
+  <input type="radio" name="wl-tab" class="wl-r" id="wl-r-melee" checked=""><input type="radio" name="wl-tab" class="wl-r" id="wl-r-pistol"><input type="radio" name="wl-tab" class="wl-r" id="wl-r-rifle"><input type="radio" name="wl-tab" class="wl-r" id="wl-r-shotgun"><input type="radio" name="wl-tab" class="wl-r" id="wl-r-smg"><input type="radio" name="wl-tab" class="wl-r" id="wl-r-heavy">
+  <div class="tabs"><label class="tab" for="wl-r-melee">近接武器</label><label class="tab" for="wl-r-pistol">拳銃</label><label class="tab" for="wl-r-rifle">ライフル / アサルトライフル</label><label class="tab" for="wl-r-shotgun">ショットガン / 火縄銃</label><label class="tab" for="wl-r-smg">サブマシンガン / マシンガン</label><label class="tab" for="wl-r-heavy">爆発物、重火器、その他</label></div>
+
+  <!-- ===== 内容 =====
+       画像を入れるときは、各行の <img src=""> の "" の中にURLを貼ってください。 -->
+
+<section class="panel" id="panel-melee">
+<h2>ソード</h2>
+<div class="table-wrap"><table class="no-img">
+<thead><tr><th>画像</th><th>ソード</th><th>技能</th><th>ダメージ</th><th>基本射程</th><th>1R回数</th><th>装弾数</th><th>耐久力</th><th>故障</th></tr></thead>
+<tbody>
+<tr><td class="img-cell"><img src="" alt="とがらせたフェンシング・フォイル*"></td><td class="gun-name">とがらせたフェンシング・フォイル*</td><td>20</td><td>1D6+db</td><td>タッチ</td><td>1</td><td>-</td><td>10</td><td>-</td></tr>
+<tr><td class="img-cell"><img src="" alt="レイピア/重いエペー*"></td><td class="gun-name">レイピア/重いエペー*</td><td>20</td><td>1D6+1+db</td><td>タッチ</td><td>1</td><td>-</td><td>15</td><td>-</td></tr>
+<tr><td class="img-cell"><img src="" alt="騎兵用サーベル"></td><td class="gun-name">騎兵用サーベル</td><td>20</td><td>1D8+1+db</td><td>タッチ</td><td>1</td><td>-</td><td>20</td><td>-</td></tr>
+<tr><td class="img-cell"><img src="" alt="ショート・ショード*"></td><td class="gun-name">ショート・ショード*</td><td>20</td><td>1D6+ｄｂ</td><td>タッチ</td><td>1</td><td>-</td><td>20</td><td>-</td></tr>
+<tr><td class="img-cell"><img src="" alt="ロング・ソード*"></td><td class="gun-name">ロング・ソード*</td><td>20</td><td>1D8+ｄｂ</td><td>タッチ</td><td>1</td><td>-</td><td>20</td><td>-</td></tr>
+</tbody>
+</table></div>
+<h2>ナイフ</h2>
+<div class="table-wrap"><table class="no-img">
+<thead><tr><th>画像</th><th>ナイフ</th><th>技能</th><th>ダメージ</th><th>基本射程</th><th>1R回数</th><th>装弾数</th><th>耐久力</th><th>故障</th></tr></thead>
+<tbody>
+<tr><td class="img-cell"><img src="" alt="プラス・ナックル"></td><td class="gun-name">プラス・ナックル</td><td>25</td><td>1D3+1+db</td><td>タッチ</td><td>1</td><td>-</td><td>9</td><td>-</td></tr>
+<tr><td class="img-cell"><img src="" alt="小型ナイフ（飛び出しナイフなど）*"></td><td class="gun-name">小型ナイフ（飛び出しナイフなど）*</td><td>25</td><td>1D4+db</td><td>タッチ</td><td>1</td><td>-</td><td>9</td><td>-</td></tr>
+<tr><td class="img-cell"><img src="" alt="中型ナイフ（肉切り包丁、ファイティング・ナイフなど）"></td><td class="gun-name">中型ナイフ（肉切り包丁、ファイティング・ナイフなど）</td><td>25</td><td>1D4+2+db</td><td>タッチ</td><td>1</td><td>-</td><td>15</td><td>-</td></tr>
+<tr><td class="img-cell"><img src="" alt="大型ナイフ（マチェットなど）"></td><td class="gun-name">大型ナイフ（マチェットなど）</td><td>25</td><td>1D8+db</td><td>タッチ</td><td>1</td><td>-</td><td>20</td><td>-</td></tr>
+<tr><td class="img-cell"><img src="" alt="ファイティング・ナイフ（ダークなど）*"></td><td class="gun-name">ファイティング・ナイフ（ダークなど）*</td><td>25</td><td>1D4+2+db</td><td>タッチ</td><td>1</td><td>-</td><td>15</td><td>-</td></tr>
+<tr><td class="img-cell"><img src="" alt="肉切り包丁*"></td><td class="gun-name">肉切り包丁*</td><td>25</td><td>1D6+db</td><td>タッチ</td><td>1</td><td>-</td><td>12</td><td>-</td></tr>
+</tbody>
+</table></div>
+<h2>斧</h2>
+<div class="table-wrap"><table class="no-img">
+<thead><tr><th>画像</th><th>斧</th><th>技能</th><th>ダメージ</th><th>基本射程</th><th>1R回数</th><th>装弾数</th><th>耐久力</th><th>故障</th></tr></thead>
+<tbody>
+<tr><td class="img-cell"><img src="" alt="木斧"></td><td class="gun-name">木斧</td><td>20</td><td>1D8+2+db</td><td>タッチ</td><td>1</td><td>-</td><td>15</td><td>-</td></tr>
+<tr><td class="img-cell"><img src="" alt="手斧、小鎌"></td><td class="gun-name">手斧、小鎌</td><td>20</td><td>1D6+1+ｄｂ</td><td>タッチ</td><td>1</td><td>-</td><td>12</td><td>-</td></tr>
+</tbody>
+</table></div>
+<h2>杖</h2>
+<div class="table-wrap"><table class="no-img">
+<thead><tr><th>画像</th><th>杖</th><th>技能</th><th>ダメージ</th><th>基本射程</th><th>1R回数</th><th>装弾数</th><th>耐久力</th><th>故障</th></tr></thead>
+<tbody>
+<tr><td class="img-cell"><img src="" alt="大きい棍棒/クリケットのバット/火かき棒"></td><td class="gun-name">大きい棍棒/クリケットのバット/火かき棒</td><td>25</td><td>1D8+db</td><td>タッチ</td><td>1</td><td>-</td><td>20</td><td>-</td></tr>
+<tr><td class="img-cell"><img src="" alt="小さい棍棒/警棒"></td><td class="gun-name">小さい棍棒/警棒</td><td>25</td><td>1D6+db</td><td>タッチ</td><td>1</td><td>-</td><td>15</td><td>-</td></tr>
+<tr><td class="img-cell"><img src="" alt="タクティカル・バトン"></td><td class="gun-name">タクティカル・バトン</td><td>25</td><td>1D8+ｄｂ</td><td>タッチ</td><td>1</td><td></td><td>25</td><td>-</td></tr>
+<tr><td class="img-cell"><img src="" alt="仕込み杖*"></td><td class="gun-name">仕込み杖*</td><td>20</td><td>1D6+db</td><td>タッチ</td><td>1</td><td>-</td><td>10</td><td>-</td></tr>
+</tbody>
+</table></div>
+<h2>槍/銃剣</h2>
+<div class="table-wrap"><table class="no-img">
+<thead><tr><th>画像</th><th>槍/銃剣</th><th>技能</th><th>ダメージ</th><th>基本射程</th><th>1R回数</th><th>装弾数</th><th>耐久力</th><th>故障</th></tr></thead>
+<tbody>
+<tr><td class="img-cell"><img src="" alt="槍"></td><td class="gun-name">槍</td><td>15</td><td>1D10+ｄｂ</td><td>タッチ</td><td>1</td><td>-</td><td>15</td><td>-</td></tr>
+<tr><td class="img-cell"><img src="" alt="銃剣"></td><td class="gun-name">銃剣</td><td>10</td><td>1D6+ｄｂ</td><td>タッチ</td><td>1</td><td>-</td><td>12</td><td>-</td></tr>
+<tr><td class="img-cell"><img src="" alt="騎兵槍*"></td><td class="gun-name">騎兵槍*</td><td>10</td><td>1D8+1+1D6</td><td>タッチ</td><td>1</td><td>-</td><td>15</td><td>-</td></tr>
+</tbody>
+</table></div>
+<h2>槍/銃剣</h2>
+<div class="table-wrap"><table class="no-img">
+<thead><tr><th>画像</th><th>槍/銃剣</th><th>技能</th><th>ダメージ</th><th>基本射程</th><th>1R回数</th><th>装弾数</th><th>耐久力</th><th>故障</th></tr></thead>
+<tbody>
+<tr><td class="img-cell"><img src="" alt="日本刀"></td><td class="gun-name">日本刀</td><td>15</td><td>1D10+ｄｂ</td><td>タッチ</td><td>1</td><td>-</td><td>20</td><td>-</td></tr>
+<tr><td class="img-cell"><img src="" alt="脇差"></td><td class="gun-name">脇差</td><td>15</td><td>1D6+1+ｄｂ</td><td>タッチ</td><td>1</td><td>-</td><td>15</td><td>-</td></tr>
+<tr><td class="img-cell"><img src="" alt="竹刀"></td><td class="gun-name">竹刀</td><td>15</td><td>スタン+ｄｂ</td><td>タッチ</td><td>1</td><td>-</td><td>2</td><td>-</td></tr>
+<tr><td class="img-cell"><img src="" alt="短刀"></td><td class="gun-name">短刀</td><td>25</td><td>1D4+db</td><td>タッチ</td><td>1</td><td>-</td><td>9</td><td>-</td></tr>
+</tbody>
+</table></div>
+<h2>青竜刀</h2>
+<div class="table-wrap"><table class="no-img">
+<thead><tr><th>画像</th><th>青竜刀</th><th>技能</th><th>ダメージ</th><th>基本射程</th><th>1R回数</th><th>装弾数</th><th>耐久力</th><th>故障</th></tr></thead>
+<tbody>
+<tr><td class="img-cell"><img src="" alt="柳葉刀"></td><td class="gun-name">柳葉刀</td><td>10</td><td>1D8+ｄｂ</td><td>タッチ</td><td>1</td><td>-</td><td>20</td><td>-</td></tr>
+<tr><td class="img-cell"><img src="" alt="青竜大刀"></td><td class="gun-name">青竜大刀</td><td>5</td><td>2D6+ｄｂ</td><td>タッチ</td><td>1</td><td>-</td><td>30</td><td>-</td></tr>
+</tbody>
+</table></div>
+<h2>節棍</h2>
+<div class="table-wrap"><table class="no-img">
+<thead><tr><th>画像</th><th>節棍</th><th>技能</th><th>ダメージ</th><th>基本射程</th><th>1R回数</th><th>装弾数</th><th>耐久力</th><th>故障</th></tr></thead>
+<tbody>
+<tr><td class="img-cell"><img src="" alt="双節棍"></td><td class="gun-name">双節棍</td><td>10</td><td>1D8+db</td><td>タッチ</td><td>1</td><td>-</td><td>20</td><td>-</td></tr>
+<tr><td class="img-cell"><img src="" alt="三節棍"></td><td class="gun-name">三節棍</td><td>5</td><td>1D10+db</td><td>タッチ</td><td>1</td><td>-</td><td>25</td><td>-</td></tr>
+</tbody>
+</table></div>
+<h2>個別に技能習得</h2>
+<div class="table-wrap"><table class="no-img">
+<thead><tr><th>画像</th><th>個別に技能習得</th><th>技能</th><th>ダメージ</th><th>基本射程</th><th>1R回数</th><th>装弾数</th><th>耐久力</th><th>故障</th></tr></thead>
+<tbody>
+<tr><td class="img-cell"><img src="" alt="薙刀"></td><td class="gun-name">薙刀</td><td>15</td><td>1D8+db</td><td>タッチ</td><td>1</td><td>-</td><td>15</td><td>-</td></tr>
+<tr><td class="img-cell"><img src="" alt="太刀"></td><td class="gun-name">太刀</td><td>5</td><td>2D8+db</td><td>タッチ</td><td>1</td><td>-</td><td>30</td><td>-</td></tr>
+<tr><td class="img-cell"><img src="" alt="鎖鎌※"></td><td class="gun-name">鎖鎌※</td><td>5</td><td>1D6または巻きつき</td><td>3ｍ</td><td>1</td><td>-</td><td>4</td><td>-</td></tr>
+<tr><td class="img-cell"><img src="" alt="ブラックジャック（重りを入れた棍棒、護身棒）"></td><td class="gun-name">ブラックジャック（重りを入れた棍棒、護身棒）</td><td>こぶし/パンチ</td><td>1D8+db</td><td>タッチ</td><td>1</td><td>-</td><td>4</td><td>-</td></tr>
+<tr><td class="img-cell"><img src="" alt="刺殺ひも"></td><td class="gun-name">刺殺ひも</td><td>15</td><td>首絞め</td><td>タッチ</td><td>1</td><td>-</td><td>1</td><td>-</td></tr>
+<tr><td class="img-cell"><img src="" alt="ムチ"></td><td class="gun-name">ムチ</td><td>5</td><td>1D3または巻きつき</td><td>3ｍ</td><td>1</td><td>-</td><td>4</td><td>-</td></tr>
+<tr><td class="img-cell"><img src="" alt="生皮製のムチ"></td><td class="gun-name">生皮製のムチ</td><td>5</td><td>1D3または組み付き</td><td>3ｍ</td><td>1</td><td>-</td><td>4</td><td>-</td></tr>
+<tr><td class="img-cell"><img src="" alt="燃えているたいまつ"></td><td class="gun-name">燃えているたいまつ</td><td>10+衣服の火</td><td>1D6</td><td>タッチ</td><td>1</td><td>-</td><td>15</td><td>-</td></tr>
+<tr><td class="img-cell"><img src="" alt="スタンガン（射出型）+"></td><td class="gun-name">スタンガン（射出型）+</td><td>拳銃</td><td>スタン</td><td>5m</td><td>1</td><td>さまざま</td><td>8</td><td>95</td></tr>
+<tr><td class="img-cell"><img src="" alt="スタンガン（接触型）"></td><td class="gun-name">スタンガン（接触型）</td><td>こぶし/パンチ</td><td>スタン</td><td>タッチ</td><td>1</td><td>さまざま</td><td>7</td><td>97</td></tr>
+<tr><td class="img-cell"><img src="" alt="催涙ガス+"></td><td class="gun-name">催涙ガス+</td><td>こぶし/パンチ</td><td>2D10分間スタン</td><td>2m</td><td>1</td><td>25発</td><td>4</td><td>0</td></tr>
+<tr><td class="img-cell"><img src="" alt="電気の通じた導線、110ボルト"></td><td class="gun-name">電気の通じた導線、110ボルト</td><td>電気修理</td><td>1D8+スタン</td><td>タッチ</td><td>1</td><td>-</td><td>6、ヒューズ</td><td>-</td></tr>
+<tr><td class="img-cell"><img src="" alt="電気の通じた導線、220ボルト"></td><td class="gun-name">電気の通じた導線、220ボルト</td><td>電気修理</td><td>2D8+スタン</td><td>タッチ</td><td>1</td><td>-</td><td>6、ヒューズ</td><td>-</td></tr>
+<tr><td class="img-cell"><img src="" alt="チェーンソー++"></td><td class="gun-name">チェーンソー++</td><td>20</td><td>2D8</td><td>タッチ</td><td>1</td><td>-</td><td>20</td><td>97</td></tr>
+</tbody>
+</table></div>
+<h2>飛び道具</h2>
+<div class="table-wrap"><table class="no-img">
+<thead><tr><th>画像</th><th>飛び道具</th><th>技能</th><th>ダメージ</th><th>基本射程</th><th>1R回数</th><th>装弾数</th><th>耐久力</th><th>故障</th></tr></thead>
+<tbody>
+<tr><td class="img-cell"><img src="" alt="投石"></td><td class="gun-name">投石</td><td>投擲</td><td>1D4or1D2+1/2db</td><td>20m or投擲ルール</td><td>2</td><td>-</td><td>20</td><td>-</td></tr>
+<tr><td class="img-cell"><img src="" alt="投げ槍"></td><td class="gun-name">投げ槍</td><td>投擲</td><td>1D8+1or1D8+1+1/2db</td><td>投擲ルール</td><td>1/2</td><td>-</td><td>15</td><td>-</td></tr>
+<tr><td class="img-cell"><img src="" alt="ボウ*"></td><td class="gun-name">ボウ*</td><td>10</td><td>1D8</td><td>60</td><td>1</td><td>-</td><td>10</td><td>-</td></tr>
+<tr><td class="img-cell"><img src="" alt="クロスボウ*"></td><td class="gun-name">クロスボウ*</td><td>20</td><td>2D6</td><td>100</td><td>1/2</td><td>-</td><td>15</td><td>-</td></tr>
+<tr><td class="img-cell"><img src="" alt="スリング*"></td><td class="gun-name">スリング*</td><td>1</td><td>1D4+1/2db</td><td>60</td><td>1</td><td>-</td><td>-</td><td>-</td></tr>
+<tr><td class="img-cell"><img src="" alt="弓（弓道）*"></td><td class="gun-name">弓（弓道）*</td><td>10</td><td>1D6+1+1/2db</td><td>90m</td><td>1</td><td>-</td><td>4</td><td>-</td></tr>
+<tr><td class="img-cell"><img src="" alt="競技用アーチェリー"></td><td class="gun-name">競技用アーチェリー</td><td>20</td><td>1D8</td><td>70m</td><td>1</td><td>-</td><td>4</td><td>-</td></tr>
+<tr><td class="img-cell"><img src="" alt="手裏剣"></td><td class="gun-name">手裏剣</td><td>投擲</td><td>1D3+1/2db</td><td>20m</td><td>2</td><td>-</td><td>2</td><td>-</td></tr>
+<tr><td class="img-cell"><img src="" alt="戦闘用ブーメラン"></td><td class="gun-name">戦闘用ブーメラン</td><td>投擲</td><td>1D8</td><td>投擲ルール</td><td>1</td><td>-</td><td>8</td><td>-</td></tr>
+<tr><td class="img-cell"><img src="" alt="戦輪"></td><td class="gun-name">戦輪</td><td>25</td><td>1D6+1+1/2db</td><td>投擲ルール</td><td>1</td><td>-</td><td>15</td><td>-</td></tr>
+<tr><td class="img-cell"><img src="" alt="テイザー（ダーツ）+"></td><td class="gun-name">テイザー（ダーツ）+</td><td>20</td><td>スタン</td><td>DEXの1/3ｍ（最大5）</td><td>1</td><td>さまざま</td><td>8</td><td>95</td></tr>
+<tr><td class="img-cell"><img src="" alt="テイザー（接触）"></td><td class="gun-name">テイザー（接触）</td><td>こぶし/パンチ</td><td>スタン</td><td>タッチ</td><td>1</td><td>さまざま</td><td>7</td><td>97</td></tr>
+</tbody>
+</table></div>
+</section>
+
+<section class="panel" id="panel-pistol">
+<h2>拳銃</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>画像</th><th>拳銃*</th><th>技能</th><th>ダメージ</th><th>基本射程</th><th>1R回数</th><th>装弾数</th><th>耐久力</th><th>故障</th><th>弾薬</th></tr></thead>
+<tbody>
+<tr><td class="img-cell"><input type="checkbox" class="wl-zc" id="wl-z1" aria-label="画像を拡大"><label for="wl-z1" class="wl-zl"><img src="https://www.no1shop.jp/annai/denix/denixjpg/1084e.jpg" alt="フリントロック式拳銃"></label><label for="wl-z1" class="wl-lb"><img src="https://www.no1shop.jp/annai/denix/denixjpg/1084e.jpg" alt="フリントロック式拳銃"></label></td><td class="gun-name">フリントロック式拳銃</td><td>20</td><td>1D6+1</td><td>10m</td><td>1/4</td><td>1</td><td>8</td><td>95</td><td>さまざま</td></tr>
+<tr><td class="img-cell"><input type="checkbox" class="wl-zc" id="wl-z2" aria-label="画像を拡大"><label for="wl-z2" class="wl-zl"><img src="https://hb-plaza.com/wp/wp-content/uploads/2025/09/ruger-mark-iv-22-45-lite-pistol.webp" alt="22口径ショート・オートマチック"></label><label for="wl-z2" class="wl-lb"><img src="https://hb-plaza.com/wp/wp-content/uploads/2025/09/ruger-mark-iv-22-45-lite-pistol.webp" alt="22口径ショート・オートマチック"></label></td><td class="gun-name">22口径ショート・オートマチック</td><td>20</td><td>1D6</td><td>10m</td><td>3</td><td>6</td><td>6</td><td>0</td><td>22LR</td></tr>
+<tr><td class="img-cell"><input type="checkbox" class="wl-zc" id="wl-z3" aria-label="画像を拡大"><label for="wl-z3" class="wl-zl"><img src="https://www.airgun.jp/upload/save_image/03181145_6052bee6c0a5b.jpg" alt="25口径デリンジャー（短銃身）"></label><label for="wl-z3" class="wl-lb"><img src="https://www.airgun.jp/upload/save_image/03181145_6052bee6c0a5b.jpg" alt="25口径デリンジャー（短銃身）"></label></td><td class="gun-name">25口径デリンジャー（短銃身）</td><td>20</td><td>1D6</td><td>3m</td><td>1</td><td>1</td><td>5</td><td>0</td><td>25口径</td></tr>
+<tr><td class="img-cell"><input type="checkbox" class="wl-zc" id="wl-z4" aria-label="画像を拡大"><label for="wl-z4" class="wl-zl"><img src="https://www.tokyo-marui.co.jp/appimg/product/p_sub1_210121124456.jpg" alt="32口径（7.65ｍｍ）リボルバー"></label><label for="wl-z4" class="wl-lb"><img src="https://www.tokyo-marui.co.jp/appimg/product/p_sub1_210121124456.jpg" alt="32口径（7.65ｍｍ）リボルバー"></label></td><td class="gun-name">32口径（7.65ｍｍ）リボルバー</td><td>20</td><td>1D8</td><td>15m</td><td>3</td><td>6</td><td>10</td><td>0</td><td>32口径</td></tr>
+<tr><td class="img-cell"><input type="checkbox" class="wl-zc" id="wl-z5" aria-label="画像を拡大"><label for="wl-z5" class="wl-zl"><img src="https://auctions.afimg.jp/v637839625/ya/image/v637839625.1.jpg" alt="32口径（7.65ｍｍ）オートマチック"></label><label for="wl-z5" class="wl-lb"><img src="https://auctions.afimg.jp/v637839625/ya/image/v637839625.1.jpg" alt="32口径（7.65ｍｍ）オートマチック"></label></td><td class="gun-name">32口径（7.65ｍｍ）オートマチック</td><td>20</td><td>1D8</td><td>15m</td><td>3</td><td>8</td><td>8</td><td>99</td><td>32オート</td></tr>
+<tr><td class="img-cell"><input type="checkbox" class="wl-zc" id="wl-z6" aria-label="画像を拡大"><label for="wl-z6" class="wl-zl"><img src="https://www.tokyo-marui.co.jp/appimg/product/p_sub1_210123055646.jpg" alt="357口径マグナム・リボルバー"></label><label for="wl-z6" class="wl-lb"><img src="https://www.tokyo-marui.co.jp/appimg/product/p_sub1_210123055646.jpg" alt="357口径マグナム・リボルバー"></label></td><td class="gun-name">357口径マグナム・リボルバー</td><td>20</td><td>1D8+1D4</td><td>15m</td><td>1</td><td>6</td><td>11</td><td>0</td><td>357マグナム</td></tr>
+<tr><td class="img-cell"><input type="checkbox" class="wl-zc" id="wl-z7" aria-label="画像を拡大"><label for="wl-z7" class="wl-zl"><img src="https://shop.r10s.jp/kokkado/cabinet/hws/j-police3inch1.jpg" alt="38口径（9ｍｍ）リボルバー"></label><label for="wl-z7" class="wl-lb"><img src="https://shop.r10s.jp/kokkado/cabinet/hws/j-police3inch1.jpg" alt="38口径（9ｍｍ）リボルバー"></label></td><td class="gun-name">38口径（9ｍｍ）リボルバー</td><td>20</td><td>1D10</td><td>15m</td><td>2</td><td>6</td><td>10</td><td>0</td><td>38口径</td></tr>
+<tr><td class="img-cell"><input type="checkbox" class="wl-zc" id="wl-z8" aria-label="画像を拡大"><label for="wl-z8" class="wl-zl"><img src="https://stat.ameba.jp/user_images/20130503/15/whoisjack/c5/18/j/o0540034612523602878.jpg" alt="38口径オートマチック"></label><label for="wl-z8" class="wl-lb"><img src="https://stat.ameba.jp/user_images/20130503/15/whoisjack/c5/18/j/o0540034612523602878.jpg" alt="38口径オートマチック"></label></td><td class="gun-name">38口径オートマチック</td><td>20</td><td>1D10</td><td>15m</td><td>2</td><td>6</td><td>8</td><td>99</td><td>38オート</td></tr>
+<tr><td class="img-cell"><input type="checkbox" class="wl-zc" id="wl-z9" aria-label="画像を拡大"><label for="wl-z9" class="wl-zl"><img src="https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0404/users/8816fac00d94032fd3b30a16f647f6242f4c4f19/i-img1200x900-16811016670bsnzj255089.jpg" alt="41口径リボルバー"></label><label for="wl-z9" class="wl-lb"><img src="https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0404/users/8816fac00d94032fd3b30a16f647f6242f4c4f19/i-img1200x900-16811016670bsnzj255089.jpg" alt="41口径リボルバー"></label></td><td class="gun-name">41口径リボルバー</td><td>20</td><td>1D10</td><td>15m</td><td>1</td><td>6</td><td>10</td><td>0</td><td>41口径</td></tr>
+<tr><td class="img-cell"><input type="checkbox" class="wl-zc" id="wl-z10" aria-label="画像を拡大"><label for="wl-z10" class="wl-zl"><img src="https://m.media-amazon.com/images/S/aplus-media-library-service-media/d037dc9c-f621-4cf0-bf3f-d0b1132446f1.__CR0,0,970,600_PT0_SX970_V1___.jpg" alt="44口径マグナム・リボルバー"></label><label for="wl-z10" class="wl-lb"><img src="https://m.media-amazon.com/images/S/aplus-media-library-service-media/d037dc9c-f621-4cf0-bf3f-d0b1132446f1.__CR0,0,970,600_PT0_SX970_V1___.jpg" alt="44口径マグナム・リボルバー"></label></td><td class="gun-name">44口径マグナム・リボルバー</td><td>15</td><td>1D10+1D4+2</td><td>15m</td><td>1</td><td>6</td><td>12</td><td>0</td><td>44マグナム</td></tr>
+<tr><td class="img-cell"><input type="checkbox" class="wl-zc" id="wl-z11" aria-label="画像を拡大"><label for="wl-z11" class="wl-zl"><img src="https://pds.exblog.jp/pds/1/201712/19/44/e0162444_20504296.jpg" alt="45口径リボルバー"></label><label for="wl-z11" class="wl-lb"><img src="https://pds.exblog.jp/pds/1/201712/19/44/e0162444_20504296.jpg" alt="45口径リボルバー"></label></td><td class="gun-name">45口径リボルバー</td><td>20</td><td>1D10+2</td><td>15m</td><td>1</td><td>6</td><td>10</td><td>0</td><td>45口径</td></tr>
+<tr><td class="img-cell"><input type="checkbox" class="wl-zc" id="wl-z12" aria-label="画像を拡大"><label for="wl-z12" class="wl-zl"><img src="https://www.tokyo-marui.co.jp/appimg/product/p_sub1_210123051256.jpg" alt="45口径オートマチック"></label><label for="wl-z12" class="wl-lb"><img src="https://www.tokyo-marui.co.jp/appimg/product/p_sub1_210123051256.jpg" alt="45口径オートマチック"></label></td><td class="gun-name">45口径オートマチック</td><td>20</td><td>1D10+2</td><td>15m</td><td>1</td><td>7</td><td>8</td><td>0</td><td>45オート</td></tr>
+<tr><td class="img-cell"><input type="checkbox" class="wl-zc" id="wl-z13" aria-label="画像を拡大"><label for="wl-z13" class="wl-zl"><img src="https://auctions.afimg.jp/d1064006285/ya/image/d1064006285.1.jpg" alt="ベレッタM9"></label><label for="wl-z13" class="wl-lb"><img src="https://auctions.afimg.jp/d1064006285/ya/image/d1064006285.1.jpg" alt="ベレッタM9"></label></td><td class="gun-name">ベレッタM9</td><td>20</td><td>1D10</td><td>15m</td><td>2</td><td>15</td><td>8</td><td>98</td><td>9mm*19</td></tr>
+<tr><td class="img-cell"><input type="checkbox" class="wl-zc" id="wl-z14" aria-label="画像を拡大"><label for="wl-z14" class="wl-zl"><img src="https://www.tokyo-marui.co.jp/appimg/product/p_sub1_201214090041.jpg" alt="グロック17 9ｍｍオートマチック"></label><label for="wl-z14" class="wl-lb"><img src="https://www.tokyo-marui.co.jp/appimg/product/p_sub1_201214090041.jpg" alt="グロック17 9ｍｍオートマチック"></label></td><td class="gun-name">グロック17 9ｍｍオートマチック</td><td>20</td><td>1D10</td><td>15m</td><td>2</td><td>17</td><td>8</td><td>98</td><td>9mm*19</td></tr>
+<tr><td class="img-cell"><input type="checkbox" class="wl-zc" id="wl-z15" aria-label="画像を拡大"><label for="wl-z15" class="wl-zl"><img src="https://www.tokyo-marui.co.jp/appimg/product/p_sub1_210121082543.jpg" alt="グロック18C"></label><label for="wl-z15" class="wl-lb"><img src="https://www.tokyo-marui.co.jp/appimg/product/p_sub1_210121082543.jpg" alt="グロック18C"></label></td><td class="gun-name">グロック18C</td><td>10</td><td>1D10</td><td>15m</td><td>2or連射</td><td>17/33</td><td>8</td><td>98</td><td>9mm*19</td></tr>
+<tr><td class="img-cell"><input type="checkbox" class="wl-zc" id="wl-z16" aria-label="画像を拡大"><label for="wl-z16" class="wl-zl"><img src="https://www.tokyo-marui.co.jp/appimg/product/p_sub1_210913034351.jpg" alt="グロック19"></label><label for="wl-z16" class="wl-lb"><img src="https://www.tokyo-marui.co.jp/appimg/product/p_sub1_210913034351.jpg" alt="グロック19"></label></td><td class="gun-name">グロック19</td><td>20</td><td>1D10</td><td>15m</td><td>2</td><td>15</td><td>8</td><td>98</td><td>9mm*19</td></tr>
+<tr><td class="img-cell"><input type="checkbox" class="wl-zc" id="wl-z17" aria-label="画像を拡大"><label for="wl-z17" class="wl-zl"><img src="https://makeshop-multi-images.akamaized.net/mokeipaddock/itemimages/003006000004_wVnLoRJ.jpg" alt="ルガーP08"></label><label for="wl-z17" class="wl-lb"><img src="https://makeshop-multi-images.akamaized.net/mokeipaddock/itemimages/003006000004_wVnLoRJ.jpg" alt="ルガーP08"></label></td><td class="gun-name">ルガーP08</td><td>20</td><td>1D10</td><td>10m</td><td>2</td><td>8</td><td>9</td><td>98</td><td>9mm*19</td></tr>
+<tr><td class="img-cell"><input type="checkbox" class="wl-zc" id="wl-z18" aria-label="画像を拡大"><label for="wl-z18" class="wl-zl"><img src="https://www.tokyo-marui.co.jp/appimg/product/p_sub1_210123053103.jpg" alt="SIG ザウエルP220 オートマチック"></label><label for="wl-z18" class="wl-lb"><img src="https://www.tokyo-marui.co.jp/appimg/product/p_sub1_210123053103.jpg" alt="SIG ザウエルP220 オートマチック"></label></td><td class="gun-name">SIG ザウエルP220 オートマチック</td><td>20</td><td>1D10</td><td>15m</td><td>3</td><td>9</td><td>8</td><td>99</td><td>9mm*19</td></tr>
+<tr><td class="img-cell"><input type="checkbox" class="wl-zc" id="wl-z19" aria-label="画像を拡大"><label for="wl-z19" class="wl-zl"><img src="https://tse1.mm.bing.net/th/id/OIP.q5dxpeDEby33jRkvGu1J6QHaE8?r=0&amp;rs=1&amp;pid=ImgDetMain&amp;o=7&amp;rm=3" alt="SIG ザウエルP226 オートマチック"></label><label for="wl-z19" class="wl-lb"><img src="https://tse1.mm.bing.net/th/id/OIP.q5dxpeDEby33jRkvGu1J6QHaE8?r=0&amp;rs=1&amp;pid=ImgDetMain&amp;o=7&amp;rm=3" alt="SIG ザウエルP226 オートマチック"></label></td><td class="gun-name">SIG ザウエルP226 オートマチック</td><td>20</td><td>1D10</td><td>15m</td><td>3</td><td>15</td><td>8</td><td>98</td><td>9mm*19</td></tr>
+<tr><td class="img-cell"><input type="checkbox" class="wl-zc" id="wl-z20" aria-label="画像を拡大"><label for="wl-z20" class="wl-zl"><img src="https://www.tokyo-marui.co.jp/appimg/product/p_sub1_210123053103.jpg" alt="SIG ザウエルP228 オートマチック"></label><label for="wl-z20" class="wl-lb"><img src="https://www.tokyo-marui.co.jp/appimg/product/p_sub1_210123053103.jpg" alt="SIG ザウエルP228 オートマチック"></label></td><td class="gun-name">SIG ザウエルP228 オートマチック</td><td>20</td><td>1D10</td><td>15m</td><td>3</td><td>13</td><td>8</td><td>98</td><td>9mm*19</td></tr>
+<tr><td class="img-cell"><input type="checkbox" class="wl-zc" id="wl-z21" aria-label="画像を拡大"><label for="wl-z21" class="wl-zl"><img src="https://hb-plaza.com/wp/wp-content/uploads/sw3913.jpg" alt="S&amp;W M3913"></label><label for="wl-z21" class="wl-lb"><img src="https://hb-plaza.com/wp/wp-content/uploads/sw3913.jpg" alt="S&amp;W M3913"></label></td><td class="gun-name">S&amp;W M3913</td><td>20</td><td>1D10</td><td>10m</td><td>3</td><td>8</td><td>6</td><td>99</td><td>9mm*19</td></tr>
+<tr><td class="img-cell"><input type="checkbox" class="wl-zc" id="wl-z22" aria-label="画像を拡大"><label for="wl-z22" class="wl-zl"><img src="https://www.hyperdouraku.com/vintage/mrzn_m59c/images/01.jpg" alt="S&amp;W M5900"></label><label for="wl-z22" class="wl-lb"><img src="https://www.hyperdouraku.com/vintage/mrzn_m59c/images/01.jpg" alt="S&amp;W M5900"></label></td><td class="gun-name">S&amp;W M5900</td><td>20</td><td>1D10</td><td>15m</td><td>3</td><td>15</td><td>8</td><td>98</td><td>9mm*19</td></tr>
+<tr><td class="img-cell"><input type="checkbox" class="wl-zc" id="wl-z23" aria-label="画像を拡大"><label for="wl-z23" class="wl-zl"><img src="https://tse3.mm.bing.net/th/id/OIP.aBAPYme-5Fkiki5s8HHlpAHaHa?r=0&amp;rs=1&amp;pid=ImgDetMain&amp;o=7&amp;rm=3" alt="S&amp;W M&amp;P40"></label><label for="wl-z23" class="wl-lb"><img src="https://tse3.mm.bing.net/th/id/OIP.aBAPYme-5Fkiki5s8HHlpAHaHa?r=0&amp;rs=1&amp;pid=ImgDetMain&amp;o=7&amp;rm=3" alt="S&amp;W M&amp;P40"></label></td><td class="gun-name">S&amp;W M&amp;P40</td><td>20</td><td>1D10+1</td><td>10m</td><td>2</td><td>10</td><td>6</td><td>99</td><td>40S&amp;W</td></tr>
+<tr><td class="img-cell"><input type="checkbox" class="wl-zc" id="wl-z24" aria-label="画像を拡大"><label for="wl-z24" class="wl-zl"><img src="https://tse4.mm.bing.net/th/id/OIP.psHMEvhdn7MKEhRAz_eKvQHaEC?r=0&amp;rs=1&amp;pid=ImgDetMain&amp;o=7&amp;rm=3" alt="S&amp;W M&amp;R R8"></label><label for="wl-z24" class="wl-lb"><img src="https://tse4.mm.bing.net/th/id/OIP.psHMEvhdn7MKEhRAz_eKvQHaEC?r=0&amp;rs=1&amp;pid=ImgDetMain&amp;o=7&amp;rm=3" alt="S&amp;W M&amp;R R8"></label></td><td class="gun-name">S&amp;W M&amp;R R8</td><td>20</td><td>1D8+1D4</td><td>15m</td><td>1</td><td>8</td><td>11</td><td>0</td><td>357マグナム</td></tr>
+<tr><td class="img-cell"><input type="checkbox" class="wl-zc" id="wl-z25" aria-label="画像を拡大"><label for="wl-z25" class="wl-zl"><img src="https://tse1.mm.bing.net/th/id/OIP.A52kWszVBv1vC2BDaOf-tAHaFP?r=0&amp;rs=1&amp;pid=ImgDetMain&amp;o=7&amp;rm=3" alt="H&amp;K USP"></label><label for="wl-z25" class="wl-lb"><img src="https://tse1.mm.bing.net/th/id/OIP.A52kWszVBv1vC2BDaOf-tAHaFP?r=0&amp;rs=1&amp;pid=ImgDetMain&amp;o=7&amp;rm=3" alt="H&amp;K USP"></label></td><td class="gun-name">H&amp;K USP</td><td>20</td><td>1D10</td><td>15m</td><td>3</td><td>15</td><td>8</td><td>98</td><td>9mm*19</td></tr>
+<tr><td class="img-cell"><input type="checkbox" class="wl-zc" id="wl-z26" aria-label="画像を拡大"><label for="wl-z26" class="wl-zl"><img src="https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0401/users/43af23d9d2a4c690ebc023029d99e892c5cb4201/i-img1198x898-1673575497jpnjzi14.jpg" alt="ベレッタ M85F"></label><label for="wl-z26" class="wl-lb"><img src="https://auctions.c.yimg.jp/images.auctions.yahoo.co.jp/image/dr000/auc0401/users/43af23d9d2a4c690ebc023029d99e892c5cb4201/i-img1198x898-1673575497jpnjzi14.jpg" alt="ベレッタ M85F"></label></td><td class="gun-name">ベレッタ M85F</td><td>20</td><td>1D10</td><td>15m</td><td>3</td><td>8</td><td>8</td><td>99</td><td>9mm*17(380ACP)</td></tr>
+<tr><td class="img-cell"><input type="checkbox" class="wl-zc" id="wl-z27" aria-label="画像を拡大"><label for="wl-z27" class="wl-zl"><img src="https://www.airgun.jp/upload/save_image/06141647_62a83d25cf4cd.jpg" alt="ベレッタ M95FS"></label><label for="wl-z27" class="wl-lb"><img src="https://www.airgun.jp/upload/save_image/06141647_62a83d25cf4cd.jpg" alt="ベレッタ M95FS"></label></td><td class="gun-name">ベレッタ M95FS</td><td>20</td><td>1D10</td><td>15m</td><td>3</td><td>15</td><td>8</td><td>98</td><td>9mm*19</td></tr>
+<tr><td class="img-cell"><input type="checkbox" class="wl-zc" id="wl-z28" aria-label="画像を拡大"><label for="wl-z28" class="wl-zl"><img src="https://www.tokyo-marui.co.jp/appimg/product/p_sub1_210121050437.jpg" alt="FNファイブ・セブン"></label><label for="wl-z28" class="wl-lb"><img src="https://www.tokyo-marui.co.jp/appimg/product/p_sub1_210121050437.jpg" alt="FNファイブ・セブン"></label></td><td class="gun-name">FNファイブ・セブン</td><td>20</td><td>2D6</td><td>25m</td><td>3</td><td>20</td><td>8</td><td>98</td><td>5.7mm*28</td></tr>
+<tr><td class="img-cell"><input type="checkbox" class="wl-zc" id="wl-z29" aria-label="画像を拡大"><label for="wl-z29" class="wl-zl"><img src="https://stat.ameba.jp/user_images/20220309/08/sakumakoh/d0/7e/j/o0640048015085230642.jpg" alt="ミネベア ニューナンブM60"></label><label for="wl-z29" class="wl-lb"><img src="https://stat.ameba.jp/user_images/20220309/08/sakumakoh/d0/7e/j/o0640048015085230642.jpg" alt="ミネベア ニューナンブM60"></label></td><td class="gun-name">ミネベア ニューナンブM60</td><td>20</td><td>1D10</td><td>10m</td><td>2</td><td>5</td><td>8</td><td>0</td><td>38Sp.</td></tr>
+<tr><td class="img-cell"><input type="checkbox" class="wl-zc" id="wl-z30" aria-label="画像を拡大"><label for="wl-z30" class="wl-zl"><img src="https://www.airgun.jp/upload/save_image/12161502_5fd9a2e0e2c01.jpg" alt="S＆W M37 エアーウエイト"></label><label for="wl-z30" class="wl-lb"><img src="https://www.airgun.jp/upload/save_image/12161502_5fd9a2e0e2c01.jpg" alt="S＆W M37 エアーウエイト"></label></td><td class="gun-name">S＆W M37 エアーウエイト</td><td>20</td><td>1D10</td><td>10m</td><td>2</td><td>5</td><td>8</td><td>0</td><td>38Sp.</td></tr>
+<tr><td class="img-cell"><input type="checkbox" class="wl-zc" id="wl-z31" aria-label="画像を拡大"><label for="wl-z31" class="wl-zl"><img src="https://m.media-amazon.com/images/I/81P3Sv6jrjL._AC_SL1500_.jpg" alt="マカロフPM"></label><label for="wl-z31" class="wl-lb"><img src="https://m.media-amazon.com/images/I/81P3Sv6jrjL._AC_SL1500_.jpg" alt="マカロフPM"></label></td><td class="gun-name">マカロフPM</td><td>20</td><td>1D8+1</td><td>15m</td><td>2</td><td>8</td><td>8</td><td>99</td><td>9mm*18</td></tr>
+<tr><td class="img-cell"><input type="checkbox" class="wl-zc" id="wl-z32" aria-label="画像を拡大"><label for="wl-z32" class="wl-zl"><img src="https://www.americanrifleman.org/media/m00hz402/horman-norincotype54-1.jpg?anchor=center&amp;mode=crop&amp;width=987&amp;height=551&amp;rnd=132785375184730000&amp;quality=60" alt="ノーリンコT-54"></label><label for="wl-z32" class="wl-lb"><img src="https://www.americanrifleman.org/media/m00hz402/horman-norincotype54-1.jpg?anchor=center&amp;mode=crop&amp;width=987&amp;height=551&amp;rnd=132785375184730000&amp;quality=60" alt="ノーリンコT-54"></label></td><td class="gun-name">ノーリンコT-54</td><td>20</td><td>1D8</td><td>10m</td><td>2</td><td>8</td><td>8</td><td>98</td><td>7.62mm*25</td></tr>
+<tr><td class="img-cell"><input type="checkbox" class="wl-zc" id="wl-z33" aria-label="画像を拡大"><label for="wl-z33" class="wl-zl"><img src="https://static.wikia.nocookie.net/guns/images/a/ac/IMIDesertEagle.png/revision/latest/scale-to-width-down/1200?cb=20200816112312" alt="IMIデザート・イーグル"></label><label for="wl-z33" class="wl-lb"><img src="https://static.wikia.nocookie.net/guns/images/a/ac/IMIDesertEagle.png/revision/latest/scale-to-width-down/1200?cb=20200816112312" alt="IMIデザート・イーグル"></label></td><td class="gun-name">IMIデザート・イーグル</td><td>20</td><td>1D10+1D6+3</td><td>15m</td><td>1</td><td>7</td><td>9</td><td>94</td><td>44マグナム</td></tr>
+</tbody>
+</table></div>
+</section>
+
+<section class="panel" id="panel-rifle">
+<h2>ライフル</h2>
+<div class="table-wrap"><table class="no-img">
+<thead><tr><th>画像</th><th>ライフル</th><th>技能</th><th>ダメージ</th><th>基本射程</th><th>1R回数</th><th>装弾数</th><th>耐久力</th><th>故障</th><th>弾薬</th></tr></thead>
+<tbody>
+<tr><td class="img-cell"><img src="" alt="58口径スプリングフィールド・ライフルマスケット"></td><td class="gun-name">58口径スプリングフィールド・ライフルマスケット</td><td>25</td><td>1D10+4</td><td>60m</td><td>1/4</td><td>1</td><td>12</td><td>95</td><td>58口径</td></tr>
+<tr><td class="img-cell"><img src="" alt="22口径ボルト・アクション・ライフル"></td><td class="gun-name">22口径ボルト・アクション・ライフル</td><td>25</td><td>1D6+1</td><td>30m</td><td>1</td><td>6</td><td>9</td><td>99</td><td>22口径</td></tr>
+<tr><td class="img-cell"><img src="" alt="30口径レバー・アクション・カービン"></td><td class="gun-name">30口径レバー・アクション・カービン</td><td>25</td><td>2D6</td><td>50m</td><td>1</td><td>6</td><td>8</td><td>98</td><td>30口径</td></tr>
+<tr><td class="img-cell"><img src="" alt="45口径マーティニ＝ヘンリー・ライフル"></td><td class="gun-name">45口径マーティニ＝ヘンリー・ライフル</td><td>25</td><td>1D8+1D6+3</td><td>80m</td><td>1/3</td><td>1</td><td>12</td><td>0</td><td>45口径</td></tr>
+<tr><td class="img-cell"><img src="" alt="303口径リー＝エンフィールド"></td><td class="gun-name">303口径リー＝エンフィールド</td><td>25</td><td>2D6+4</td><td>110m</td><td>1/2</td><td>10</td><td>12</td><td>0</td><td>7.62mm*56R</td></tr>
+<tr><td class="img-cell"><img src="" alt="30-06口径ボルトアクションライフル（豊和M1500）"></td><td class="gun-name">30-06口径ボルトアクションライフル（豊和M1500）</td><td>25</td><td>2D6+4</td><td>110m</td><td>1/2</td><td>5</td><td>12</td><td>0</td><td>7.62mm*63</td></tr>
+<tr><td class="img-cell"><img src="" alt="308口径ボルトアクションライフル(M24 SWS)"></td><td class="gun-name">308口径ボルトアクションライフル(M24 SWS)</td><td>25</td><td>2D6+4</td><td>110m</td><td>1/2</td><td>6</td><td>12</td><td>0</td><td>7.62mm*51</td></tr>
+<tr><td class="img-cell"><img src="" alt="レミントンMRS"></td><td class="gun-name">レミントンMRS</td><td>25</td><td>2D8+4</td><td>130m</td><td>1/2</td><td>3</td><td>10</td><td>0</td><td>300WM</td></tr>
+<tr><td class="img-cell"><img src="" alt="L115（AI ASW338)"></td><td class="gun-name">L115（AI ASW338)</td><td>25</td><td>3D6+4</td><td>140m</td><td>1/2</td><td>5</td><td>12</td><td>0</td><td>.338LM</td></tr>
+<tr><td class="img-cell"><img src="" alt="M110SASS(KAC SR-25)"></td><td class="gun-name">M110SASS(KAC SR-25)</td><td>25</td><td>2D6+4</td><td>110m</td><td>1</td><td>10/20</td><td>10</td><td>99</td><td>7.62mm*51</td></tr>
+<tr><td class="img-cell"><img src="" alt="ドラグノフSVD"></td><td class="gun-name">ドラグノフSVD</td><td>25</td><td>2D6+4</td><td>110m</td><td>1</td><td>10</td><td>10</td><td>98</td><td>7.62mm*54R</td></tr>
+<tr><td class="img-cell"><img src="" alt="M1ガーランド（30-06口径セミオートマチック・ライフル）"></td><td class="gun-name">M1ガーランド（30-06口径セミオートマチック・ライフル）</td><td>25</td><td>2D6+4</td><td>110m</td><td>1</td><td>8</td><td>11</td><td>0</td><td>7.62mm*63</td></tr>
+<tr><td class="img-cell"><img src="" alt="SKSカービン"></td><td class="gun-name">SKSカービン</td><td>25</td><td>2D6+1</td><td>90m</td><td>2</td><td>10</td><td>10</td><td>97</td><td>7.62mm*39</td></tr>
+<tr><td class="img-cell"><img src="" alt="444口径マーリン・ライフル"></td><td class="gun-name">444口径マーリン・ライフル</td><td>25</td><td>2D8+4</td><td>110m</td><td>1</td><td>5</td><td>12</td><td>98</td><td>444マーリン</td></tr>
+<tr><td class="img-cell"><img src="" alt="バーレット・モデル82"></td><td class="gun-name">バーレット・モデル82</td><td>25</td><td>2D10+1D8+6</td><td>250m</td><td>1</td><td>11</td><td>12</td><td>96</td><td>50口径</td></tr>
+<tr><td class="img-cell"><img src="" alt="エレファント・ガン（二連式）"></td><td class="gun-name">エレファント・ガン（二連式）</td><td>15</td><td>3D6+4</td><td>100m</td><td>1or2</td><td>2</td><td>12</td><td>0</td><td>ウィンチェス、ターマグナムなど</td></tr>
+<tr><td class="img-cell"><img src="" alt="エアライフル（貫通なし）"></td><td class="gun-name">エアライフル（貫通なし）</td><td>25</td><td>1D6</td><td>10m</td><td>1/2</td><td>1</td><td>12</td><td>98</td><td>-</td></tr>
+<tr><td class="img-cell"><img src="" alt="モラン大佐のエアライフル"></td><td class="gun-name">モラン大佐のエアライフル</td><td>15</td><td>2D6+1</td><td>20m</td><td>1/3</td><td>1</td><td>7</td><td>88</td><td>-</td></tr>
+<tr><td class="img-cell"><img src="" alt="M2ライフル"></td><td class="gun-name">M2ライフル</td><td>25</td><td>2D6+2</td><td>110m</td><td>1/2</td><td>8</td><td>11</td><td>0</td><td></td></tr>
+<tr><td class="img-cell"><img src="" alt="30-06口径ボルト・アクション・ライフル"></td><td class="gun-name">30-06口径ボルト・アクション・ライフル</td><td>25</td><td>2D6+4</td><td>110m</td><td>1/2</td><td>5</td><td>12</td><td>0</td><td></td></tr>
+<tr><td class="img-cell"><img src="" alt="30-06セミオートマチック・ライフル"></td><td class="gun-name">30-06セミオートマチック・ライフル</td><td>25</td><td>2D6+4</td><td>110m</td><td>1</td><td>5</td><td>12</td><td>0</td><td>7.62mm*63</td></tr>
+</tbody>
+</table></div>
+<h2>アサルト・ライフル</h2>
+<div class="table-wrap"><table class="no-img">
+<thead><tr><th>画像</th><th>アサルト・ライフル*</th><th>技能</th><th>ダメージ</th><th>基本射程</th><th>1R回数</th><th>装弾数</th><th>耐久力</th><th>故障</th><th>弾薬</th></tr></thead>
+<tbody>
+<tr><td class="img-cell"><img src="" alt="AK47あるいはAKM"></td><td class="gun-name">AK47あるいはAKM</td><td>25</td><td>2D6+1</td><td>100m</td><td>1or連射</td><td>30</td><td>12</td><td>0</td><td>7.62mm*39</td></tr>
+<tr><td class="img-cell"><img src="" alt="AK74"></td><td class="gun-name">AK74</td><td>25</td><td>2D6</td><td>110m</td><td>1or連射</td><td>30</td><td>12</td><td>97</td><td>5.45mm*39</td></tr>
+<tr><td class="img-cell"><img src="" alt="AK-12"></td><td class="gun-name">AK-12</td><td>25</td><td>2D6</td><td>110m</td><td>1or連射</td><td>30</td><td>12</td><td>98</td><td>7.62mm*51</td></tr>
+<tr><td class="img-cell"><img src="" alt="FNFAL"></td><td class="gun-name">FNFAL</td><td>25</td><td>2D6+4</td><td>110m</td><td>1or連射</td><td>20</td><td>11</td><td>97</td><td>5.56mm*45</td></tr>
+<tr><td class="img-cell"><img src="" alt="FN SCAR-L"></td><td class="gun-name">FN SCAR-L</td><td>25</td><td>2D6</td><td>110m</td><td>1or連射</td><td>30</td><td>12</td><td>98</td><td>7.62mm*51</td></tr>
+<tr><td class="img-cell"><img src="" alt="FN SCAR-H"></td><td class="gun-name">FN SCAR-H</td><td>25</td><td>2D6+4</td><td>110m</td><td>1or連射</td><td>20</td><td>12</td><td>98</td><td>5.56mm*45</td></tr>
+<tr><td class="img-cell"><img src="" alt="IMI ガリルAR"></td><td class="gun-name">IMI ガリルAR</td><td>25</td><td>2D6</td><td>110m</td><td>1or連射</td><td>35</td><td>12</td><td>98</td><td>5.56mm*45</td></tr>
+<tr><td class="img-cell"><img src="" alt="IMI タボール"></td><td class="gun-name">IMI タボール</td><td>25</td><td>2D6</td><td>90m</td><td>1or連射</td><td>30</td><td>11</td><td>98</td><td>5.56mm*45</td></tr>
+<tr><td class="img-cell"><img src="" alt="M16A4"></td><td class="gun-name">M16A4</td><td>25</td><td>2D6</td><td>110m</td><td>1or3点連射</td><td>30</td><td>11</td><td>97</td><td>5.56mm*45</td></tr>
+<tr><td class="img-cell"><img src="" alt="M4A1カービン"></td><td class="gun-name">M4A1カービン</td><td>25</td><td>2D6</td><td>90m</td><td>1or連射</td><td>30</td><td>11</td><td>97</td><td>5.56mm*45</td></tr>
+<tr><td class="img-cell"><img src="" alt="マグブル・マサダ"></td><td class="gun-name">マグブル・マサダ</td><td>25</td><td>2D6</td><td>90m</td><td>1or連射</td><td>30</td><td>11</td><td>98</td><td>5.56mm*45</td></tr>
+<tr><td class="img-cell"><img src="" alt="H＆K G36"></td><td class="gun-name">H＆K G36</td><td>25</td><td>2D6</td><td>110m</td><td>1or連射</td><td>30</td><td>11</td><td>99</td><td>5.56mm*45</td></tr>
+<tr><td class="img-cell"><img src="" alt="H&amp;K 416D"></td><td class="gun-name">H&amp;K 416D</td><td>25</td><td>2D6</td><td>90m</td><td>1or連射</td><td>30</td><td>11</td><td>99</td><td>5.56mm*45</td></tr>
+<tr><td class="img-cell"><img src="" alt="H&amp;K 417"></td><td class="gun-name">H&amp;K 417</td><td>25</td><td>2D6+4</td><td>110m</td><td>1or連射</td><td>20</td><td>11</td><td>99</td><td>7.62mm*51</td></tr>
+<tr><td class="img-cell"><img src="" alt="シュタイヤーAUG"></td><td class="gun-name">シュタイヤーAUG</td><td>25</td><td>2D6</td><td>110m</td><td>1or連射</td><td>30</td><td>12</td><td>99</td><td>5.56mm*45</td></tr>
+<tr><td class="img-cell"><img src="" alt="ベレッタM70/90"></td><td class="gun-name">ベレッタM70/90</td><td>25</td><td>2D6</td><td>110m</td><td>1/3/連射</td><td>30</td><td>12</td><td>99</td><td>5.56mm*45</td></tr>
+<tr><td class="img-cell"><img src="" alt="ノーリンコ03式自動歩槍"></td><td class="gun-name">ノーリンコ03式自動歩槍</td><td>25</td><td>2D6</td><td>110m</td><td>1or連射</td><td>30</td><td>11</td><td>97</td><td>5.8mm*42</td></tr>
+<tr><td class="img-cell"><img src="" alt="64式7.62mm小銃"></td><td class="gun-name">64式7.62mm小銃</td><td>25</td><td>2D6+2</td><td>110m</td><td>1or連射</td><td>20</td><td>12</td><td>97</td><td>7.62mm*51</td></tr>
+<tr><td class="img-cell"><img src="" alt="89式5.56mm小銃"></td><td class="gun-name">89式5.56mm小銃</td><td>25</td><td>2D6</td><td>110m</td><td>1/3/連射</td><td>20/30</td><td>11</td><td>97</td><td>5.56mm*45</td></tr>
+<tr><td class="img-cell"><img src="" alt="バレット・モデル82"></td><td class="gun-name">バレット・モデル82</td><td>25</td><td>2D10+4</td><td>210m</td><td>1or連射</td><td>11</td><td>12</td><td>96</td><td></td></tr>
+<tr><td class="img-cell"><img src="" alt="ガリルAR"></td><td class="gun-name">ガリルAR</td><td>25</td><td>2D6+3</td><td>110m</td><td>1or連射</td><td>20</td><td>12</td><td>98</td><td></td></tr>
+</tbody>
+</table></div>
+</section>
+
+<section class="panel" id="panel-shotgun">
+<h2>ショットガン</h2>
+<div class="table-wrap"><table class="no-img">
+<thead><tr><th>画像</th><th>ショットガン*</th><th>技能</th><th>ダメージ</th><th>基本射程</th><th>1R回数</th><th>装弾数</th><th>耐久力</th><th>故障</th><th>弾薬</th></tr></thead>
+<tbody>
+<tr><td class="img-cell"><img src="" alt="20ゲージ・ショットガン（二連式）"></td><td class="gun-name">20ゲージ・ショットガン（二連式）</td><td>30</td><td>2D6/1D6/1D3</td><td>10/20/50m</td><td>1or2</td><td>2</td><td>12</td><td>0</td><td>20ゲージ</td></tr>
+<tr><td class="img-cell"><img src="" alt="16ゲージ・ショットガン（二連式）"></td><td class="gun-name">16ゲージ・ショットガン（二連式）</td><td>30</td><td>2D6+2/1D6+1/1D4</td><td>10/20/50m</td><td>1or2</td><td>2</td><td>12</td><td>0</td><td>16ゲージ</td></tr>
+<tr><td class="img-cell"><img src="" alt="12ゲージ・ショットガン（二連式）"></td><td class="gun-name">12ゲージ・ショットガン（二連式）</td><td>30</td><td>4D6/2D6/1D6</td><td>10/20/50m</td><td>1or2</td><td>2</td><td>12</td><td>0</td><td>12ゲージ</td></tr>
+<tr><td class="img-cell"><img src="" alt="12ゲージ・ショットガン（ポンプ）"></td><td class="gun-name">12ゲージ・ショットガン（ポンプ）</td><td>30</td><td>4D6/2D6/1D6</td><td>10/20/50m</td><td>1</td><td>5</td><td>10</td><td>0</td><td>12ゲージ</td></tr>
+<tr><td class="img-cell"><img src="" alt="12ゲージ・ショットガン（セミオート）"></td><td class="gun-name">12ゲージ・ショットガン（セミオート）</td><td>30</td><td>4D6/2D6/1D6</td><td>10/20/50m</td><td>2</td><td>5</td><td>10</td><td>0</td><td>12ゲージ</td></tr>
+<tr><td class="img-cell"><img src="" alt="12ゲージ・ショットガン（二連式、切り落とし）"></td><td class="gun-name">12ゲージ・ショットガン（二連式、切り落とし）</td><td>30</td><td>4D6/1D6</td><td>5/10m</td><td>1or2</td><td>2</td><td>14</td><td>0</td><td>12ゲージ</td></tr>
+<tr><td class="img-cell"><img src="" alt="10ゲージ・ショットガン（二連式）"></td><td class="gun-name">10ゲージ・ショットガン（二連式）</td><td>30</td><td>4D6+2/2D6+1/1D6</td><td>10/20/50m</td><td>1or2</td><td>2</td><td>12</td><td>0</td><td>10ゲージ</td></tr>
+<tr><td class="img-cell"><img src="" alt="12ゲージ・ベネリM3（折り畳み式銃床）"></td><td class="gun-name">12ゲージ・ベネリM3（折り畳み式銃床）</td><td>30</td><td>4D6/2D6/1D6</td><td>10/20/50m</td><td>2</td><td>7</td><td>14</td><td>0</td><td>12ゲージ</td></tr>
+<tr><td class="img-cell"><img src="" alt="12ゲージ・サイガ12K（折り畳み式銃床）"></td><td class="gun-name">12ゲージ・サイガ12K（折り畳み式銃床）</td><td>30</td><td>4D6/2D6/1D6</td><td>10/20/50m</td><td>2</td><td>5</td><td>10</td><td>98</td><td>12ゲージ</td></tr>
+<tr><td class="img-cell"><img src="" alt="12ゲージ・SPAS(折り畳み式銃床）"></td><td class="gun-name">12ゲージ・SPAS(折り畳み式銃床）</td><td>30</td><td>4D6/2D6/1D6</td><td>10/20/50m</td><td>1</td><td>6</td><td>6</td><td>98</td><td>12ゲージ</td></tr>
+<tr><td class="img-cell"><img src="" alt="12ゲージ・ケル・テックKSG"></td><td class="gun-name">12ゲージ・ケル・テックKSG</td><td>30</td><td>4D6/2D6/1D6</td><td>10/20/50m</td><td>1</td><td>7+7</td><td>6</td><td>99</td><td>12ゲージ</td></tr>
+</tbody>
+</table></div>
+<h2>火縄銃</h2>
+<div class="table-wrap"><table class="no-img">
+<thead><tr><th>画像</th><th>火縄銃</th><th>技能</th><th>ダメージ</th><th>基本射程</th><th>1R回数</th><th>装弾数</th><th>耐久力</th><th>故障</th><th>弾薬</th></tr></thead>
+<tbody>
+<tr><td class="img-cell"><img src="" alt="火縄銃"></td><td class="gun-name">火縄銃</td><td>15</td><td>2D6</td><td>60m</td><td>1/5</td><td>1</td><td>12</td><td>95</td><td>-</td></tr>
+</tbody>
+</table></div>
+</section>
+
+<section class="panel" id="panel-smg">
+<h2>サブマシンガン</h2>
+<div class="table-wrap"><table class="no-img">
+<thead><tr><th>画像</th><th>サブマシンガン*</th><th>技能</th><th>ダメージ</th><th>基本射程</th><th>1R回数</th><th>装弾数</th><th>耐久力</th><th>故障</th><th>弾薬</th></tr></thead>
+<tbody>
+<tr><td class="img-cell"><img src="" alt="FN P90"></td><td class="gun-name">FN P90</td><td>15</td><td>2D6</td><td>50m</td><td>2or連射</td><td>50</td><td>10</td><td>98</td><td>5.7mm*28</td></tr>
+<tr><td class="img-cell"><img src="" alt="H&amp;K MP5(固定ストック）"></td><td class="gun-name">H&amp;K MP5(固定ストック）</td><td>15</td><td>1D10</td><td>40m</td><td>2or連射</td><td>15/30</td><td>10</td><td>97</td><td>9mm*19</td></tr>
+<tr><td class="img-cell"><img src="" alt="M&amp;K MP5F（伸縮性ストック）"></td><td class="gun-name">M&amp;K MP5F（伸縮性ストック）</td><td>15</td><td>1D10</td><td>20/40m</td><td>2or連射</td><td>15/30</td><td>9</td><td>97</td><td>9mm*19</td></tr>
+<tr><td class="img-cell"><img src="" alt="H&amp;K MP5K PDW"></td><td class="gun-name">H&amp;K MP5K PDW</td><td>15</td><td>1D10</td><td>15m</td><td>2or連射</td><td>15/30</td><td>8</td><td>97</td><td>9mm*19</td></tr>
+<tr><td class="img-cell"><img src="" alt="H&amp;K MP7A1 PDW"></td><td class="gun-name">H&amp;K MP7A1 PDW</td><td>15</td><td>2D6</td><td>50m</td><td>2or連射</td><td>40</td><td>8</td><td>98</td><td>4.6mm*30</td></tr>
+<tr><td class="img-cell"><img src="" alt="Izhmashバイソン"></td><td class="gun-name">Izhmashバイソン</td><td>15</td><td>1D8+1</td><td>15m</td><td>2or連射</td><td>64</td><td>7</td><td>96</td><td>9mm*18</td></tr>
+<tr><td class="img-cell"><img src="" alt="イングラムMAC11（38口径）"></td><td class="gun-name">イングラムMAC11（38口径）</td><td>15</td><td>1D10</td><td>15m</td><td>2or連射</td><td>32</td><td>6</td><td>96</td><td>9mm*17(380ACP)</td></tr>
+<tr><td class="img-cell"><img src="" alt="クリス・ヴェクター"></td><td class="gun-name">クリス・ヴェクター</td><td>15</td><td>1D10+2</td><td>15m</td><td>2or連射</td><td>30</td><td>6</td><td>96</td><td>45ACP</td></tr>
+<tr><td class="img-cell"><img src="" alt="スコルピオンSMG"></td><td class="gun-name">スコルピオンSMG</td><td>15</td><td>1D8</td><td>15m</td><td>3or連射</td><td>20</td><td>6</td><td>96</td><td>32ACP</td></tr>
+<tr><td class="img-cell"><img src="" alt="ウージーSMG（9mm）"></td><td class="gun-name">ウージーSMG（9mm）</td><td>15</td><td>1D10</td><td>20m</td><td>2or連射</td><td>32</td><td>8</td><td>98</td><td>9mm*19</td></tr>
+<tr><td class="img-cell"><img src="" alt="トンプソン"></td><td class="gun-name">トンプソン</td><td>15</td><td>1D10+2</td><td>20m</td><td>1or連射</td><td>20/30/50</td><td>8</td><td>96</td><td></td></tr>
+<tr><td class="img-cell"><img src="" alt="ヘッケラー＆コックMP5"></td><td class="gun-name">ヘッケラー＆コックMP5</td><td>15</td><td>1D10</td><td>45m</td><td>2or連射</td><td>15/30</td><td>10</td><td>97</td><td></td></tr>
+</tbody>
+</table></div>
+<h2>マシンガン</h2>
+<div class="table-wrap"><table class="no-img">
+<thead><tr><th>画像</th><th>マシンガン*</th><th>技能</th><th>ダメージ</th><th>基本射程</th><th>1R回数</th><th>装弾数</th><th>耐久力</th><th>故障</th><th>弾薬</th></tr></thead>
+<tbody>
+<tr><td class="img-cell"><img src="" alt="FNミニミ（5.56mm）"></td><td class="gun-name">FNミニミ（5.56mm）</td><td>15</td><td>2D6</td><td>110m</td><td>連射</td><td>30/ベルト</td><td>11</td><td>99</td><td>5.56mm*45</td></tr>
+<tr><td class="img-cell"><img src="" alt="FN MAG(7.62mm)"></td><td class="gun-name">FN MAG(7.62mm)</td><td>15</td><td>2D6+4</td><td>110m</td><td>連射</td><td>ベルト</td><td>12</td><td>98</td><td>7.62mm*51</td></tr>
+<tr><td class="img-cell"><img src="" alt="PKM"></td><td class="gun-name">PKM</td><td>15</td><td>2D6+4</td><td>110m</td><td>連射</td><td>ベルト</td><td>12</td><td>98</td><td>7.62mm*54R</td></tr>
+<tr><td class="img-cell"><img src="" alt="M60E4"></td><td class="gun-name">M60E4</td><td>15</td><td>2D6+4</td><td>90m</td><td>連射</td><td>ベルト</td><td>12</td><td>98</td><td>7.62mm*51</td></tr>
+<tr><td class="img-cell"><img src="" alt="MG3"></td><td class="gun-name">MG3</td><td>15</td><td>2D6+4</td><td>120m</td><td>連射</td><td>ベルト</td><td>12</td><td>97</td><td>7.62mm*51</td></tr>
+<tr><td class="img-cell"><img src="" alt="ミニガン※"></td><td class="gun-name">ミニガン※</td><td>15</td><td>2D6+4</td><td>200m</td><td>連射</td><td>4000</td><td>14</td><td>98</td><td>7.62mm*51</td></tr>
+<tr><td class="img-cell"><img src="" alt="1882型ガトリングガン"></td><td class="gun-name">1882型ガトリングガン</td><td>15</td><td>2D6+4</td><td>100m</td><td>連射</td><td>200</td><td>20</td><td>96</td><td></td></tr>
+<tr><td class="img-cell"><img src="" alt="ブローニング・オートライフルM1918"></td><td class="gun-name">ブローニング・オートライフルM1918</td><td>15</td><td>2D6+4</td><td>90m</td><td>1/2or連射</td><td>20</td><td>11</td><td>0</td><td></td></tr>
+<tr><td class="img-cell"><img src="" alt="30口径ブローニングM1917A1（ベルト給弾式）"></td><td class="gun-name">30口径ブローニングM1917A1（ベルト給弾式）</td><td>15</td><td>2D6+3</td><td>150m</td><td>連射</td><td>250</td><td>12</td><td>96</td><td></td></tr>
+<tr><td class="img-cell"><img src="" alt="MG42（7.92mm、ベルト給弾式）"></td><td class="gun-name">MG42（7.92mm、ベルト給弾式）</td><td>15</td><td>2D6+4</td><td>200m</td><td>連射</td><td>300</td><td>18</td><td>0</td><td></td></tr>
+</tbody>
+</table></div>
+</section>
+
+<section class="panel" id="panel-heavy">
+<h2>爆発物、重火器、その他</h2>
+<div class="table-wrap"><table class="no-img">
+<thead><tr><th>画像</th><th>爆発物、重火器、その他</th><th>技能</th><th>ダメージ</th><th>基本射程</th><th>1R回数</th><th>装弾数</th><th>耐久力</th><th>故障</th></tr></thead>
+<tbody>
+<tr><td class="img-cell"><img src="" alt="モロトフ・カクテル（火炎瓶）"></td><td class="gun-name">モロトフ・カクテル（火炎瓶）</td><td>投擲</td><td>2D6+燃えるために幸運</td><td>投擲</td><td>1/2</td><td>使い捨て</td><td>1</td><td>95</td></tr>
+<tr><td class="img-cell"><img src="" alt="信号ピストル（フレア・ガン）"></td><td class="gun-name">信号ピストル（フレア・ガン）</td><td>拳銃</td><td>1D10+火による1D3</td><td>10</td><td>1/2</td><td>1</td><td>11</td><td>0</td></tr>
+<tr><td class="img-cell"><img src="" alt="ダイナマイト"></td><td class="gun-name">ダイナマイト</td><td>投擲</td><td>4D10/3m</td><td>投擲</td><td>1/2</td><td>使い捨て</td><td>1</td><td>99</td></tr>
+<tr><td class="img-cell"><img src="" alt="信管"></td><td class="gun-name">信管</td><td>電気修理</td><td>2D10/1m</td><td>NA</td><td>NA</td><td>使い捨て</td><td>3</td><td>0</td></tr>
+<tr><td class="img-cell"><img src="" alt="パイプ爆弾"></td><td class="gun-name">パイプ爆弾</td><td>電気修理</td><td>1D10/3m</td><td>その場所</td><td>使い捨て</td><td>使い捨て</td><td>3</td><td>95</td></tr>
+<tr><td class="img-cell"><img src="" alt="プラスチック爆弾（C-4）4オンス(120g)"></td><td class="gun-name">プラスチック爆弾（C-4）4オンス(120g)</td><td>電気修理</td><td>6D10/3m</td><td>その場所</td><td>使い捨て</td><td>使い捨て</td><td>15</td><td>99</td></tr>
+<tr><td class="img-cell"><img src="" alt="手榴弾"></td><td class="gun-name">手榴弾</td><td>投擲</td><td>4D10/3m</td><td>投擲</td><td>1/2</td><td>使い捨て</td><td>8</td><td>99</td></tr>
+<tr><td class="img-cell"><img src="" alt="81mm迫撃砲"></td><td class="gun-name">81mm迫撃砲</td><td>砲</td><td>6D10/3m</td><td>500m</td><td>2</td><td>個別</td><td>10</td><td>0</td></tr>
+<tr><td class="img-cell"><img src="" alt="75mm野砲"></td><td class="gun-name">75mm野砲</td><td>砲</td><td>10D10/2m</td><td>500m</td><td>1/4</td><td>個別</td><td>40</td><td>99</td></tr>
+<tr><td class="img-cell"><img src="" alt="120mm戦車砲"></td><td class="gun-name">120mm戦車砲</td><td>砲</td><td>15D10/4m</td><td>2000m</td><td>1</td><td>個別</td><td>35</td><td>0</td></tr>
+<tr><td class="img-cell"><img src="" alt="艦船搭載の5インチ砲"></td><td class="gun-name">艦船搭載の5インチ砲</td><td>砲</td><td>12D10/4m</td><td>3000m</td><td>2</td><td>自動</td><td>50</td><td>98</td></tr>
+<tr><td class="img-cell"><img src="" alt="AP地雷"></td><td class="gun-name">AP地雷</td><td>隠す+幸運</td><td>4D10/5m</td><td>その場所</td><td>その場所</td><td>使い捨て</td><td>9</td><td>99</td></tr>
+<tr><td class="img-cell"><img src="" alt="クレイモア地雷"></td><td class="gun-name">クレイモア地雷</td><td>幸運</td><td>6D6/20m</td><td>その場所</td><td>その場所</td><td>使い捨て</td><td>12</td><td>99</td></tr>
+<tr><td class="img-cell"><img src="" alt="火炎放射器"></td><td class="gun-name">火炎放射器</td><td>5</td><td>2D6+燃えるために幸運</td><td>25m</td><td>1</td><td>最低10</td><td>6</td><td>93</td></tr>
+<tr><td class="img-cell"><img src="" alt="各種グレネード・ランチャー"></td><td class="gun-name">各種グレネード・ランチャー</td><td>重火器</td><td>3D10/2m</td><td>20m</td><td>1/3</td><td>1</td><td>12</td><td>99</td></tr>
+<tr><td class="img-cell"><img src="" alt="110mm個人携帯対戦車砲弾、RPG-7****"></td><td class="gun-name">110mm個人携帯対戦車砲弾、RPG-7****</td><td>重火器</td><td>8D6/1m</td><td>30m</td><td>1</td><td>使い捨て</td><td>10</td><td>98</td></tr>
+<tr><td class="img-cell"><img src="" alt="LAW*****"></td><td class="gun-name">LAW*****</td><td>重火器</td><td>8D10/1m</td><td>150m</td><td>1月3日</td><td>1</td><td>10</td><td>98</td></tr>
+<tr><td class="img-cell"><img src="" alt="GEミニ・ガン****"></td><td class="gun-name">GEミニ・ガン****</td><td>15</td><td>2D6+4</td><td>400m</td><td>1</td><td>4000</td><td>14</td><td>98</td></tr>
+<tr><td class="img-cell"><img src="" alt="ジャングル狩猟用の弓"></td><td class="gun-name">ジャングル狩猟用の弓</td><td>1</td><td>1D6+db</td><td>30m</td><td>1</td><td>1</td><td>6</td><td>90</td></tr>
+</tbody>
+</table></div>
+</section>
+
+</div>
+
+
+</div>
