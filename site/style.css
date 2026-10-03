@@ -144,4 +144,5 @@ main { min-height: 50vh; }
    固定しないと、ラベルを押すたびにブラウザが入力欄の位置(=ページ上部)へスクロールしてしまう */
 #hw-root .hw-r, #hw-root .hw-q, #wl-root .wl-r, #wl-root .wl-zc {
   position: fixed !important; top: 0; left: 0; width: 1px; height: 1px; margin: 0; opacity: 0; pointer-events: none;
+  visibility: hidden !important;   /* フォーカスされない = ラベルを押してもスクロールしない */
 }
