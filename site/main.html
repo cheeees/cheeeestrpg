@@ -112,6 +112,12 @@
 <!-- 画像の拡大表示(共通。クリック・Esc で閉じる) -->
 <div class="lightbox" id="lightbox" hidden><img alt=""></div>
 
+<!-- 右下のメニューボタン(トップに戻るボタンの上)。項目は上のメニューから自動で作られるので、ここは触らなくてOK -->
+<div class="fab-menu" id="fab-menu">
+  <button type="button" class="fab-btn" id="fab-btn" aria-label="メニューを開く" aria-expanded="false" aria-controls="fab-list"><span></span></button>
+  <ul class="fab-list" id="fab-list" hidden></ul>
+</div>
+  
 <!-- トップに戻るボタン(全ページ共通) -->
 <button type="button" class="to-top" id="to-top" aria-label="ページの先頭へ戻る">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
