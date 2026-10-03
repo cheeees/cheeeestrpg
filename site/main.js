@@ -29,6 +29,8 @@ function loadIncludes(scope) {
   var check = document.getElementById("nav-check");
   var btn = document.getElementById("to-top");
 
+  var first = true;   /* 最初の表示だけは一番上から(hero画像も見せる) */
+
   function show() {
     var id = location.hash.slice(1) || "top";
     var cur = pages.filter(function (p) { return p.id === "p-" + id; })[0] || pages[0];
@@ -39,7 +41,12 @@ function loadIncludes(scope) {
     });
     document.title = (cur.dataset.title ? cur.dataset.title + " | " : "") + SITE_NAME;
     check.checked = false;
-    window.scrollTo(0, 0);
+    /* ページを切り替えたとき: hero画像があるページは、画像を飛ばして中身の先頭へ。
+       ない(画像なしの)ページは一番上へ。移動はアニメーションなしで一瞬で行う */
+    var hero = cur.querySelector(".hero");
+    var top = (!first && hero) ? cur.offsetTop + hero.offsetHeight : 0;
+    window.scrollTo({ top: top, behavior: "instant" });
+    first = false;
     loadIncludes(cur);
   }
   window.addEventListener("hashchange", show);
