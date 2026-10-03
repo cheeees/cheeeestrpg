@@ -179,7 +179,6 @@
      編集モードの「コードを書き出す」で出たコードを、この行と「ここまで」の行の間に丸ごと貼り付けてください。
      (元からある中身は、サンプルデータなので全部消してOKです) -->
 <!-- 公開用データ(編集モードの「コードを書き出す」で作成。スクリプト不要版) -->
-<!-- 公開用データ(編集モードの「コードを書き出す」で作成。スクリプト不要版) -->
 <style>
 #hw-root .ic-0{background-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22160%22%20height%3D%22240%22%20viewBox%3D%220%200%20160%20240%22%3E%3Crect%20width%3D%22160%22%20height%3D%22240%22%20fill%3D%22%23ff6688%22%2F%3E%3Ctext%20x%3D%2280%22%20y%3D%22135%22%20font-size%3D%2252%22%20text-anchor%3D%22middle%22%20fill%3D%22%23fff%22%20font-family%3D%22sans-serif%22%3E%E6%99%AE%3C%2Ftext%3E%3C%2Fsvg%3E")}
 #hw-root .ic-1{background-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22160%22%20height%3D%22240%22%20viewBox%3D%220%200%20160%20240%22%3E%3Crect%20width%3D%22160%22%20height%3D%22240%22%20fill%3D%22%234f8cff%22%2F%3E%3Ctext%20x%3D%2280%22%20y%3D%22135%22%20font-size%3D%2252%22%20text-anchor%3D%22middle%22%20fill%3D%22%23fff%22%20font-family%3D%22sans-serif%22%3E%E7%B4%B0%3C%2Ftext%3E%3C%2Fsvg%3E")}
@@ -274,17 +273,18 @@
 #hw-root #hw-z-5:checked ~ main .zd-5::before{background:var(--main);border-color:var(--main)}
 #hw-root #hw-z-5:checked ~ main .zd-5::before{transform:scale(1.5)}
 #hw-root .cmpw{margin:6px 0 0}
-#hw-root .cmp{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
-#hw-root .cmpin{--ch:clamp(230px,66vw,380px);position:relative;display:flex;align-items:flex-start;gap:6px;width:max-content;min-width:100%;padding:12px 10px 8px 34px;isolation:isolate}
+#hw-root .cmp{overflow:visible}
+#hw-root .cmpin{--ch:clamp(230px,66vw,380px);position:relative;display:flex;align-items:flex-start;gap:0;width:100%;padding:12px 4px 8px 30px;isolation:isolate}
 #hw-root .rul{position:absolute;left:0;right:0;top:12px;height:var(--ch);border-bottom:2px solid var(--mut);pointer-events:none}
 #hw-root .rl{position:absolute;left:0;right:0;height:0;border-top:1px dashed var(--line)}
 #hw-root .rl b{position:sticky;left:3px;display:inline-block;transform:translateY(-50%);font-size:10px;font-weight:400;color:var(--mut);background:var(--bg);padding:0 3px;border-radius:3px}
-#hw-root .ci{position:relative;flex:none;display:flex;flex-direction:column;align-items:center;min-width:64px;padding:0 4px 6px;border:0;background:none;border-radius:10px;cursor:pointer;font:inherit;font-size:12px;color:var(--fg)}
+#hw-root .ci{position:relative;flex:1 1 0;display:flex;flex-direction:column;align-items:center;min-width:0;padding:0 1px 6px;border:0;background:none;border-radius:10px;cursor:pointer;font:inherit;font-size:12px;color:var(--fg)}
 #hw-root .ci .fg{display:flex;align-items:flex-end;justify-content:center;width:100%;height:var(--ch)}
 #hw-root .ci .sil{display:block;flex:none;height:calc(var(--ch)*var(--k));width:calc(var(--ch)*var(--k)*0.4);filter:drop-shadow(0 0 1px #0007)}
-#hw-root .ci .nm{display:flex;align-items:center;gap:4px;max-width:88px;margin-top:6px}
+#hw-root .ci .nm{display:flex;align-items:center;gap:4px;max-width:100%;margin-top:6px}
+#hw-root .cmpin.dn .nm{flex-direction:column;gap:3px}.cmpin.dn .nm span{writing-mode:vertical-rl;max-inline-size:7em}.cmpin.dn .hh{writing-mode:vertical-rl;font-size:9px}
 #hw-root .ci .nm i{flex:none;width:16px;height:16px;border-radius:50%;border:2px solid;background-color:var(--card);background-position:center;background-size:cover;display:block;font-style:normal;font-size:9px;line-height:12px;text-align:center;color:#fff}
-#hw-root .ci .nm span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#hw-root .ci .nm span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #hw-root .ci .hh{color:var(--mut);font-size:11px}
 #hw-root .ci::before{content:"";position:absolute;inset:0;z-index:-1;border-radius:10px;pointer-events:none}.ci.on::before{background:var(--soft)}.ci.on .nm span{font-weight:700}
 #hw-root .cds{position:absolute;inset:0;display:block}
@@ -475,25 +475,29 @@
 #hw-root .stage{pointer-events:none}
 #hw-root .c{pointer-events:auto}
 #hw-root .cmpw,#hw-root .bdw,#hw-root .agew{pointer-events:none}
-#hw-root .cmp,#hw-root .ci,#hw-root .pc{pointer-events:auto}
+#hw-root .pc,#hw-root .ci .sil,#hw-root .ci .nm,#hw-root .ci .hh{pointer-events:auto}
 #hw-root #hw-t-0:checked ~ main .c:not(.tg-0){opacity:.12;pointer-events:none;box-shadow:none}
 #hw-root #hw-t-0:checked ~ main .chw:not(.tg-0){display:none}
 #hw-root #hw-t-0:checked ~ main .ci:not(.tg-0){opacity:.12;pointer-events:none}
+#hw-root #hw-t-0:checked ~ main .ci:not(.tg-0) *{pointer-events:none}
 #hw-root #hw-t-0:checked ~ main .pc:not(.tg-0){opacity:.12;pointer-events:none}
 #hw-root #hw-t-0:checked ~ main .tgb-0{background:var(--main);color:var(--on);border-color:var(--main)}
 #hw-root #hw-t-1:checked ~ main .c:not(.tg-1){opacity:.12;pointer-events:none;box-shadow:none}
 #hw-root #hw-t-1:checked ~ main .chw:not(.tg-1){display:none}
 #hw-root #hw-t-1:checked ~ main .ci:not(.tg-1){opacity:.12;pointer-events:none}
+#hw-root #hw-t-1:checked ~ main .ci:not(.tg-1) *{pointer-events:none}
 #hw-root #hw-t-1:checked ~ main .pc:not(.tg-1){opacity:.12;pointer-events:none}
 #hw-root #hw-t-1:checked ~ main .tgb-1{background:var(--main);color:var(--on);border-color:var(--main)}
 #hw-root #hw-t-2:checked ~ main .c:not(.tg-2){opacity:.12;pointer-events:none;box-shadow:none}
 #hw-root #hw-t-2:checked ~ main .chw:not(.tg-2){display:none}
 #hw-root #hw-t-2:checked ~ main .ci:not(.tg-2){opacity:.12;pointer-events:none}
+#hw-root #hw-t-2:checked ~ main .ci:not(.tg-2) *{pointer-events:none}
 #hw-root #hw-t-2:checked ~ main .pc:not(.tg-2){opacity:.12;pointer-events:none}
 #hw-root #hw-t-2:checked ~ main .tgb-2{background:var(--main);color:var(--on);border-color:var(--main)}
 #hw-root #hw-t-3:checked ~ main .c:not(.tg-3){opacity:.12;pointer-events:none;box-shadow:none}
 #hw-root #hw-t-3:checked ~ main .chw:not(.tg-3){display:none}
 #hw-root #hw-t-3:checked ~ main .ci:not(.tg-3){opacity:.12;pointer-events:none}
+#hw-root #hw-t-3:checked ~ main .ci:not(.tg-3) *{pointer-events:none}
 #hw-root #hw-t-3:checked ~ main .pc:not(.tg-3){opacity:.12;pointer-events:none}
 #hw-root #hw-t-3:checked ~ main .tgb-3{background:var(--main);color:var(--on);border-color:var(--main)}
 #hw-root #hw-p-0:checked ~ main .logi:not(.pl-0){display:none}
