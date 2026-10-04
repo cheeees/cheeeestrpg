@@ -71,8 +71,13 @@ html,body{height:100%;margin:0;font:14px/1.4 system-ui,"Noto Sans JP",sans-serif
 .main{display:flex;flex:1;min-height:0}
 .left{width:45%;min-width:240px;display:flex;flex-direction:column}
 .edwrap{flex:1;display:flex;min-height:0}
-#gut{flex:none;position:relative;overflow:hidden;background:#171411;border-right:1px solid #3a322b;color:#7d7264;font:13px/20px ui-monospace,Menlo,Consolas,monospace;text-align:right;user-select:none;width:calc(2ch + 20px)}
-#gn{white-space:pre;padding:10px 8px 30px 10px}
+#gut{flex:none;position:relative;overflow:hidden;background:#171411;border-right:1px solid #3a322b;color:#7d7264;font:13px/20px ui-monospace,Menlo,Consolas,monospace;text-align:right;user-select:none;width:calc(2ch + 34px)}
+#gn{white-space:pre;padding:10px 8px 30px 22px}
+#gfl{position:absolute;left:0;top:0;width:20px;height:0}
+.gf{position:absolute;left:3px;width:16px;height:20px;line-height:20px;text-align:center;font-size:11px;cursor:pointer;color:#7d7264;opacity:0;transition:opacity .1s;user-select:none}
+#gut:hover .gf,.gf.fd{opacity:1}
+.gf.fd{color:#ffd60a}
+.gf:hover{color:#ffd60a}
 #gcur{position:absolute;left:0;right:0;top:10px;height:20px;background:rgba(255,214,10,.16);pointer-events:none}
 .stack{position:relative;flex:1;min-width:0;overflow:hidden;background:#1e1b18}
 #cl{position:absolute;left:0;right:0;top:0;height:20px;background:rgba(255,255,255,.05);pointer-events:none}
@@ -110,10 +115,13 @@ iframe{border:0;background:#fff;height:100%;width:100%}
   <button id="w-pc" class="on">PC</button>
   <button id="w-tab">タブレット</button>
   <button id="w-sp">スマホ</button>
+  <button id="inspect" title="ONにして、右のプレビューの要素をクリックすると、その要素が書かれている場所へ移動します(Escで終了)">🔍 要素を選ぶ</button>
+  <button id="foldall" title="折りたためる所をすべて折りたたむ">⊟ 全部たたむ</button>
+  <button id="unfoldall" title="折りたたみをすべて開く">⊞ 全部ひらく</button>
   <button id="assist">入力補助</button>
   <button id="reload">↻更新</button>
   <span id="st"></span>
-  <div id="keys">Ctrl+S 保存 ｜ Ctrl+F 検索 ｜ Ctrl+H 置換 ｜ Enter/F3 次へ ｜ Shift+Enter/Shift+F3 前へ ｜ Esc 閉じる ｜ Ctrl+Z 元に戻す ｜ Tab 略語展開・インデント ｜ Shift+Tab インデント戻す ｜ Ctrl+/ コメント切替</div>
+  <div id="keys">Ctrl+S 保存 ｜ Ctrl+F 検索 ｜ Ctrl+H 置換 ｜ Enter/F3 次へ ｜ Shift+Enter/Shift+F3 前へ ｜ Esc 閉じる ｜ Ctrl+Z 元に戻す ｜ Tab 略語展開・インデント ｜ Shift+Tab インデント戻す ｜ Ctrl+/ コメント切替 ｜ 行番号の横の ▾▸ で折りたたみ(Ctrl+Shift+[ たたむ / Ctrl+Shift+] 開く)</div>
 </div>
 <div id="ghdlg" hidden>
   <div class="box">
@@ -146,7 +154,7 @@ iframe{border:0;background:#fff;height:100%;width:100%}
     </div>
   </div>
   <div class="edwrap">
-    <div id="gut"><div id="gn"></div><div id="gcur"></div></div>
+    <div id="gut"><div id="gn"></div><div id="gfl"></div><div id="gcur"></div></div>
     <div class="stack">
       <div id="cl"></div>
       <div id="bd"><div id="bdt"></div></div>
@@ -486,13 +494,13 @@ async function build(){
   var isMain=cur==="main.html",name=cur.indexOf("embed/")===0?cur.slice(6):"";
   var pm=pageMap(),page=isMain?"":(pm[name]||"__preview");
   if(isMain){try{page=fr.contentWindow.location.hash.slice(1)}catch(e){}if(page==="__preview")page=""}
-  var html=site["main.html"];
+  var html=inspecting?annotate(site["main.html"],"m:"):site["main.html"];
   if(name&&!pm[name]){
     var sec='<section class="page" id="p-__preview" data-title="プレビュー"><div class="hero"><img src="img/hero.webp" alt=""></div><div class="wrap"><div class="sec"><div class="hn"><h2>プレビュー</h2><span class="sub">'+name+'</span></div><div class="embed" data-include="embed/'+name+'"></div></div></div></section>';
     html=html.replace("</main>",function(){return sec+"\n</main>"});
   }
   var map={};
-  Object.keys(embeds).forEach(function(n){map["embed/"+n]=fixImg(embeds[n])});
+  Object.keys(embeds).forEach(function(n){map["embed/"+n]=fixImg(inspecting?annotate(embeds[n],"e:"+n+":"):embeds[n])});
   /* CSS: main.html の <link> を、読み込んだ中身に置き換える */
   html=html.replace(/<link\b[^>]*>/gi,function(tag){
     var p=cssHref(tag);if(!p||site["a:"+p]==null)return tag;
@@ -750,32 +758,351 @@ async function findTemplate(){
   }
 }
 
-/* ---------- 行番号・現在行ハイライト ---------- */
-var gutBox=$("gut"),gn=$("gn"),gcur=$("gcur"),clEl=$("cl"),bd=$("bd"),bdt=$("bdt");
-var LH=20,PAD=10,lastLines=0,curLine=0;
+/* ---------- 行番号・現在行ハイライト・折りたたみ ---------- */
+var gutBox=$("gut"),gn=$("gn"),gcur=$("gcur"),gfl=$("gfl"),clEl=$("cl"),bd=$("bd"),bdt=$("bdt");
+var LH=20,PAD=10,curLine=0;
 function escH(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
-function lineOf(p){var v=ed.value,n=0,i=-1;while((i=v.indexOf("\n",i+1))>=0&&i<p)n++;return n}
+function nlCount(v,p){var n=0,i=-1;while((i=v.indexOf("\n",i+1))>=0&&i<p)n++;return n}
+
+/* 折りたたみの仕組み:
+   textarea には「折りたたんだ後の見た目」を入れ、隠した行は FOLDS に預けておく。
+   ed.value / selectionStart などは、折りたたみを無視した「全文」の座標で読み書きできるよう差し替えてある
+   (保存・検索・プレビューなど、ほかの処理は今までどおり全文だけを見ればよい)。
+   折りたたんだ行の末尾に「 ⟪…N行⟫」という目印が付く。 */
+var TAP=HTMLTextAreaElement.prototype;
+var dV=Object.getOwnPropertyDescriptor(TAP,"value"),dS=Object.getOwnPropertyDescriptor(TAP,"selectionStart"),dE=Object.getOwnPropertyDescriptor(TAP,"selectionEnd");
+function dispVal(){return dV.get.call(ed)}
+var FOLDS=[],MK=/ ⟪…(\d+)行⟫/,cacheD=null,cacheF="",infoD=null,infoV=null,lastGood="",selSave=null;
+function hasMk(l){return l.indexOf(" ⟪…")>=0&&MK.test(l)}
+function expandLines(lines,kids){
+  var out=[],ki=0;
+  for(var i=0;i<lines.length;i++){
+    var l=lines[i];
+    if(ki<kids.length&&hasMk(l)){
+      out.push(l.replace(MK,""));
+      var sub=expandLines(kids[ki].lines,kids[ki].kids);
+      for(var j=0;j<sub.length;j++)out.push(sub[j]);
+      ki++;
+    }else out.push(l);
+  }
+  return out;
+}
+function foldH(f){if(f.h==null)f.h=expandLines(f.lines,f.kids).join("\n").length;return f.h}
+function fullText(){
+  var d=dispVal();
+  if(d!==cacheD){cacheD=d;cacheF=expandLines(d.split("\n"),FOLDS).join("\n");infoD=null}
+  return cacheF;
+}
+function getInfo(){
+  var d=dispVal();
+  if(infoV&&infoD===d)return infoV;
+  var items=[],pos=0,lines=d.split("\n"),ki=0;
+  for(var k=0;k<lines.length;k++){
+    var l=lines[k];
+    if(ki<FOLDS.length&&hasMk(l)){
+      var m=MK.exec(l);
+      items.push({s:pos+m.index,mL:m[0].length,e:pos+l.length,H:foldH(FOLDS[ki]),line:k});ki++;
+    }
+    pos+=l.length+1;
+  }
+  infoV=items;infoD=d;return items;
+}
+/* 画面の位置 → 全文の位置 */
+function d2f(d){
+  var it=getInfo(),shift=0;
+  for(var i=0;i<it.length;i++){
+    var x=it[i];
+    if(d<=x.s)break;
+    if(d<x.s+x.mL)return x.s+shift;
+    if(d<=x.e)return d-x.mL+shift;
+    shift+=1+x.H-x.mL;
+  }
+  return d+shift;
+}
+/* 全文の位置 → 画面の位置(折りたたみの中なら h に何番目かが入る) */
+function f2d(p){
+  var it=getInfo(),shift=0;
+  for(var i=0;i<it.length;i++){
+    var x=it[i],ms=x.s+shift,fe=x.e-x.mL+shift;
+    if(p<=ms)return {d:p-shift};
+    if(p<=fe)return {d:p+x.mL-shift};
+    if(p<=fe+1+x.H)return {h:i,d:x.s};
+    shift+=1+x.H-x.mL;
+  }
+  return {d:p-shift};
+}
+function mkIdx(D,k){var n=0;for(var i=0;i<k;i++)if(hasMk(D[i]))n++;return n}
+function unfoldAt(D,F,k){
+  if(!hasMk(D[k]))return 0;
+  var idx=mkIdx(D,k),f=F[idx];
+  D[k]=D[k].replace(MK,"");
+  Array.prototype.splice.apply(D,[k+1,0].concat(f.lines));
+  Array.prototype.splice.apply(F,[idx,1].concat(f.kids));
+  return f.lines.length;
+}
+function foldAt(D,F,a,b){
+  if(b<=a||hasMk(D[a]))return false;
+  var idx=mkIdx(D,a),cnt=0;
+  for(var i=a+1;i<=b;i++)if(hasMk(D[i]))cnt++;
+  var kids=F.splice(idx,cnt),lines=D.splice(a+1,b-a),n=lines.length;
+  kids.forEach(function(x){n+=x.n});
+  D[a]+=" ⟪…"+n+"行⟫";
+  F.splice(idx,0,{lines:lines,kids:kids,n:n,h:null});
+  return true;
+}
+function flMap(D,F){
+  var fl=new Array(D.length),c=0,ki=0;
+  for(var k=0;k<D.length;k++){fl[k]=c;if(ki<F.length&&hasMk(D[k])){c+=1+F[ki].n;ki++}else c++}
+  return {fl:fl,total:c};
+}
+function fullToDisp(fl,e){var lo=0,hi=fl.length-1;while(lo<hi){var m=(lo+hi+1)>>1;if(fl[m]<=e)lo=m;else hi=m-1}return lo}
+/* 構造を変える共通処理: 全文の選択位置とスクロールを保ったまま、画面の中身を作り直す */
+function restructure(fn){
+  var fa=ed.selectionStart,fb=ed.selectionEnd,top=ed.scrollTop,left=ed.scrollLeft;
+  var D=dispVal().split("\n");
+  fn(D,FOLDS);
+  cacheD=null;infoD=null;infoV=null;
+  var nv=D.join("\n");lastGood=nv;
+  dV.set.call(ed,nv);
+  TAP.setSelectionRange.call(ed,f2d(fa).d,f2d(fb).d);
+  ed.scrollTop=top;ed.scrollLeft=left;
+  refreshEdNow();
+}
+function reveal(p){
+  while(FOLDS.length){
+    var r=f2d(p);if(r.h==null)return;
+    var line=getInfo()[r.h].line;
+    restructure(function(D,F){unfoldAt(D,F,line)});
+  }
+}
+Object.defineProperty(ed,"value",{configurable:true,
+  get:function(){return FOLDS.length?fullText():dispVal()},
+  set:function(t){FOLDS=[];cacheD=null;infoD=null;infoV=null;dV.set.call(ed,t);lastGood=dispVal()}});
+Object.defineProperty(ed,"selectionStart",{configurable:true,
+  get:function(){var d=dS.get.call(ed);return FOLDS.length?d2f(d):d},
+  set:function(p){if(FOLDS.length){reveal(p);p=f2d(p).d}dS.set.call(ed,p)}});
+Object.defineProperty(ed,"selectionEnd",{configurable:true,
+  get:function(){var d=dE.get.call(ed);return FOLDS.length?d2f(d):d},
+  set:function(p){if(FOLDS.length){reveal(p);p=f2d(p).d}dE.set.call(ed,p)}});
+ed.setSelectionRange=function(a,b,dir){
+  if(FOLDS.length){reveal(a);reveal(b);a=f2d(a).d;b=f2d(b).d}
+  TAP.setSelectionRange.call(ed,a,b,dir);
+};
+
+/* 折りたためる範囲(全文の行番号): 複数行にまたがるタグ・コメント、<style>/<script> の中の { } */
+function braceRanges(c,base,js,out,ln){
+  var st=[],i=0,n=c.length;
+  while(i<n){
+    var ch=c.charAt(i);
+    if(ch==="/"&&c.charAt(i+1)==="*"){var e=c.indexOf("*/",i+2);i=e<0?n:e+2;continue}
+    if(js&&ch==="/"&&c.charAt(i+1)==="/"){var e2=c.indexOf("\n",i);i=e2<0?n:e2;continue}
+    if(ch==='"'||ch==="'"||ch==="`"){
+      var j=i+1;while(j<n&&c.charAt(j)!==ch&&(ch==="`"||c.charAt(j)!=="\n")){if(c.charAt(j)==="\\")j++;j++}
+      i=j+1;continue;
+    }
+    if(ch==="{")st.push(ln(base+i));
+    else if(ch==="}"&&st.length){var a=st.pop(),b=ln(base+i);if(b>a)out.push({s:a,e:b})}
+    i++;
+  }
+}
+function foldRanges(t){
+  var nl=[],i=-1;while((i=t.indexOf("\n",i+1))>=0)nl.push(i);
+  function ln(p){var lo=0,hi=nl.length;while(lo<hi){var m=(lo+hi)>>1;if(nl[m]<p)lo=m+1;else hi=m}return lo}
+  var raw=[],st=[],lo2=t.toLowerCase(),m,
+    re=/<!--[\s\S]*?-->|<(\/?)([a-zA-Z][\w:-]*)((?:"[^"]*"|'[^']*'|[^'">])*)>/g;
+  while((m=re.exec(t))){
+    var s0=m[0];
+    if(s0.charAt(1)==="!"){var a=ln(m.index),b=ln(m.index+s0.length-1);if(b>a)raw.push({s:a,e:b});continue}
+    var name=m[2].toLowerCase();
+    if(m[1]){
+      for(var j=st.length-1;j>=0;j--)if(st[j].n===name){var o=st[j];st.length=j;var b2=ln(m.index);if(b2>o.l)raw.push({s:o.l,e:b2});break}
+      continue;
+    }
+    if(VOID.test(name)||/\/$/.test(m[3]))continue;
+    var tl=ln(m.index+s0.length-1);
+    if(name==="script"||name==="style"||name==="textarea"||name==="title"){
+      var ce=lo2.indexOf("</"+name,re.lastIndex);if(ce<0)ce=t.length;
+      if(name==="script"||name==="style")braceRanges(t.slice(re.lastIndex,ce),re.lastIndex,name==="script",raw,ln);
+      st.push({n:name,l:tl});re.lastIndex=ce;continue;
+    }
+    st.push({n:name,l:tl});
+  }
+  var map={};
+  raw.forEach(function(r){if(map[r.s]==null||r.e>map[r.s])map[r.s]=r.e});
+  var list=Object.keys(map).map(function(s){return {s:+s,e:map[s]}});
+  list.sort(function(x,y){return (x.e-x.s)-(y.e-y.s)||x.s-y.s});
+  return {map:map,list:list};
+}
+var rngText=null,rngVal=null;
+function getRanges(){var t=ed.value;if(t!==rngText){rngText=t;rngVal=foldRanges(t)}return rngVal}
+
+/* 折りたたみ操作 */
+function toggleLine(k){
+  var D=dispVal().split("\n");
+  if(hasMk(D[k])){restructure(function(D2,F){unfoldAt(D2,F,k)});return}
+  if(!fbar.hidden){status("検索バーを閉じると折りたためます");return}
+  var mp=flMap(D,FOLDS),e=getRanges().map[mp.fl[k]];
+  if(e==null)return;
+  restructure(function(D2,F){foldAt(D2,F,k,fullToDisp(flMap(D2,F).fl,e))});
+}
+function caretLine(){return nlCount(dispVal(),dS.get.call(ed))}
+function foldCaret(){
+  if(!cur)return;
+  if(!fbar.hidden){status("検索バーを閉じると折りたためます");return}
+  var D=dispVal().split("\n"),k=caretLine();
+  if(hasMk(D[k]))return;
+  var fl=flMap(D,FOLDS).fl[k],R=getRanges(),best=null;
+  R.list.forEach(function(r){if(r.s<=fl&&fl<=r.e&&(!best||r.s>best.s||(r.s===best.s&&r.e<best.e)))best=r});
+  if(!best)return;
+  restructure(function(D2,F){
+    var m=flMap(D2,F),a=fullToDisp(m.fl,best.s);
+    if(m.fl[a]===best.s)foldAt(D2,F,a,fullToDisp(m.fl,best.e));
+  });
+}
+function unfoldCaret(){
+  if(!cur)return;
+  var D=dispVal().split("\n"),k=caretLine();
+  if(hasMk(D[k]))restructure(function(D2,F){unfoldAt(D2,F,k)});
+}
+function foldAll(){
+  if(!cur||!FOLDS)return;
+  if(!fbar.hidden){status("検索バーを閉じると折りたためます");return}
+  var R=getRanges();
+  restructure(function(D,F){
+    R.list.forEach(function(r){
+      var m=flMap(D,F),a=fullToDisp(m.fl,r.s);
+      if(m.fl[a]!==r.s)return;
+      foldAt(D,F,a,fullToDisp(m.fl,r.e));
+    });
+  });
+}
+function unfoldAll(){
+  if(!FOLDS.length)return;
+  restructure(function(D,F){var i=0;while(i<D.length){if(hasMk(D[i]))unfoldAt(D,F,i);i++}});
+}
+$("foldall").onclick=function(){foldAll();ed.focus()};
+$("unfoldall").onclick=function(){unfoldAll();ed.focus()};
+gfl.addEventListener("mousedown",function(e){
+  var t=e.target;if(!t||!t.dataset||t.dataset.k==null)return;
+  e.preventDefault();toggleLine(+t.dataset.k);
+});
+
+/* 編集の守り: 折りたたんだ行(や、その行にくっつく操作)に触れる編集は、先にその折りたたみを開く */
+function guardEdit(back){
+  if(!FOLDS.length)return false;
+  var v=dispVal(),a=dS.get.call(ed),b=dE.get.call(ed),la=nlCount(v,a),lb=nlCount(v,b);
+  if(back&&a===b&&la>0&&v.charAt(a-1)==="\n")la--;
+  var D=v.split("\n"),need=false;
+  for(var k=la;k<=lb&&k<D.length;k++)if(hasMk(D[k])){need=true;break}
+  if(!need)return false;
+  restructure(function(D2,F){var i=la,end=lb;while(i<=end&&i<D2.length){if(hasMk(D2[i]))end+=unfoldAt(D2,F,i);i++}});
+  return true;
+}
+function isEditKey(e){
+  if(e.isComposing||e.keyCode===229)return true;
+  var k=e.key||"";
+  if(e.ctrlKey||e.metaKey){k=k.toLowerCase();return k==="v"||k==="x"||k==="/"}
+  return k.length===1||k==="Enter"||k==="Backspace"||k==="Delete"||k==="Tab";
+}
+document.addEventListener("keydown",function(e){
+  if(e.target!==ed)return;
+  var k=e.key||"";
+  if((e.ctrlKey||e.metaKey)&&e.shiftKey&&!e.altKey&&(k==="["||k==="{"||k==="]"||k==="}")){
+    e.preventDefault();e.stopPropagation();
+    if(k==="["||k==="{")foldCaret();else unfoldCaret();
+    return;
+  }
+  if(!FOLDS.length||!isEditKey(e))return;
+  guardEdit(k==="Backspace");
+},true);
+document.addEventListener("beforeinput",function(e){
+  if(e.target!==ed||!FOLDS.length)return;
+  selSave=[dS.get.call(ed),dE.get.call(ed)];
+  var t=e.inputType||"";
+  if(/^(insert|delete)/.test(t)&&t!=="insertCompositionText"&&guardEdit(t==="deleteContentBackward")){
+    e.preventDefault();status("折りたたみを開きました。もう一度操作してください");
+  }
+},true);
+/* 入力のあと、折りたたみの目印が壊れていないか確かめる(壊れていたら元に戻す) */
+document.addEventListener("input",function(e){
+  if(e.target!==ed||!FOLDS.length)return;
+  var disp=dispVal(),lines=disp.split("\n"),ki=0,ok=true;
+  for(var i=0;i<lines.length;i++){
+    if(hasMk(lines[i])){var m=MK.exec(lines[i]);if(ki>=FOLDS.length||+m[1]!==FOLDS[ki].n)ok=false;ki++}
+  }
+  if(ki!==FOLDS.length)ok=false;
+  cacheD=null;infoD=null;infoV=null;
+  if(ok){lastGood=disp;return}
+  e.stopImmediatePropagation();
+  dV.set.call(ed,lastGood);
+  if(selSave)TAP.setSelectionRange.call(ed,selSave[0],selSave[1]);
+  status("折りたたみの部分は直接は編集できません(▾▸で開いてから編集してください)");
+  refreshEdNow();
+},true);
+function selFull(){var a=ed.selectionStart,b=ed.selectionEnd;return a===b?"":ed.value.slice(a,b)}
+ed.addEventListener("copy",function(e){
+  if(!FOLDS.length)return;var s=selFull();if(!s)return;
+  e.clipboardData.setData("text/plain",s);e.preventDefault();
+});
+ed.addEventListener("cut",function(e){
+  if(!FOLDS.length)return;var s=selFull();if(!s)return;
+  e.clipboardData.setData("text/plain",s);e.preventDefault();
+  guardEdit(false);document.execCommand("delete");
+});
+
+/* 行番号・▾▸ */
+var lastGn="",lastArrows="",arrowTimer=null;
 function placeCur(){
   var y=PAD+curLine*LH;
   gcur.style.top=y+"px";
   clEl.style.transform="translateY("+(y-ed.scrollTop)+"px)";
 }
-function updateCur(){curLine=lineOf(ed.selectionStart);placeCur()}
+function updateCur(){curLine=nlCount(dispVal(),dS.get.call(ed));placeCur()}
 function syncScroll(){gutBox.scrollTop=ed.scrollTop;bd.scrollTop=ed.scrollTop;bd.scrollLeft=ed.scrollLeft;placeCur()}
-function refreshEd(){
-  var v=ed.value,n=1,i=-1;
-  while((i=v.indexOf("\n",i+1))>=0)n++;
-  if(n!==lastLines){
-    lastLines=n;
-    var a=new Array(n);for(var k=0;k<n;k++)a[k]=k+1;
-    gn.textContent=a.join("\n");
-    gutBox.style.width="calc("+Math.max(2,String(n).length)+"ch + 20px)";
+function renderArrows(){
+  var D=dispVal().split("\n"),mp=flMap(D,FOLDS),R=getRanges(),items=[];
+  for(var k=0;k<D.length;k++){
+    if(hasMk(D[k]))items.push(k+"f");
+    else if(R.map[mp.fl[k]]!=null)items.push(k+"o");
+  }
+  var key=items.join(",");
+  if(key===lastArrows)return;
+  lastArrows=key;
+  var frag=document.createDocumentFragment();
+  items.forEach(function(s){
+    var k=parseInt(s,10),f=s.charAt(s.length-1)==="f",el=document.createElement("span");
+    el.className="gf"+(f?" fd":"");el.textContent=f?"▸":"▾";
+    el.style.top=(PAD+k*LH)+"px";el.dataset.k=k;el.title=f?"開く":"折りたたむ";
+    frag.appendChild(el);
+  });
+  gfl.textContent="";gfl.appendChild(frag);
+}
+function refreshEdNow(){
+  var D=dispVal().split("\n"),mp=flMap(D,FOLDS),n=D.length,a=new Array(n);
+  for(var k=0;k<n;k++)a[k]=mp.fl[k]+1;
+  var txt=a.join("\n");
+  if(txt!==lastGn){
+    lastGn=txt;gn.textContent=txt;
+    gutBox.style.width="calc("+Math.max(2,String(mp.total).length)+"ch + 34px)";
   }
   renderFind();updateCur();syncScroll();
+  clearTimeout(arrowTimer);renderArrows();
+}
+function refreshEd(){
+  var D=dispVal().split("\n"),mp=flMap(D,FOLDS),n=D.length,a=new Array(n);
+  for(var k=0;k<n;k++)a[k]=mp.fl[k]+1;
+  var txt=a.join("\n");
+  if(txt!==lastGn){
+    lastGn=txt;gn.textContent=txt;
+    gutBox.style.width="calc("+Math.max(2,String(mp.total).length)+"ch + 34px)";
+  }
+  renderFind();updateCur();syncScroll();
+  clearTimeout(arrowTimer);arrowTimer=setTimeout(renderArrows,150);
 }
 ed.addEventListener("input",refreshEd);
 ed.addEventListener("scroll",syncScroll);
 document.addEventListener("selectionchange",function(){if(document.activeElement===ed)updateCur()});
+
 
 /* ---------- 検索・置換 ---------- */
 var fbar=$("fbar"),fi=$("fi"),ri=$("ri"),fcnt=$("fcnt"),fCase=false,fReg=false,M=[],mi=-1;
@@ -816,11 +1143,11 @@ function renderMarks(){
 function renderFind(){if(fbar.hidden)return;findAll();pickNear();renderMarks()}
 var cvs=document.createElement("canvas").getContext("2d");
 function scrollToPos(p){
-  var v=ed.value,line=lineOf(p),y=PAD+line*LH;
+  var v=dispVal(),dp=FOLDS.length?f2d(p).d:p,line=nlCount(v,dp),y=PAD+line*LH;
   if(y<ed.scrollTop+LH||y+LH>ed.scrollTop+ed.clientHeight-LH*2)ed.scrollTop=Math.max(0,y-ed.clientHeight/2);
-  var ls=v.lastIndexOf("\n",p-1)+1;
+  var ls=v.lastIndexOf("\n",dp-1)+1;
   cvs.font=getComputedStyle(ed).font;
-  var w=cvs.measureText("0").width,x=PAD+v.slice(ls,p).replace(/\t/g,"  ").length*w;
+  var w=cvs.measureText("0").width,x=PAD+v.slice(ls,dp).replace(/\t/g,"  ").length*w;
   if(x<ed.scrollLeft+20||x>ed.scrollLeft+ed.clientWidth-80)ed.scrollLeft=Math.max(0,x-ed.clientWidth/3);
 }
 function show(k){
@@ -874,6 +1201,7 @@ function replAll(){
   status(cnt+" 件を置換しました(Ctrl+Z で元に戻せます)");
 }
 function openFind(toReplace){
+  unfoldAll();   /* 検索中は折りたたみを全部開く */
   fbar.hidden=false;
   var s=ed.value.slice(ed.selectionStart,ed.selectionEnd);
   if(s&&s.indexOf("\n")<0)fi.value=s;
@@ -939,6 +1267,98 @@ dr.onmousedown=function(e){
   function up(){fr.style.pointerEvents="";document.removeEventListener("mousemove",mv);document.removeEventListener("mouseup",up)}
   document.addEventListener("mousemove",mv);document.addEventListener("mouseup",up);
 };
+/* ---------- 要素選択モード(プレビューをクリック → その要素が書かれている場所へ飛ぶ) ----------
+   ONの間だけ、プレビュー用HTMLの各タグに data-ed="main.html内の位置" を付けて作り直す(保存されるファイルには付かない) */
+var inspecting=false,labelCache={};
+function annotate(t,prefix){
+  var SKIP=/^(html|head|meta|link|script|style|title|base)$/,
+    lo=t.toLowerCase(),out="",last=0,m,
+    re=/<!--[\s\S]*?-->|<(\/?)([a-zA-Z][\w:-]*)((?:"[^"]*"|'[^']*'|[^'">])*)>/g;
+  while((m=re.exec(t))){
+    if(m[0].charAt(1)==="!"||m[1])continue;
+    var name=m[2].toLowerCase();
+    if(/^(script|style|textarea|title)$/.test(name)){var ce=lo.indexOf("</"+name,re.lastIndex);if(ce>=0)re.lastIndex=ce}
+    if(SKIP.test(name))continue;
+    var p=m.index+1+m[2].length;
+    out+=t.slice(last,p)+' data-ed="'+prefix+m.index+'"';last=p;
+  }
+  return out+t.slice(last);
+}
+function inspLoc(v){
+  var m=/^(m|e):(?:(.+):)?(\d+)$/.exec(v||"");if(!m)return null;
+  var key=m[1]==="m"?"main.html":"embed/"+m[2],t=getText(key);
+  return t==null?null:{key:key,off:+m[3],text:t};
+}
+function lineAt(t,off){var n=1,i=-1;while((i=t.indexOf("\n",i+1))>=0&&i<off)n++;return n}
+function inspLabel(v){
+  if(labelCache[v]!=null)return labelCache[v];
+  var l=inspLoc(v);
+  return labelCache[v]=l?l.key+" : "+lineAt(l.text,l.off)+"行目":"";
+}
+function jumpToSource(v){
+  var l=inspLoc(v);
+  if(!l){status("元の記述が見つかりません");return}
+  if(l.text.charAt(l.off)!=="<"){status("ソースが書き換わっているため位置がずれています。プレビューが更新されてからもう一度クリックしてください");return}
+  var re=/"[^"]*"|'[^']*'|>/g,x,end=l.off+1;
+  re.lastIndex=l.off+1;
+  while((x=re.exec(l.text))){if(x[0]===">"){end=x.index+1;break}}
+  if(l.key!==cur){sel.value=l.key;openFile(l.key)}
+  ed.focus();
+  ed.setSelectionRange(l.off,end);
+  var d=FOLDS.length?f2d(l.off).d:l.off,line=nlCount(dispVal(),d);
+  ed.scrollTop=Math.max(0,PAD+line*LH-ed.clientHeight/3);
+  ed.scrollLeft=0;
+  updateCur();syncScroll();
+  status("ジャンプ: "+l.key+" の "+lineAt(l.text,l.off)+"行目 "+l.text.slice(l.off,Math.min(end,l.off+40)).replace(/\s+/g," "));
+}
+function setInspect(on){
+  if(on&&!opened()){status("先にsiteフォルダか、GitHubを開いてください");return}
+  inspecting=!!on;labelCache={};
+  $("inspect").classList.toggle("on",inspecting);
+  status(inspecting?"要素選択モード: プレビューの要素をクリックすると、その記述へ移動します(Escで終了)":"要素選択モードを終了しました");
+  build();
+}
+$("inspect").onclick=function(){setInspect(!inspecting)};
+document.addEventListener("keydown",function(e){
+  if(e.key==="Escape"&&inspecting&&fbar.hidden)setInspect(false);
+},true);
+function attachInspect(){
+  var doc;try{doc=fr.contentDocument}catch(e){return}
+  if(!doc||!doc.documentElement||doc.__edI)return;
+  doc.__edI=1;
+  var root=doc.documentElement,hl=doc.createElement("div"),lb=doc.createElement("div"),stl=doc.createElement("style");
+  stl.textContent="html.__ed_on,html.__ed_on *{cursor:crosshair!important}";
+  hl.style.cssText="position:fixed;z-index:2147483647;pointer-events:none;display:none;border:2px solid #ffd60a;background:rgba(255,214,10,.18);box-sizing:border-box";
+  lb.style.cssText="position:absolute;left:-2px;background:#5b2e0a;color:#fff;font:11px/1.5 ui-monospace,Menlo,Consolas,monospace;padding:1px 6px;white-space:nowrap;border-radius:3px;max-width:90vw;overflow:hidden;text-overflow:ellipsis";
+  hl.appendChild(lb);root.appendChild(stl);root.appendChild(hl);
+  root.classList.toggle("__ed_on",inspecting);
+  function target(e){var t=e.target;return t&&t.closest?t.closest("[data-ed]"):null}
+  function hide(){hl.style.display="none"}
+  doc.addEventListener("mousemove",function(e){
+    if(!inspecting)return;
+    var a=target(e);if(!a){hide();return}
+    var r=a.getBoundingClientRect(),cl=(typeof a.className==="string"&&a.className.trim())?"."+a.className.trim().split(/\s+/)[0]:"";
+    hl.style.display="block";
+    hl.style.left=r.left+"px";hl.style.top=r.top+"px";hl.style.width=r.width+"px";hl.style.height=r.height+"px";
+    lb.textContent=a.tagName.toLowerCase()+(a.id?"#"+a.id:"")+cl+"  →  "+inspLabel(a.getAttribute("data-ed"));
+    if(r.top<24){lb.style.top="100%";lb.style.bottom="auto"}else{lb.style.bottom="100%";lb.style.top="auto"}
+  },true);
+  doc.addEventListener("scroll",hide,true);
+  root.addEventListener("mouseleave",hide);
+  ["mousedown","mouseup","dblclick","auxclick","contextmenu"].forEach(function(n){
+    doc.addEventListener(n,function(e){if(!inspecting)return;e.preventDefault();e.stopPropagation()},true);
+  });
+  doc.addEventListener("click",function(e){
+    if(!inspecting)return;
+    e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
+    var a=target(e);
+    if(a)jumpToSource(a.getAttribute("data-ed"));
+    else status("この要素に対応する記述が見つかりません(JavaScript が作った要素など)");
+  },true);
+  doc.addEventListener("keydown",function(e){if(e.key==="Escape"&&inspecting)setInspect(false)},true);
+}
+fr.addEventListener("load",attachInspect);
+
 /* 前回 GitHub で開いていたら、自動でつなぐ(トークンを記憶している場合は保存もすぐ使える) */
 if(localStorage.getItem("ghAuto")==="1"){
   var c0=ghLoadCfg();
