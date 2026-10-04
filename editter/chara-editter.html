@@ -478,6 +478,7 @@ const CMP_W_MAX=1400;   // ★PCで身長比較を広げる横幅の上限(px)
 const CMP_W_VW=94;      // ★画面幅のうち身長比較が使う割合(%)
 const CMP_NAME_MIN=72;  // ★名前を横書きにする(9人以下)ときの、1人あたりの最小の幅(px)。名前が「…」で切れるなら大きく
 const CMP_GAP_SP=2;     // ★スマホ(幅600px以下)でのキャラ同士の間隔(px)。スマホの高さは下の @media(max-width:600px) の clamp(30px,36vw,70px) で決まります
+const CMP_SP_H_MAX=320; // ★スマホで「選んだキャラだけ」にして人数が少ないときの高さの上限(px)。人数が少ないほど大きく、多いほど低く自動で変わります(2人なら この高さ)。もっと低くしたいなら 260 など
 function cmpCss(p){
   return [
    `.cmpw{margin:6px 0 0}`,
@@ -539,6 +540,8 @@ function cmpCss(p){
    `@media(max-width:600px){.rl:not(.rt):not(.rm) b{display:none}}`
   ].map(r=>{const m=r.match(/^(@media[^{]+)\{([\s\S]+)\}$/);return m?m[1]+"{"+p+m[2]+"}":p+r}).join("\n");
 }
+// 身長比較の「体の幅 ÷ 目盛りの最大」(各キャラの --w と同じ値)を、身長のあるキャラ全員ぶん返す。スマホの人数別の高さ(buildStatic)で使う。top の出し方は cmpHTML と同じにすること
+function cmpWf(L){const H=L.map(hOf),has=L.map((c,i)=>i).filter(i=>H[i]>0);if(!has.length)return[];const mx=Math.max(...has.map(i=>H[i])),step=mx<=50?5:mx<=120?10:mx<=260?20:50,top=Math.ceil(mx*1.02/step)*step;return has.map(i=>silBox(L[i].sil,H[i]).w/top)}
 // 比較表示の中身。o={esc,col(i),ico(i)=>{cls,style,txt},tg(i),sel,dim(i),lab}  lab=true なら <label for="hw-s-i">(公開用)、そうでなければ button(編集画面)
 function cmpHTML(L,o){
   const esc=o.esc,H=L.map(hOf),has=L.map((c,i)=>i).filter(i=>H[i]>0),miss=L.length-has.length;
@@ -1217,6 +1220,11 @@ function buildStatic(){
     {const ag=new Set(L.map((c,i)=>Aa[i]>=0?ageGrp(Aa[i]):-1));for(let g=0;g<=10;g++)if(ag.has(g))css.push(`#hw-root #hw-m-age:checked ~ #hw-cs-hd:checked ~ main .agg-${g}{order:${10-g}}`)}
     // 身長比較: 「選んだキャラだけ」で、身長のあるキャラが1人も選ばれていないときは、目盛りの線ごと隠す
     {const hs=idx.filter(i=>Hh[i]>0);if(hs.length)css.push(`#hw-root #hw-only:checked ${hs.map(i=>`~ #hw-k-${i}:not(:checked)`).join(" ")} ~ main .cmpin{display:none}`)}
+    // 身長比較(スマホ): 「選んだキャラだけ」で人数が少ないとき、人数に合わせて高さを大きくする(全員が横幅に収まる高さ。上限は CMP_SP_H_MAX)。
+    // 選ばれた人数 k は「.hw-k:checked が k個以上」で判定。k が増えるほど selector の強さも増すので、いちばん大きい k のルールが勝つ。幅の合計は「幅の広い順に k 人ぶん」で見積もる(誰が選ばれても収まる)。
+    // 横幅は 100cqw(身長比較の入れ物の幅)で測るので、埋め込み先に余白があっても収まる。cqw が使えない古いブラウザでは何もせず、従来の高さのまま。
+    {const wf=cmpWf(L).sort((a,b)=>b-a);if(wf.length){let s=0;const rs=[];for(let k=1;k<=wf.length;k++){s+=wf[k-1];rs.push(`#hw-root:has(#hw-only:checked):has(${Array(k).fill(".hw-k:checked").join("~")}) .cmpin{--ch:clamp(30px,calc((100cqw - 38px - ${k}*var(--gap)) / ${+s.toFixed(4)}),${CMP_SP_H_MAX}px)}`)}
+      css.push(`@media(max-width:600px){@supports (width:1cqw){#hw-root .cmp{container-type:inline-size}${rs.join("")}}}`)}}
     for(let g=0;g<=10;g++){const ms=idx.filter(i=>Aa[i]>=0&&ageGrp(Aa[i])===g);if(ms.length)css.push(`#hw-root #hw-only:checked ${ms.map(i=>`~ #hw-k-${i}:not(:checked)`).join(" ")} ~ main .agg-${g}{display:none}`)}
     // 通過数: 高い順のときはグループの順番を逆にする。「選んだキャラだけ」で空になったグループは隠す
     {const mx=Math.max(0,...Ss);new Set(Ss).forEach(n=>css.push(`#hw-root #hw-m-scn:checked ~ #hw-cs-hd:checked ~ main .scg-${n}{order:${mx-n}}`))}
