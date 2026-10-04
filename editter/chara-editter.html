@@ -116,6 +116,10 @@ a.lt::after{content:" ›"}
 .grid b{font-size:16px}
 .skl{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:2px 18px}
 .skl div{display:flex;justify-content:space-between;gap:8px;padding:4px 0;border-bottom:1px dotted var(--line);font-size:14px}@media(max-width:600px){.skl{grid-template-columns:repeat(3,minmax(0,1fr));gap:2px 10px}.skl div{gap:4px;padding:3px 0;font-size:11px}.skl div span{min-width:0;overflow-wrap:anywhere}.skl div b{flex:none}}
+/* スマホ: 長い技能名は、1つの枠に収まる大きさまで文字を小さくする(7px〜11px)。--len は名前の長さ(全角=1/半角=.55)。最小サイズを変えたいなら 7px を */
+@media(max-width:600px){@supports (width:1cqw){.skl{container-type:inline-size}.skl div{align-items:baseline}.skl div span{font-size:clamp(7px,calc(((100cqw - 20px) / 3 - 26px) / var(--len,1)),11px)}}}
+/* スマホ(さらに上書き): 文字は9pxまでしか小さくせず、それでも収まらない名前は横に縮める(最小55%)。縦横比が変わるのが嫌なら、この1ブロックを消すと上の「7pxまで小さくする」だけになります。9px と .55 が調整できる数字です */
+@media(max-width:600px){@supports (width:1cqw) and (width:calc(1px * tan(atan2(1px,1px)))){.skl div span{--av:calc((100cqw - 20px) / 3 - 26px);--fs:clamp(9px,calc(var(--av) / var(--len,1)),11px);--sx:clamp(.55,tan(atan2(var(--av),calc(var(--len,1) * var(--fs)))),1);font-size:var(--fs);white-space:nowrap;overflow:hidden;flex:none;width:calc(var(--av) / var(--sx));margin-right:calc(var(--av) / var(--sx) * (var(--sx) - 1));transform:scaleX(var(--sx));transform-origin:left center}}}
 .scl{margin:0;padding:0;list-style:none}
 .scl li{padding:7px 0;border-bottom:1px dotted var(--line);font-size:14px}
 .scl li span{display:block;font-size:12px;color:var(--mut);margin-top:2px;white-space:pre-wrap}
@@ -1345,7 +1349,7 @@ ${G.length?`<div class="tabs lsort">${SORTS.map(([m,n])=>`<label for="hw-o-${m}"
 
   // --- キャラ紹介ページ ---
   const pic=(g,lazy)=>`<img src="${esc(safeImg(g.src))}" alt="${esc(g.label||"")}"${lazy?' loading="lazy"':""}>`;
-  const item=(cls,k,v)=>`<div${cls?` class="${cls}"`:""}><span>${esc(k)}</span><b>${esc(v)}</b></div>`;
+  const item=(cls,k,v)=>`<div${cls?` class="${cls}"`:""}><span${cls?"":` style="--len:${skLen(k)}"`}>${esc(k)}</span><b>${esc(v)}</b></div>`;
   const pnav=`<div class="pnav"><label for="hw-v-home" class="back">← 色相環にもどる</label>${L.length<2?"":`<div class="psw">${L.map((c,i)=>`<label for="hw-sw-${i}" class="swb sb-${i}">キャラを切り替え</label>`).join("")}<div class="pswl">${L.map((c,j)=>`<label for="hw-v-${j}" class="psi psi-${j}"><i class="cg-${j}"></i>${esc(c.name)}</label>`).join("")}</div></div>`}</div>`;
   const profs=L.map((c,i)=>{
     const a=SA[i],st=c.stats||[],sk=c.skills||[],sc=c.scenarios||[],ar=c.artifacts||[],sp=c.spells||[],sq=c.sequelae||[];
@@ -1627,7 +1631,9 @@ $("pe_parse").onclick=()=>{
 
 // ================= ステータス表示 / ログ一覧 =================
 const VITAL=/^(HP|MP|SAN)(値)?$/i, KEYSK=/^(アイデア|アイディア|幸運|知識|IDEA|LUK|LUCK|KNOW)$/i;
-function card(cls,k,v){const d=document.createElement("div");if(cls)d.className=cls;const l=document.createElement("span"),b=document.createElement("b");l.textContent=k;b.textContent=v;d.append(l,b);return d}
+// 技能名の長さ(全角=1、半角=.55)。スマホで長い名前の文字を小さくするのに使う
+const skLen=k=>{let n=0;for(const ch of String(k))n+=ch.charCodeAt(0)>255?1:.55;return +n.toFixed(2)};
+function card(cls,k,v){const d=document.createElement("div");if(cls)d.className=cls;const l=document.createElement("span"),b=document.createElement("b");l.textContent=k;if(!cls)l.style.setProperty("--len",skLen(k));b.textContent=v;d.append(l,b);return d}
 const vital=(k,v)=>card("vt",k,v);
 const logFor=t=>logs.find(l=>(l.url||l.z)&&(l.scenario===t||l.title===t));
 const logAny=t=>logs.find(l=>l.scenario===t||l.title===t);
