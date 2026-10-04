@@ -120,6 +120,9 @@ a.lt::after{content:" ›"}
 @media(max-width:600px){@supports (width:1cqw){.skl{container-type:inline-size}.skl div{align-items:baseline}.skl div span{font-size:clamp(7px,calc(((100cqw - 20px) / 3 - 26px) / var(--len,1)),11px)}}}
 /* スマホ(さらに上書き): 文字は9pxまでしか小さくせず、それでも収まらない名前は横に縮める(最小55%)。縦横比が変わるのが嫌なら、この1ブロックを消すと上の「7pxまで小さくする」だけになります。9px と .55 が調整できる数字です */
 @media(max-width:600px){@supports (width:1cqw) and (width:calc(1px * tan(atan2(1px,1px)))){.skl div{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:4px;align-items:baseline}.skl div b{justify-self:end;text-align:right;font-variant-numeric:tabular-nums}.skl div span{--av:calc((100cqw - 20px) / 3 - 30px);--fs:clamp(9px,calc(var(--av) / var(--len,1)),11px);--sx:clamp(.4,tan(atan2(var(--av),calc(var(--len,1) * var(--fs) * 1.06))),1);font-size:var(--fs);white-space:nowrap;overflow:hidden;overflow-wrap:normal;flex:none;width:min(calc(var(--av) / var(--sx)),max-content);margin-right:calc(var(--av) / var(--sx) * (var(--sx) - 1));transform:scaleX(var(--sx));transform-origin:left center}}}
+/* スマホ: 通過シナリオは「タイトル(1行・文字サイズはそのまま横に縮める)」「ログを読む+日付」の2段 */
+.scs .tt{display:inline;font-size:inherit;font-weight:inherit;color:inherit;margin-top:0;white-space:normal}
+@media(max-width:600px){@supports (width:1cqw) and (width:calc(1px * tan(atan2(1px,1px)))){.scs{container-type:inline-size}.scs li{display:grid;grid-template-columns:auto 1fr;align-items:baseline}.scs a.lg{display:contents}.scs .tt{grid-column:1/-1;display:block;white-space:nowrap;overflow:hidden;--sx:clamp(.3,tan(atan2(100cqw,calc(var(--len,1) * 14px * 1.06))),1);width:min(calc(100cqw / var(--sx)),max-content);margin-right:calc(100cqw / var(--sx) * (var(--sx) - 1));transform:scaleX(var(--sx));transform-origin:left center}.scs a.lg::after{margin-left:0;margin-right:.9em}.scs .dt{margin-left:0}.scs li>span:not(.dt){grid-column:1/-1}}}
 .scl{margin:0;padding:0;list-style:none}
 .scl li{padding:7px 0;border-bottom:1px dotted var(--line);font-size:14px}
 .scl li span{display:block;font-size:12px;color:var(--mut);margin-top:2px;white-space:pre-wrap}
@@ -252,7 +255,7 @@ a.lt::after{content:" ›"}
   <div id="i_art" hidden><h4>アーティファクト</h4><ul class="scl" id="g_art"></ul></div>
   <div id="i_spells" hidden><h4>呪文</h4><ul class="scl" id="g_spells"></ul></div>
   <div id="i_seq" hidden><h4>後遺症</h4><ul class="scl" id="g_seq"></ul></div>
-  <div id="i_sc" hidden><h4>通過シナリオ<span class="cnt" id="sc_n"></span></h4><ul class="scl" id="g_sc"></ul></div>
+  <div id="i_sc" hidden><h4>通過シナリオ<span class="cnt" id="sc_n"></span></h4><ul class="scl scs" id="g_sc"></ul></div>
  </section>
 
 <!-- ▼▼▼ 【公開用で消す場所 ②】ここから ▼▼▼
@@ -1378,9 +1381,9 @@ ${G.length?`<div class="tabs lsort">${SORTS.map(([m,n])=>`<label for="hw-o-${m}"
     if(ar.length)parts.push(nlist("アーティファクト",ar));
     if(sp.length)parts.push(nlist("呪文",sp));
     if(sq.length)parts.push(nlist("後遺症",sq));
-    if(sc.length)parts.push(`<div><h4>通過シナリオ<span class="cnt">通過数 ${scN(c)}本</span></h4><ul class="scl">${sc.map(x=>{
+    if(sc.length)parts.push(`<div><h4>通過シナリオ<span class="cnt">通過数 ${scN(c)}本</span></h4><ul class="scl scs">${sc.map(x=>{
       const lg=G.find(l=>linkOf(l)&&(l.scenario===x.title||l.title===x.title)),la=logByTitle(x.title);
-      const t=lg?`<a class="lg" href="${esc(linkOf(lg))}" target="_blank" rel="noopener">${esc(x.title)}</a>`:`<b>${esc(x.title)}</b>`;
+      const tl=`class="tt" style="--len:${skLen(x.title)}"`,t=lg?`<a class="lg" href="${esc(linkOf(lg))}" target="_blank" rel="noopener"><span ${tl}>${esc(x.title)}</span></a>`:`<b ${tl}>${esc(x.title)}</b>`;
       const dtx=(la?fmtRange(la.date,la.end):"")||fmtRange(x.date,x.end);
       const mm=la&&la.memo;return `<li>${t}${dtx?`<span class="dt">${esc(dtx)}</span>`:""}${mm?`<span>${esc(mm)}</span>`:""}</li>`;
     }).join("")}</ul></div>`);
@@ -1485,7 +1488,7 @@ function renderSheet(){
   fill("g_vital",vit,vital);fill("g_stats",rs,(k,v)=>card("",k,v));
   fill("g_basic",basic,(k,v)=>card("",k,v));fill("g_keys",kk,(k,v)=>card("key",k,v));fill("g_skills",rk,(k,v)=>card("",k,v));
   const l=$("g_sc");l.innerHTML="";
-  sc.forEach(x=>{const li=document.createElement("li"),lg=logFor(x.title),la=logAny(x.title);let t;if(lg){t=document.createElement("a");linkLog(t,lg);t.className="lg"}else t=document.createElement("b");t.textContent=x.title;li.appendChild(t);const dtx=(la?fmtRange(la.date,la.end):"")||fmtRange(x.date,x.end);if(dtx){const dt=document.createElement("span");dt.className="dt";dt.textContent=dtx;t.after(dt)}
+  sc.forEach(x=>{const li=document.createElement("li"),lg=logFor(x.title),la=logAny(x.title);let t;const tt=document.createElement(lg?"span":"b");tt.className="tt";tt.textContent=x.title;tt.style.setProperty("--len",skLen(x.title));if(lg){t=document.createElement("a");linkLog(t,lg);t.className="lg";t.appendChild(tt)}else t=tt;li.appendChild(t);const dtx=(la?fmtRange(la.date,la.end):"")||fmtRange(x.date,x.end);if(dtx){const dt=document.createElement("span");dt.className="dt";dt.textContent=dtx;t.after(dt)}
     const mm=la&&la.memo;if(mm){const m=document.createElement("span");m.textContent=mm;li.appendChild(m)}l.appendChild(li)});
 }
 
