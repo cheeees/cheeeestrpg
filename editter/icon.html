@@ -4,292 +4,249 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="light">
-<title>アイコン用画像メーカー</title>
+<title>らくらくアイコン</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto+Sans+JP&display=swap">
 <style>
-:root{--bg:#fff;--fg:#333;--mut:#7a6f62;--line:#e6dccb;--main:#8e632b;--on:#fff;--soft:#fff8d6;--card:#fff;--ng:#b3261e;--panel:var(--card);--text:var(--fg);--sub:var(--mut);--acc:var(--main);--acc-t:var(--on);--err:var(--ng)}
+:root{--bg:#fff;--panel:#fff;--line:#e6dccb;--text:#222;--sub:#7a6f62;--acc:#8e632b;--acc-t:#fff;--err:#b3261e;--ok:#3f7d1f;--sel:#fff8d6;--deep:#5b2e0a;--yel:#ffd60a}
 *{box-sizing:border-box}
-body{margin:0;padding:0 0 60px;background:var(--bg);color:var(--fg);font-family:"Noto Sans JP","Hiragino Maru Gothic ProN","Hiragino Sans","Yu Gothic UI","Yu Gothic",Meiryo,system-ui,sans-serif;line-height:1.6}
-main{max-width:760px;margin:0 auto;padding:20px 14px 0}
-h1{font-size:20px;margin:0 0 8px;padding-bottom:8px;color:#5b2e0a;border-bottom:6px solid #ffd60a}
-h2{font-size:14px;margin:22px 0 6px;padding-left:8px;border-left:6px solid #ffd60a;color:#5b2e0a}
-p.n{font-size:13px;color:var(--mut);margin:6px 0}
-ol{font-size:13px;color:var(--mut);padding-left:20px;margin:6px 0}
-textarea{width:100%;height:150px;font:12px/1.5 monospace;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg)}
-input[type=text],input[type=number],select{padding:7px 8px;border:1px solid var(--line);border-radius:6px;font:inherit;background:var(--bg);color:var(--fg)}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 "Noto Sans JP","Yu Gothic UI","Meiryo",system-ui,sans-serif}
+.wrap{max-width:1100px;margin:0 auto;padding:12px 16px 40px}
+h1{font-size:19px;color:var(--deep);padding:2px 0 8px;border-bottom:6px solid var(--yel);margin:8px 0 14px}
+.bar{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;align-items:center}
+button{font:inherit;color:var(--text);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:5px 11px;cursor:pointer}
+button:hover:not(:disabled){border-color:var(--acc);background:var(--sel)}
+button.pri{background:var(--acc);color:var(--acc-t);border-color:var(--acc);font-weight:600;padding:8px 22px}
+button.pri:hover:not(:disabled){background:var(--deep);border-color:var(--deep)}
+button:disabled{opacity:.45;cursor:default}
+input[type=text],input[type=number],select{font:inherit;color:var(--text);background:var(--panel);border:1px solid var(--line);border-radius:5px;padding:4px 7px}
 input[type=number]{width:80px}
-input.wide{width:min(100%,320px)}
-.row{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin:10px 0}
-.row label{font-size:13px;color:var(--mut)}
-button,a.btn{padding:9px 16px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--fg);font:inherit;cursor:pointer;text-decoration:none;display:inline-block}
-button.p{background:var(--main);color:var(--on);border-color:var(--main)}
-button:hover:not(:disabled){border-color:var(--main);background:var(--soft)}
-button.p:hover:not(:disabled){background:#5b2e0a;border-color:#5b2e0a}
-input[type=checkbox],input[type=radio]{accent-color:var(--main)}
-button:disabled{opacity:.4;cursor:not-allowed}
-details{margin:10px 0;padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--soft)}
-summary{cursor:pointer;font-size:13px}
-#warn{display:none;margin:10px 0;padding:8px 12px;border-radius:8px;background:#fde7e5;color:var(--ng);font-size:13px}
-#prog{font-size:13px;color:var(--mut);margin:8px 0;min-height:1.6em}
-#sum{font-size:14px;font-weight:700;margin:10px 0}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
-.it{border:1px solid var(--line);border-radius:10px;padding:8px;text-align:center;background:var(--card);font-size:11px;color:var(--mut);word-break:break-all}
-.it img{width:96px;height:96px;border-radius:50%;object-fit:cover;border:2px solid var(--line);display:block;margin:0 auto 6px;background:#f4efe6}
-.it.ng{border-color:var(--ng)}
-.it.ng .e{color:var(--ng)}
-.it a{color:var(--main);display:inline-block;margin-top:4px}
-.sm{display:inline-flex;gap:3px;margin-top:4px}
-.sm img{width:44px;height:44px;margin:0;border-width:3px}
-.sm img+img{width:16px;height:16px;border-width:2px;align-self:center}
+input[type=checkbox],input[type=radio],input[type=range]{accent-color:var(--acc)}
+.tablebox{background:var(--panel);border:1px solid var(--line);border-radius:8px;height:340px;overflow:auto}
+table{border-collapse:collapse;width:100%}
+th,td{text-align:left;padding:4px 8px;border-bottom:1px solid var(--line);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:380px}
+th{position:sticky;top:0;background:#fff8d6;color:var(--deep);z-index:1;font-weight:600}
+td.c,th.c{width:34px;text-align:center}
+td.r,th.r{text-align:right}
+td.pv{width:44px;padding:2px 8px}
+td.pv img{width:28px;height:28px;border-radius:50%;object-fit:cover;border:1px solid var(--line);display:block}
+tr.gray td{color:var(--sub)}
+tr.bad td{color:var(--err)}
+tr.ok td.st{color:var(--ok);font-weight:600}
+tr.run td.st{color:var(--acc);font-weight:600}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 14px 10px;margin-top:12px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:6px 0}
+.grp{border:1px solid var(--line);border-radius:6px;padding:6px 12px 8px;margin:4px 0;flex:1;min-width:300px}
+.grp legend{color:var(--acc);font-weight:700;font-size:12px;padding:0 4px}
+label{cursor:pointer}
+.hint{color:var(--sub);font-size:12px}
+.foot{display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap}
+#info{color:var(--sub)}
+#warn{display:none;background:#fef3c7;color:#92400e;border:1px solid #f59e0b;border-radius:6px;padding:8px 12px;margin-bottom:10px}
+progress{width:200px;height:12px;accent-color:var(--acc)}
 </style>
 </head>
 <body>
-<main>
-<h1>アイコン用の小さい画像を作る</h1>
-<p class="n">GitHubのフォルダを直接読み書きできます(下の「GitHubから直接作る」)。ZIPをダウンロードしてアップロードし直す方法も、そのまま使えます。</p>
-<p class="n">円の中のアイコンは、元の画像を小さく縮めて表示しているので、元画像が大きいとPCでギザギザに見えます。このページで、アイコン専用の小さい画像(<b>○○_icon.webp</b>)を作ります。画像はこのページの中だけで処理され、どこにも送信されません。</p>
-<ol>
- <li>編集モードの「アイコンURLの一覧をコピー」を押して、下の枠に貼り付けます。</li>
- <li>「作成」を押すと、サイトから元画像を読み込んで、小さい画像を作ります。</li>
- <li>「ZIPでダウンロード」で、まとめて保存します。解凍して、中のフォルダを <b>pic フォルダに重ねてアップロード</b>(元の画像と同じ場所に ○○_icon.webp が並ぶようにします)。</li>
- <li>編集モードの「アイコンのURLを _icon.webp にする」を押します。</li>
-</ol>
-
+<div class="wrap">
+<h1>らくらくアイコン(円形アイコン用の小さい画像を作る)</h1>
 <div id="warn">このブラウザは webp の書き出しに対応していません。Chrome / Edge / Firefox で開いてください。</div>
 
-<h2>アイコンURLの一覧</h2>
-<textarea id="list" placeholder="https://cheeees.github.io/cheeeestrpg/pic/hajime/02_00.webp&#10;/cheeeestrpg/pic/makoto/01_00.webp&#10;…(1行に1つ)" spellcheck="false"></textarea>
+<div class="bar">
+  <button id="bGh" title="GitHubのリポジトリ内の pic フォルダを読み込み、作った _icon.webp をそのままコミットします">🐙 GitHubから開く</button>
+  <button id="bAll">全選択</button>
+  <button id="bNone">全解除</button>
+  <input type="text" id="flt" placeholder="名前で絞り込み(例: hajime)" style="width:200px" spellcheck="false">
+  <span class="hint" id="ghTag"></span>
+</div>
+<div class="tablebox"><table>
+  <thead><tr><th class="c"><input type="checkbox" id="chkAll"></th><th>画像(pic からの場所)</th><th class="r">元のサイズ</th><th>保存名</th><th class="pv"></th><th class="r">変換後</th><th>状態</th></tr></thead>
+  <tbody id="tb"></tbody>
+</table></div>
+<div class="hint" style="margin-top:4px">※ すでに _icon.webp がある画像は「作成済み」になり、チェックなしです。作り直したいときはチェックを入れると上書きします。</div>
 
-<div class="row">
- <label>大きさ <input type="number" id="size" value="256" min="32" max="1024"> px</label>
- <label>画質 <input type="number" id="q" value="90" min="50" max="100"> %</label>
- <label>/ から始まるURLの取得元 <input type="text" id="origin" class="wide" value="https://cheeees.github.io"></label>
+<div class="panel">
+  <div class="row" style="align-items:flex-start">
+    <fieldset class="grp"><legend>アイコンの大きさ・画質</legend>
+      <div class="row">大きさ <input type="number" id="size" value="256" min="32" max="1024" step="32"> px <span class="hint">(元が小さいときは拡大しません)</span></div>
+      <div class="row">画質 <input type="range" id="q" min="50" max="100" value="90" style="width:200px"> <b id="qv">90</b></div>
+      <div class="hint">※ 画像の中央を正方形に切り抜いて縮小します。透明部分はそのまま保持されます。</div>
+    </fieldset>
+  </div>
 </div>
 
-<details>
- <summary>サイトから読み込めないとき(手元の pic フォルダを使う)</summary>
- <p class="n">ここで手元の <b>pic フォルダ</b>(または、その中のキャラごとのフォルダをまとめて入れた親フォルダ)を選ぶと、サイトではなくそちらの画像を使います。選ばなければ、サイトから読み込みます。</p>
- <input type="file" id="dir" webkitdirectory multiple>
- <p class="n" id="dirn"></p>
-</details>
-
-<h2>GitHubから直接作る</h2>
-<p class="n">GitHubの <b>pic フォルダ</b>を選ぶと、そこから画像を読み込み、<b>○○_icon.webp</b> を元の画像と同じ場所に作って、そのまま1回のコミットで保存します(ZIP・アップロードは不要)。上の枠にURLを入れたときは<b>そのURLの画像だけ</b>、空欄のときはフォルダ内の画像すべて(_icon を除く)が対象です。</p>
-<div class="row">
- <button id="gh" type="button">🐙 GitHubから開く</button>
- <span class="n" id="ghTag"></span>
+<div class="foot">
+  <button class="pri" id="bRun" disabled>アイコンを作ってGitHubに保存</button>
+  <button id="bStop" disabled>中止</button>
+  <progress id="prog" value="0" max="1" style="display:none"></progress>
+  <span id="info">「GitHubから開く」で、pic フォルダ(または、その中のフォルダ)を選んでください</span>
 </div>
-<div class="row">
- <label>既に _icon.webp があるとき <select id="exist"><option value="skip">スキップ</option><option value="over">上書き</option></select></label>
- <button class="p" id="goGh" type="button" disabled>作成してGitHubに保存</button>
 </div>
-
-<h2>サイト/手元のフォルダから作る(ZIP)</h2>
-<div class="row">
- <button class="p" id="go" type="button">作成</button>
- <button id="zip" type="button" disabled>ZIPでダウンロード</button>
-</div>
-<div id="prog"></div>
-<div id="sum"></div>
-<div class="grid" id="grid"></div>
-</main>
 
 <script>
 const $=id=>document.getElementById(id);
-const canWebp=document.createElement("canvas").toDataURL("image/webp").startsWith("data:image/webp");
-if(!canWebp){$("warn").style.display="block";$("go").disabled=true}
-
-// ---- URLの扱い ----
-// 「/pic/ より後ろ」を相対パスにする(例: hajime/02_00.webp)
-function relOf(u){
-  u=u.trim().split("#")[0].split("?")[0];
-  const m=u.match(/\/pic\/(.+)$/);
-  if(!m)return null;
-  try{return decodeURIComponent(m[1])}catch(e){return m[1]}
-}
-function absUrl(u,origin){
-  u=u.trim();
-  if(/^https?:\/\//i.test(u))return u;
-  return origin.replace(/\/+$/,"")+(u.startsWith("/")?"":"/")+u;
-}
-
-// ---- 手元のフォルダ ----
-let local=[];
-$("dir").onchange=e=>{
-  local=[...e.target.files].filter(f=>/^image\//.test(f.type)||/\.(webp|png|jpe?g|gif)$/i.test(f.name));
-  $("dirn").textContent=local.length?"画像 "+local.length+" 件を読み込みました。":"画像が見つかりませんでした。";
-};
-function findLocal(rel){
-  for(const f of local){const p=f.webkitRelativePath||f.name;if(p===rel||p.endsWith("/"+rel))return f}
-  return null;
-}
-
-// ---- 縮小(半分ずつ縮めてから最後に合わせる=一気に縮めるよりギザギザが出にくい)----
-function mk(n){const c=document.createElement("canvas");c.width=c.height=n;return c}
-function squareIcon(bmp,size){
-  const w=bmp.width,h=bmp.height,m=Math.min(w,h);
-  let cur=mk(m);
-  cur.getContext("2d").drawImage(bmp,(w-m)/2,(h-m)/2,m,m,0,0,m,m);   // 中央を正方形に切り抜く
-  if(m<=size)return cur;                                              // 元が小さいときは拡大しない
-  while(cur.width/2>=size){
-    const n=mk(Math.round(cur.width/2)),g=n.getContext("2d");
-    g.imageSmoothingQuality="high";g.drawImage(cur,0,0,n.width,n.height);cur=n;
-  }
-  const f=mk(size),g=f.getContext("2d");
-  g.imageSmoothingQuality="high";g.drawImage(cur,0,0,size,size);
-  return f;
-}
-
-// ---- ZIP(無圧縮・外部ライブラリなし)----
-const CRC=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
-function crc32(b){let c=0xFFFFFFFF;for(let i=0;i<b.length;i++)c=CRC[(c^b[i])&255]^(c>>>8);return(c^0xFFFFFFFF)>>>0}
-function makeZip(files){
-  const enc=new TextEncoder(),parts=[],cd=[];let off=0;
-  const d=new Date(),dt=(((d.getFullYear()-1980)<<9)|((d.getMonth()+1)<<5)|d.getDate())&0xFFFF,tm=((d.getHours()<<11)|(d.getMinutes()<<5)|(d.getSeconds()>>1))&0xFFFF;
-  files.forEach(f=>{
-    const nm=enc.encode(f.name),crc=crc32(f.data),sz=f.data.length;
-    const lh=new DataView(new ArrayBuffer(30));
-    lh.setUint32(0,0x04034b50,true);lh.setUint16(4,20,true);lh.setUint16(6,0x0800,true);lh.setUint16(8,0,true);
-    lh.setUint16(10,tm,true);lh.setUint16(12,dt,true);lh.setUint32(14,crc,true);lh.setUint32(18,sz,true);lh.setUint32(22,sz,true);
-    lh.setUint16(26,nm.length,true);lh.setUint16(28,0,true);
-    parts.push(new Uint8Array(lh.buffer),nm,f.data);
-    const ch=new DataView(new ArrayBuffer(46));
-    ch.setUint32(0,0x02014b50,true);ch.setUint16(4,20,true);ch.setUint16(6,20,true);ch.setUint16(8,0x0800,true);ch.setUint16(10,0,true);
-    ch.setUint16(12,tm,true);ch.setUint16(14,dt,true);ch.setUint32(16,crc,true);ch.setUint32(20,sz,true);ch.setUint32(24,sz,true);
-    ch.setUint16(28,nm.length,true);ch.setUint32(42,off,true);
-    cd.push(new Uint8Array(ch.buffer),nm);
-    off+=30+nm.length+sz;
-  });
-  const cdSize=cd.reduce((a,b)=>a+b.length,0),end=new DataView(new ArrayBuffer(22));
-  end.setUint32(0,0x06054b50,true);end.setUint16(8,files.length,true);end.setUint16(10,files.length,true);end.setUint32(12,cdSize,true);end.setUint32(16,off,true);
-  return new Blob([...parts,...cd,new Uint8Array(end.buffer)],{type:"application/zip"});
-}
-
-// ---- 作成 ----
-let made=[];
-const kb=n=>(n/1024).toFixed(n<10240?1:0)+"KB";
-function card(cls,html){const d=document.createElement("div");d.className="it "+cls;d.innerHTML=html;$("grid").appendChild(d);return d}
-const esc=s=>String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
-
-async function readBitmap(url,rel){
-  const lf=local.length?findLocal(rel):null;
-  if(lf)return {bmp:await createImageBitmap(lf),from:"手元のフォルダ"};
-  if(local.length)throw new Error("選んだフォルダに見つかりません: "+rel);
-  let r;
-  try{r=await fetch(url,{mode:"cors"})}catch(e){throw new Error("サイトから読み込めませんでした(下の「手元の pic フォルダを使う」を試してください)")}
-  if(!r.ok)throw new Error("サイトに画像がありません(HTTP "+r.status+")");
-  return {bmp:await createImageBitmap(await r.blob()),from:"サイト"};
-}
-
+const fmt=n=>n<1024?n+' B':n<1048576?(n/1024).toFixed(1)+' KB':(n/1048576).toFixed(2)+' MB';
+const collator=new Intl.Collator('ja',{numeric:true,sensitivity:'base'});
 const IMG=/\.(webp|png|jpe?g|gif)$/i,ICON=/_icon\.[a-z]+$/i;
-let ghDir=null;
+const canWebp=document.createElement('canvas').toDataURL('image/webp').startsWith('data:image/webp');
+if(!canWebp)$('warn').style.display='block';
+let dirHandle=null,items=[],running=false,stopFlag=false;
 
-// GitHubのフォルダを開く(下の階層も含めて、画像のあるフォルダを候補に出す)
-$("gh").onclick=async()=>{
-  if(!window.GhFS){alert("ghfs.js が読み込まれていません。icon.html と同じフォルダに ghfs.js を置いてください");return}
-  const d=await GhFS.pick({purpose:"icon",title:"GitHubの pic フォルダを開く(アイコン画像)",deep:true,prefer:"site/pic",
-    describe:i=>{const n=i.names.filter(x=>IMG.test(x)&&!ICON.test(x)).length;return n?"画像 "+n+" 件":null}});
-  if(d){ghDir=d;$("ghTag").textContent="GitHub: "+d.label;$("goGh").disabled=!canWebp}
-};
+const shown=()=>{const k=$('flt').value.trim().toLowerCase();return items.filter(i=>!k||i.rel.toLowerCase().includes(k));};
+function update(){
+  const vis=shown(),n=items.filter(i=>i.checked).length;
+  $('bRun').disabled=running||!n||!canWebp;
+  $('bStop').disabled=!running;
+  $('chkAll').checked=vis.length>0&&vis.every(i=>i.checked);
+  if(!running){
+    if(!dirHandle)return;
+    $('info').textContent=items.length?`画像 ${items.length} 件中 ${n} 件を選択中`:'このフォルダに画像がありません';
+  }
+}
+function render(){
+  const tb=$('tb');tb.textContent='';
+  shown().forEach(it=>{
+    const tr=document.createElement('tr');
+    tr.className=it.cls||'';
+    const c=document.createElement('td');c.className='c';
+    const cb=document.createElement('input');cb.type='checkbox';cb.checked=it.checked;
+    cb.onclick=()=>{it.checked=cb.checked;update();};
+    c.appendChild(cb);tr.appendChild(c);
+    const mk=(t,cls)=>{const td=document.createElement('td');td.textContent=t;td.title=t;if(cls)td.className=cls;return td;};
+    tr.appendChild(mk(it.rel,''));
+    tr.appendChild(mk(fmt(it.size),'r'));
+    tr.appendChild(mk(it.outName,''));
+    const pv=document.createElement('td');pv.className='pv';
+    if(it.thumb){const im=document.createElement('img');im.src=it.thumb;im.alt='';pv.appendChild(im);}
+    tr.appendChild(pv);
+    tr.appendChild(mk(it.outSize!=null?fmt(it.outSize):'','r'));
+    tr.appendChild(mk(it.status,'st'));
+    tb.appendChild(tr);
+    it.tr=tr;
+  });
+  update();
+}
+function setRow(it,cls,status){
+  it.cls=cls;it.status=status;
+  const tr=it.tr;if(!tr)return;
+  tr.className=cls;
+  const t=tr.children;
+  t[5].textContent=it.outSize!=null?fmt(it.outSize):'';
+  t[6].textContent=status;t[6].title=status;
+  if(it.thumb&&!t[4].firstChild){const im=document.createElement('img');im.src=it.thumb;im.alt='';t[4].appendChild(im);}
+}
+
 // フォルダの中の画像を、下の階層まで集める
 async function walk(dir,base,out){
   for await(const [name,h] of dir.entries()){
-    if(h.kind==="directory")await walk(h,base+name+"/",out);
-    else if(IMG.test(name)&&!ICON.test(name))out.push({rel:base+name,full:h.full,handle:h,parent:dir});
+    if(h.kind==='directory')await walk(h,base+name+'/',out);
+    else if(IMG.test(name)&&!ICON.test(name))out.push({handle:h,parent:dir,rel:base+name,name,full:h.full});
   }
 }
-
-async function run(gh){
-  const size=Math.max(32,Math.min(1024,+$("size").value||256)),q=Math.max(50,Math.min(100,+$("q").value||90))/100,origin=$("origin").value.trim()||"https://cheeees.github.io";
-  const seen=new Set(),jobs=[];let skip=0,exists=0;
-  const lines=$("list").value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
-  if(gh){
-    if(!ghDir){alert("先に「GitHubから開く」でフォルダを開いてください");return}
-    if(!ghDir.repo.token){alert("GitHubに保存するには、アクセストークンが必要です。\n「GitHubから開く」でトークンを入れて開き直してください。");return}
+async function loadDir(h){
+  dirHandle=h;items=[];
+  $('ghTag').textContent='GitHub: '+h.label;
+  $('info').textContent='画像を調べています…';
+  const files=[];
+  await walk(h,'',files);
+  const seen=new Set();
+  files.sort((a,b)=>collator.compare(a.rel,b.rel));
+  for(const f of files){
+    const outFull=f.full.replace(/\.[^./]+$/,'')+'_icon.webp';
+    if(seen.has(outFull))continue;seen.add(outFull);   // 同じ名前(png と webp など)は1件だけ
+    const exists=h.repo.cur.has(outFull);
+    items.push({handle:f.handle,parent:f.parent,rel:f.rel,name:f.name,size:f.handle.ghSize,
+      outName:outFull.split('/').pop(),outFull,exists,checked:!exists,outSize:null,
+      status:exists?'作成済み':'',cls:exists?'gray':'',thumb:''});
   }
-  $("grid").innerHTML="";$("sum").textContent="";made=[];$("zip").disabled=true;
-  if(gh){
-    $("go").disabled=true;$("goGh").disabled=true;$("prog").textContent="GitHubのフォルダを調べています…";
-    const files=[];
-    try{await walk(ghDir,"",files)}catch(e){$("prog").textContent="";$("sum").textContent="フォルダを調べられませんでした: "+e.message;$("go").disabled=!canWebp;$("goGh").disabled=!canWebp;return}
-    if(lines.length){
-      lines.forEach(u=>{
-        const rel=relOf(u);
-        if(!rel||ICON.test(rel)){skip++;return}
-        const f=files.find(x=>("/"+x.full).endsWith("/pic/"+rel));
-        const key=f?f.full:"?"+rel;
-        if(seen.has(key))return;seen.add(key);
-        jobs.push(f?{rel:f.rel,file:f}:{rel,missing:true});
-      });
-    }else{
-      files.forEach(f=>jobs.push({rel:f.rel,file:f}));
-      if(jobs.length&&!confirm("URLの一覧が空なので、開いたフォルダ内の画像 "+jobs.length+" 件すべてから _icon.webp を作ります。よろしいですか?\n(一部だけ作りたいときは「キャンセル」して、上の枠にURLを入れてください)")){
-        $("prog").textContent="";$("go").disabled=!canWebp;$("goGh").disabled=!canWebp;return;
-      }
-    }
-  }else{
-    lines.forEach(u=>{
-      const rel=relOf(u);
-      if(!rel||ICON.test(rel)){skip++;return}
-      if(seen.has(rel))return;seen.add(rel);jobs.push({u,rel});
-    });
-  }
-  if(!jobs.length){$("prog").textContent=gh?"作成できる画像がありません(フォルダ内に画像がない、またはURLが /pic/ を含んでいません)。":"作成できるURLがありません(/pic/ を含む画像のURLを1行に1つ入れてください)。";$("go").disabled=!canWebp;$("goGh").disabled=!(canWebp&&ghDir);return}
-  $("go").disabled=true;$("goGh").disabled=true;let ok=0,ng=0;
-  const over=$("exist").value==="over",outSeen=new Set();
-  for(let i=0;i<jobs.length;i++){
-    const job=jobs[i],rel=job.rel;
-    $("prog").textContent="作成中… "+(i+1)+" / "+jobs.length+"  "+rel;
-    try{
-      if(job.missing)throw new Error("開いたGitHubのフォルダの中に見つかりません(pic フォルダを選んでいますか?)");
-      let outFull="";
-      if(job.file){
-        outFull=job.file.full.replace(/\.[^./]+$/,"")+"_icon.webp";
-        if(outSeen.has(outFull))continue;outSeen.add(outFull);          // 同じ名前(png と webp など)は1回だけ
-        if(!over&&ghDir.repo.cur.has(outFull)){exists++;continue}
-      }
-      let bmp,from;
-      if(job.file){bmp=await createImageBitmap(await job.file.handle.getFile());from="GitHub"}
-      else ({bmp,from}=await readBitmap(absUrl(job.u,origin),rel));
-      const cv=squareIcon(bmp,size),sw=bmp.width,sh=bmp.height;
-      const blob=await new Promise(r=>cv.toBlob(r,"image/webp",q));
-      if(!blob||blob.type!=="image/webp")throw new Error("webpに変換できませんでした");
-      const out=rel.replace(/\.[^./]+$/,"")+"_icon.webp",data=new Uint8Array(await blob.arrayBuffer()),url=URL.createObjectURL(blob);
-      if(job.file){   // GitHubのメモリ上に書く(実際の送信は最後に1回のコミットで)
-        const wh=await job.file.parent.getFileHandle(outFull.split("/").pop(),{create:true});
-        const w=await wh.createWritable();await w.write(blob);await w.close();
-      }
-      made.push({name:out,data});ok++;
-      card("",`<img src="${url}" alt=""><div>${esc(out)}</div><div>${sw}×${sh} → ${cv.width}×${cv.height}<br>${kb(blob.size)}(${from})</div><div class="sm"><img src="${url}" alt=""><img src="${url}" alt=""></div><br><a href="${url}" download="${esc(out.split("/").pop())}">この1枚だけ保存</a>`);
-    }catch(e){
-      ng++;card("ng",`<div>${esc(rel)}</div><div class="e">${esc(e.message||e)}</div>`);
-    }
-  }
-  let ghMsg="";
-  if(gh&&ok){
-    $("prog").textContent="GitHubに保存中…";
-    try{
-      const n=await ghDir.fs.commit("editterでアイコン画像を作成: "+ok+" 件");
-      ghMsg=n?" / GitHubに保存しました(1コミット)。次は編集モードの「アイコンのURLを _icon.webp にする」を押してください":"";
-    }catch(e){
-      ghDir.fs.discard();
-      ghMsg=" / GitHubへの保存に失敗しました(何も保存されていません): "+e.message+"  ※読み込み直すときは「GitHubから開く」を押し直してください";
-      ng+=ok;ok=0;
-    }
-  }
-  $("prog").textContent="";
-  $("sum").textContent="作成 "+ok+" 件 / 失敗 "+ng+" 件"+(exists?" / 既にあるのでスキップ "+exists+" 件":"")+(skip?" / 対象外 "+skip+" 件(/pic/ を含まない・すでに _icon)":"")+ghMsg;
-  $("zip").disabled=!made.length||(gh&&!ok);$("go").disabled=!canWebp;$("goGh").disabled=!(canWebp&&ghDir);
+  render();
 }
-$("go").onclick=()=>run(false);
-$("goGh").onclick=()=>run(true);
-
-$("zip").onclick=()=>{
-  if(!made.length)return;
-  const a=document.createElement("a");a.href=URL.createObjectURL(makeZip(made));a.download="icons.zip";
-  document.body.appendChild(a);a.click();a.remove();
+$('bGh').onclick=async()=>{
+  if(running)return;
+  if(!window.GhFS){alert('ghfs.js が読み込まれていません。icon.html と同じフォルダに ghfs.js を置いてください');return;}
+  const h=await GhFS.pick({purpose:'icon',title:'GitHubの pic フォルダを開く(アイコン作成)',deep:true,prefer:'site/pic',
+    describe:i=>{const n=i.names.filter(x=>IMG.test(x)&&!ICON.test(x)).length;return n?`画像 ${n} 件`:null;}});
+  if(h){
+    try{await loadDir(h);}catch(e){alert('フォルダを読み込めませんでした: '+e.message);}
+  }
 };
+$('bAll').onclick=()=>{shown().forEach(i=>i.checked=true);render();};
+$('bNone').onclick=()=>{shown().forEach(i=>i.checked=false);render();};
+$('chkAll').onclick=e=>{shown().forEach(i=>i.checked=e.target.checked);render();};
+$('flt').oninput=render;
+$('q').oninput=()=>{$('qv').textContent=$('q').value;};
+
+// ---- 縮小(半分ずつ縮めてから最後に合わせる=一気に縮めるよりギザギザが出にくい)----
+function mkCv(n){const c=document.createElement('canvas');c.width=c.height=n;return c;}
+function squareIcon(bmp,size){
+  const w=bmp.width,h=bmp.height,m=Math.min(w,h);
+  let cur=mkCv(m);
+  cur.getContext('2d').drawImage(bmp,(w-m)/2,(h-m)/2,m,m,0,0,m,m);   // 中央を正方形に切り抜く
+  if(m<=size)return cur;                                              // 元が小さいときは拡大しない
+  while(cur.width/2>=size){
+    const n=mkCv(Math.round(cur.width/2)),g=n.getContext('2d');
+    g.imageSmoothingQuality='high';g.drawImage(cur,0,0,n.width,n.height);cur=n;
+  }
+  const f=mkCv(size),g=f.getContext('2d');
+  g.imageSmoothingQuality='high';g.drawImage(cur,0,0,size,size);
+  return f;
+}
+
+async function convertOne(it,o){
+  const bmp=await createImageBitmap(await it.handle.getFile());
+  const cv=squareIcon(bmp,o.size);bmp.close();
+  const blob=await new Promise(r=>cv.toBlob(r,'image/webp',o.q));
+  if(!blob||blob.type!=='image/webp')throw new Error('webpに変換できませんでした');
+  const wh=await it.parent.getFileHandle(it.outName,{create:true});   // GitHubのメモリ上に書く(送信は最後に1回)
+  const w=await wh.createWritable();
+  try{await w.write(blob);await w.close();}
+  catch(e){try{await w.abort();}catch(_){}throw e;}
+  it.outSize=blob.size;
+  if(it.thumb)URL.revokeObjectURL(it.thumb);
+  it.thumb=URL.createObjectURL(blob);
+}
+
+$('bRun').onclick=async()=>{
+  const list=items.filter(i=>i.checked);
+  if(!list.length||!dirHandle)return;
+  if(!dirHandle.repo.token){alert('GitHubに保存するには、アクセストークンが必要です。\n「GitHubから開く」でトークンを入れて開き直してください。');return;}
+  const over=list.filter(i=>i.exists).length;
+  if(over&&!confirm(`作成済みの _icon.webp ${over} 件を上書きします。\n(Gitの履歴には残るので、後から戻すことはできます)よろしいですか?`))return;
+  const o={size:Math.max(32,Math.min(1024,parseInt($('size').value)||256)),q:Math.max(50,Math.min(100,parseInt($('q').value)||90))/100};
+  running=true;stopFlag=false;update();
+  list.forEach(i=>{i.outSize=null;setRow(i,'gray','待機中');});
+  const prog=$('prog');prog.style.display='';prog.max=list.length;prog.value=0;
+  let idx=0,done=0,ok=0,ng=0;
+  async function worker(){
+    while(!stopFlag&&idx<list.length){
+      const it=list[idx++];
+      setRow(it,'run','変換中…');
+      try{await convertOne(it,o);ok++;setRow(it,'ok','完了');}
+      catch(e){ng++;it.outSize=null;setRow(it,'bad','失敗: '+e.message);}
+      done++;prog.value=done;
+      $('info').textContent=`変換中… ${done} / ${list.length}`;
+    }
+  }
+  await Promise.all([worker(),worker(),worker()]);
+  list.forEach(i=>{if(i.status==='待機中')setRow(i,'gray','中止');});
+  let ghMsg='';
+  if(ok){
+    $('info').textContent='GitHubに保存中…';
+    try{
+      const n=await dirHandle.fs.commit(`editterでアイコン画像を作成: ${ok} 件`);
+      if(n){ghMsg=' ・ GitHubに保存しました(1コミット)';list.forEach(i=>{if(i.cls==='ok'){i.exists=true;i.checked=false;}});}
+    }catch(e){
+      dirHandle.fs.discard();
+      list.forEach(i=>{if(i.cls==='ok')setRow(i,'bad','GitHub保存失敗: '+e.message);});
+      ng+=ok;ok=0;
+      alert('GitHubへの保存に失敗しました。アイコンは保存されていません。\n\n'+e.message);
+    }
+  }
+  running=false;
+  prog.style.display='none';
+  update();   // 先に画面の状態を更新してから、結果の文を出す
+  $('info').textContent=`${stopFlag?'中止しました':'完了'}:成功 ${ok} 件 / 失敗 ${ng} 件`+ghMsg+(ghMsg?'  次は編集モードの「アイコンのURLを _icon.webp にする」を押してください':'');
+};
+$('bStop').onclick=()=>{stopFlag=true;$('bStop').disabled=true;};
 </script>
 <script src="editter.js"></script>
 <script src="ghfs.js"></script>

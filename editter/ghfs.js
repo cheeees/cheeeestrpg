@@ -203,6 +203,19 @@
       ".ghfs-box button:disabled{opacity:.45;cursor:default}" +
       ".ghfs-box button.pri{background:var(--acc,#8e632b);color:var(--acc-t,#fff);border-color:var(--acc,#8e632b);font-weight:600}" +
       ".ghfs-st{font-size:12px;min-height:1.4em;color:var(--sub,#7a6f62)}.ghfs-st.err{color:var(--err,#dc2626)}" +
+      ".ghfs-lb{font-size:12px;color:var(--sub,#7a6f62)}" +
+      ".ghfs-crumb{display:flex;flex-wrap:wrap;align-items:center;gap:2px;margin:4px 0;font-size:13px}" +
+      ".ghfs-crumb button{padding:2px 8px;border-radius:99px;font-size:12px}" +
+      ".ghfs-crumb span{color:var(--sub,#7a6f62)}" +
+      ".ghfs-list{border:1px solid var(--line,#e6dccb);border-radius:8px;max-height:min(38vh,260px);overflow:auto;background:var(--bg,#fff)}" +
+      ".ghfs-box .ghfs-list button{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;border:0;border-bottom:1px solid var(--line,#e6dccb);border-radius:0;padding:8px 10px;text-align:left;background:transparent}" +
+      ".ghfs-list button:last-child{border-bottom:0}" +
+      ".ghfs-list button:hover{background:var(--sel,#fff8d6)}" +
+      ".ghfs-list .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}" +
+      ".ghfs-list .ct{flex:none;font-size:12px;color:var(--acc,#8e632b);font-weight:600}" +
+      ".ghfs-list .dim .ct{color:var(--sub,#7a6f62);font-weight:400;opacity:.7}" +
+      ".ghfs-list .empty{padding:10px;font-size:12px;color:var(--sub,#7a6f62)}" +
+      ".ghfs-cur{font-size:12px;color:var(--text,#222);margin-top:4px;word-break:break-all}" +
       ".ghfs-note{font-size:11px;line-height:1.6;color:var(--sub,#7a6f62);margin:0}";
     document.head.appendChild(s);
   }
@@ -225,10 +238,11 @@
         '<label class="chk"><input type="checkbox" id="gf-rem"> このブラウザにトークンを記憶する</label>' +
         '<div class="row"><button id="gf-conn" class="pri">接続してフォルダ一覧を出す</button></div>' +
         '<div class="ghfs-st" id="gf-st"></div>' +
-        '<label id="gf-dl" hidden>' + (opts.newFolder ? '保存先フォルダ' : '開くフォルダ') + '<select id="gf-dir"></select></label>' +
+        '<div id="gf-dl" class="ghfs-br" hidden><div class="ghfs-lb">' + (opts.newFolder ? '保存先フォルダ' : '開くフォルダ') + '(押して中に入る)</div>' +
+        '<div class="ghfs-crumb" id="gf-crumb"></div><div class="ghfs-list" id="gf-list"></div><div class="ghfs-cur" id="gf-cur"></div></div>' +
         '<label id="gf-nl" hidden>この中に新しいフォルダを作って保存(空欄ならそのまま。例: log/2026)<input type="text" id="gf-new" spellcheck="false"></label>' +
         '<p class="ghfs-note">トークンは Fine-grained token で、このリポジトリだけを選び「Contents: Read and write」にしたものを使います(editter/main.html と共通)。</p>' +
-        '<div class="row"><button id="gf-cancel">キャンセル</button><button id="gf-open" class="pri" disabled>開く</button></div></div>';
+        '<div class="row"><button id="gf-cancel">キャンセル</button><button id="gf-open" class="pri" disabled>このフォルダを開く</button></div></div>';
       document.body.appendChild(bg);
       var $ = function (id) { return bg.querySelector("#" + id); };
       bg.querySelector("h3").textContent = opts.title || "GitHubのフォルダを開く";
@@ -236,7 +250,56 @@
       $("gf-branch").value = c.branch || "main";
       $("gf-token").value = tok;
       $("gf-rem").checked = c.remember !== false;
-      var repo = null;
+      var repo = null, curPath = "", kids = new Map(), direct = null, deep = null;
+
+      /* リポジトリ内のフォルダ構造を作り、前回のフォルダ(なければ prefer / site/img / 直下)から表示する */
+      function browse(r) {
+        kids = new Map(); direct = r.dirInfos(); deep = r.deepInfos();
+        r.cur.forEach(function (e, p) {
+          var parts = p.split("/");
+          for (var i = 0; i < parts.length - 1; i++) {
+            var par = parts.slice(0, i).join("/");
+            if (!kids.has(par)) kids.set(par, new Set());
+            kids.get(par).add(parts[i]);
+          }
+        });
+        var last = localStorage.getItem("ghDir:" + (opts.purpose || ""));
+        var start = [last, opts.prefer, "site/img"].filter(function (v) { return v != null && (v === "" || deep.has(v)); })[0];
+        $("gf-dl").hidden = false; $("gf-nl").hidden = !opts.newFolder; $("gf-open").disabled = false;
+        show(start == null ? "" : start);
+      }
+      function descr(path) {
+        var names = (opts.deep ? deep : direct).get(path) || [];
+        return opts.describe ? opts.describe({ path: path, names: names }) : (names.length ? names.length + "件" : null);
+      }
+      function mkBtn(text, fn, cls) { var b = document.createElement("button"); b.type = "button"; b.textContent = text; b.onclick = fn; if (cls) b.className = cls; return b; }
+      function show(path) {
+        curPath = path;
+        var crumb = $("gf-crumb"); crumb.innerHTML = "";
+        crumb.appendChild(mkBtn("リポジトリ直下", function () { show(""); }));
+        var parts = path ? path.split("/") : [];
+        parts.forEach(function (n, i) {
+          var sp = document.createElement("span"); sp.textContent = "›"; crumb.appendChild(sp);
+          var to = parts.slice(0, i + 1).join("/");
+          crumb.appendChild(mkBtn(n, function () { show(to); }));
+        });
+        var list = $("gf-list"); list.innerHTML = "";
+        if (path) {
+          var up = mkBtn("", function () { show(parts.slice(0, -1).join("/")); });
+          var un = document.createElement("span"); un.className = "nm"; un.textContent = "↩ 一つ上へ"; up.appendChild(un); list.appendChild(up);
+        }
+        var names = Array.from(kids.get(path) || []).sort(function (a, b) { return a.localeCompare(b, "ja", { numeric: true }); });
+        names.forEach(function (n) {
+          var full = path ? path + "/" + n : n, d = descr(full);
+          var b = mkBtn("", function () { show(full); }, d == null ? "dim" : "");
+          var s1 = document.createElement("span"); s1.className = "nm"; s1.textContent = "📁 " + n;
+          var s2 = document.createElement("span"); s2.className = "ct"; s2.textContent = d == null ? "対象なし" : d;
+          b.appendChild(s1); b.appendChild(s2); list.appendChild(b);
+        });
+        if (!names.length) { var e = document.createElement("div"); e.className = "empty"; e.textContent = "この中にフォルダはありません"; list.appendChild(e); }
+        var d0 = descr(path);
+        $("gf-cur").textContent = "開くフォルダ: " + (path || "(リポジトリ直下)") + "  —  " + (d0 == null ? "対象のファイルはありません" : d0);
+      }
       function st(t, err) { var e = $("gf-st"); e.textContent = t; e.className = "ghfs-st" + (err ? " err" : ""); }
       function close(v) { document.removeEventListener("keydown", onKey, true); bg.remove(); resolve(v); }
       function onKey(e) { if (e.key === "Escape") { e.stopPropagation(); close(null); } }
@@ -257,24 +320,12 @@
         var rem = $("gf-rem").checked, old = loadCfg();
         localStorage.setItem(LS_CFG, JSON.stringify(Object.assign({}, old, { repo: r.repo, branch: r.branch, remember: rem })));
         if (rem && r.token) localStorage.setItem(LS_TOKEN, r.token); else localStorage.removeItem(LS_TOKEN);
-        var list = [];
-        (opts.deep ? r.deepInfos() : r.dirInfos()).forEach(function (names, path) {
-          var d = opts.describe ? opts.describe({ path: path, names: names }) : (names.length + "件");
-          if (d != null) list.push({ path: path, text: (path || "(リポジトリ直下)") + "  —  " + d });
-        });
-        list.sort(function (a, b) { return a.path < b.path ? -1 : a.path > b.path ? 1 : 0; });
-        var sel = $("gf-dir"); sel.innerHTML = "";
-        if (!list.length) { st("条件に合うフォルダがリポジトリの中にありません", true); return; }
-        list.forEach(function (x) { var o = document.createElement("option"); o.value = x.path; o.textContent = x.text; sel.appendChild(o); });
-        var last = localStorage.getItem("ghDir:" + (opts.purpose || ""));
-        var pref = [last, opts.prefer, "site/img"].filter(function (v) { return v != null && list.some(function (x) { return x.path === v; }); })[0];
-        if (pref != null) sel.value = pref;
-        $("gf-dl").hidden = false; $("gf-nl").hidden = !opts.newFolder; $("gf-open").disabled = false;
-        st(r.repo + "@" + r.branch + " に接続しました。フォルダを選んで「開く」を押してください");
+        browse(r);
+        st(r.repo + "@" + r.branch + " に接続しました。フォルダを選んで「このフォルダを開く」を押してください");
       };
       $("gf-open").onclick = function () {
         if (!repo) return;
-        var path = $("gf-dir").value;
+        var path = curPath;
         localStorage.setItem("ghDir:" + (opts.purpose || ""), path);
         if (opts.newFolder) {
           var nf = $("gf-new").value.trim().replace(/^\/+|\/+$/g, "");
