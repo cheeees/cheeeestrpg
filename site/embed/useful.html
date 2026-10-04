@@ -382,6 +382,53 @@
 
 <!-- ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼ ここから書き換え ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼ -->
 
+<!-- ┌─ パーツ【ページ内メニュー】 ─────────────────────────────
+     ・「▼▼▼ ここから書き換え」の“すぐ下”(いちばん上)に、このブロックを丸ごと貼ります。
+     ・メニューは自動で作られます。大見出し <h2> だけが、白いボタンで横に並びます。
+       見出しを足したり変えたりしても、ここは書き換え不要です。
+     ・開閉や中見出しはメニューに出ません。
+     ・ページのアドレス(#...)は変えずに、その場でスクロールします(サイトのページ切り替えと干渉しません)。
+     ・JavaScript を使います。サイトに埋め込むときは、main.js の「<script> も動く」版が必要です。
+     ─────────────────────────────────────────────┘ -->
+<style>
+#pg-root .toc { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 20px; }
+#pg-root .toc:empty { display: none; }
+#pg-root .toc button { font: inherit; font-size: 13px; line-height: 1.2; padding: 6px 15px; border: 1px solid var(--line); border-radius: 999px; background: var(--white); color: var(--main); font-weight: 700; cursor: pointer; transition: .15s ease; box-shadow: 0 2px 8px #00000012; }
+#pg-root .toc button:hover { background: var(--soft); border-color: var(--accent); }
+#pg-root .toc button:focus-visible { outline: 2px solid var(--main); outline-offset: 2px; }
+/* ジャンプしたとき、見出しが画面の端にくっつかないように少し空ける */
+#pg-root .container > h2 { scroll-margin-top: 12px; }
+@media (max-width: 650px) {
+#pg-root .toc button { font-size: 12px; padding: 5px 12px; }
+}
+</style>
+<nav class="toc" id="pg-toc" aria-label="ページ内メニュー"></nav>
+<script>
+(function () {
+  function build() {
+    var root = document.getElementById("pg-root"), nav = document.getElementById("pg-toc");
+    if (!root || !nav || nav.getAttribute("data-built")) return;
+    nav.setAttribute("data-built", "1");
+    var box = root.querySelector(".container");
+    if (!box) return;
+    [].slice.call(box.children).forEach(function (h) {
+      if (h.tagName !== "H2") return;
+      var b = document.createElement("button");
+      b.type = "button"; b.textContent = h.textContent.trim();
+      b.addEventListener("click", function () {
+        var calm = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+        h.scrollIntoView({ behavior: calm ? "auto" : "smooth", block: "start" });
+      });
+      nav.appendChild(b);
+    });
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", build);
+  else build();
+})();
+</script>
+
+<div class="spacer"></div>
+
       <h2>狂気表</h2>
       <details class="fold">
               <summary>狂気表・短期</summary>
@@ -436,205 +483,495 @@
 
       <h2>能力値参考</h2>
 
-
-      <!-- ┌─ パーツ【見出し・通常テキスト】 ─┐ -->
-      <h2>見出し(大)</h2>
-      <p>通常のテキストです。<strong>太字</strong>も使えます。段落ごとに &lt;p&gt; で囲みます。</p>
-　　  <p>ここは普通の文字で、<span class="c-red">この部分だけ赤</span>になります。</p>
-      <p><span class="c-blue" style="font-weight:700">青い太字</span></p>
-      <p>小空白↓</p>
-       <div class="spacer s"></div>      <!-- 8px の空白 -->
-      <p>空白↓</p>
-       <div class="spacer"></div>      <!-- 24px の空白 -->
-      <p>中空白↓</p>
-       <div class="spacer l"></div>    <!-- 48px の空白 -->
-      <p>大空白↓</p>
-       <div class="spacer xl"></div>    <!-- 80px の空白 -->
-      <p>指定幅空白↓</p>
-       <div class="spacer" style="--h:100px"></div>   <!-- 好きな高さ -->
-
-      <p class="pc-only">この文章は PC のときだけ表示されます。</p>
-       <div class="spacer l pc-only"></div>           <!-- PCのときだけ空ける -->
-      <p class="sp-only">この文章は スマホ のときだけ表示されます。</p>
-      <p>PCのときだけ上の文章との空白があります。</p>
-
-      <h2 class="mid">見出し(中)</h2>
-      <h3>小見出し</h3>
-      <ul class="list">
-        <li>箇条書きの項目1</li>
-        <li>箇条書きの項目2</li>
-      </ul>
-      <p class="mut ">小さめの補足テキストです。</p>
-      <p>前の文章の横に</p><p class="mut inline">並べることもできます</p>
-      <!-- └─ ここまで ─┘ -->
-
-      <!-- ┌─ パーツ【囲みボックス】(お知らせ / 警告) ─┐ -->
-      <div class="box"><p>これは「お知らせ」ボックスです。</p></div>
-      <div class="box alert"><p>これは「警告」ボックスです(class に alert を足すと赤系になります)。</p></div>
-      <!-- └─ ここまで ─┘ -->
-
-      <!-- ┌─ パーツ【項目：内容の並び】(注釈の外。注釈の中に書くと、自動で注釈用の見た目になります) ─┐ -->
-      <h2 class="mid">項目：内容の並び</h2>
-      <dl class="kv">
-        <dt>技能</dt><dd>判定に使う基本の技能値。</dd>
-        <dt>ダメージ</dt><dd>命中時に与えるダメージのダイス。「db」はダメージボーナス。</dd>
-        <dt>基本射程</dt><dd>命中率に補正を受けずに攻撃できる最大の距離。<br>「タッチ」は接触距離。</dd>
-      </dl>
-      <dl class="kv plain">
-        <dt>タイトル</dt><dd>区切り</dd>
-        <dt>タイトル2</dt><dd>非表示</dd>
-      </dl>
-      <!-- └─ ここまで ─┘ -->
-
-      <!-- ┌─ パーツ【記号の説明リスト】(注釈の外。注釈の中に書くと、自動で注釈用の見た目になります) ─┐ -->
-      <h2 class="mid">記号の説明リスト</h2>
-      <ul class="legend">
-        <li><span class="sym">*</span><span class="bar" aria-hidden="true"></span><span class="desc">貫通ができる。</span></li>
-        <li><span class="sym">**</span><span class="bar" aria-hidden="true"></span><span class="desc">馬の勢いでのダメージボーナス</span></li>
-        <li><span class="sym">+</span><span class="bar" aria-hidden="true"></span><span class="desc">ゼロ射程のルールを適用しない</span></li>
-      </ul>
-      <ul class="legend plain">
-        <li><span class="sym">*</span><span class="bar" aria-hidden="true"></span><span class="desc">区切り</span></li>
-        <li><span class="sym">**</span><span class="bar" aria-hidden="true"></span><span class="desc">ないよ</span></li>
-      </ul>
-      <!-- └─ ここまで ─┘ -->
-
-            <h2>表パーツ(標準)</h2>
-            <p>横幅が足りないときは、表の中だけが横にスクロールします。</p>
-      <!-- ┌─ パーツ【サイド(注釈)】 ─────────────────────────
-           置きたい位置に aside を書くだけです(.layout や .main で囲む必要はありません)。
-           ・PC: この「次のパーツ」(ここでは下の表)の右隣に並びます。「✕」で閉じると、ボタンだけが右寄せで残ります。
-           ・スマホ: この「次のパーツ」の上に開閉ボタンが出ます(スクロールしても上に残ります)。
-           ・場所を変えるときは、aside の開始タグから終了タグまでをまるごと切り取って貼り直します。
-           ・横に並ぶのは「次のパーツ」1つだけです。その次のパーツからは、全幅に戻ります。
-           ─────────────────────────────────────────────┘ -->
-      <aside class="side">
-        <!-- 開閉ボタン(ボタンの文字はここで変えられます。<input> は消さないでください) -->
-        <label class="side-toggle"><input type="checkbox"><span>項目・注釈の意味</span><span class="mark"></span></label>
-        <!-- サイドの中身(ここから) -->
-        <div class="side-body">
-          <h3>■ 項目の意味</h3>
-          <dl class="kv">
-            <dt>技能</dt><dd>判定に使う基本の技能値。</dd>
-            <dt>ダメージ</dt><dd>命中時に与えるダメージのダイス。「db」はダメージボーナス。</dd>
-            <dt>基本射程</dt><dd>命中率に補正を受けずに攻撃できる最大の距離。「タッチ」は接触距離。</dd>
-          </dl>
-          <h3>■ 注釈の意味</h3>
-          <!-- 記号の説明リスト(.legend) -->
-          <ul class="legend">
-            <li><span class="sym">*</span><span class="bar" aria-hidden="true"></span><span class="desc">貫通ができる。</span></li>
-            <li><span class="sym">**</span><span class="bar" aria-hidden="true"></span><span class="desc">馬の勢いでのダメージボーナス</span></li>
-            <li><span class="sym">+</span><span class="bar" aria-hidden="true"></span><span class="desc">ゼロ射程のルールを適用しない</span></li>
-          </ul>
-        </div>
-        <!-- サイドの中身(ここまで) -->
-      </aside>
-      <!-- └─ サイドここまで ─┘ -->
-
-            <!-- ┌─ パーツ【表】 ─┐ -->
-            <div class="table-wrap"><table>
-              <thead><tr><th>名前</th><th>技能</th><th>ダメージ</th><th>基本射程</th><th>耐久力</th></tr></thead>
-              <tbody>
-                <!-- 1行 = 1つの <tr>。名前の列は td class="name"(左寄せ・太字)、他は普通の <td> td class="left"で左寄せ-->
-                <tr><td class="name">レイピア/重いエペー*</td><td>20</td><td>1D6+1+db</td><td>タッチ</td><td>15</td></tr>
-                <tr><td class="name">騎兵用サーベル</td><td>20</td><td>1D8+1+db</td><td>タッチ</td><td>20</td></tr>
-                <tr><td class="name">ロング・ソード*</td><td>20</td><td>1D8+db</td><td>タッチ</td><td>20</td></tr>
-              </tbody>
-            </table></div>
-            <!-- └─ ここまで ─┘ -->
-
-            <h2>数字中心の表(スマホで収める版)</h2>
-            <!-- 表を class="fit" にすると、スマホで横スクロールせず小さい文字で画面に収まります -->
-            <div class="table-wrap fit"><table class="fit">
-              <thead><tr><th>名前</th><th>技能</th><th>ダメージ</th><th>射程</th><th>耐久</th><th>故障</th></tr></thead>
-              <tbody>
-                <tr><td class="name">小型ナイフ*</td><td>25</td><td>1D4+db</td><td>タッチ</td><td>9</td><td>-</td></tr>
-                <tr><td class="name">大型ナイフ(マチェットなど)</td><td>25</td><td>1D8+db</td><td>タッチ</td><td>20</td><td>-</td></tr>
-              </tbody>
-            </table></div>
-
-            <!-- ┌─ パーツ【開閉】(タブの中にも置けます) ─┐ -->
-            <details class="fold">
-              <summary>閉じた状態から始まる開閉</summary>
-              <div class="fold-body"><p>押すと開きます。中には文章でも表でもタブでも入れられます。</p></div>
-            </details>
-            <details class="fold" open="">
-              <summary>最初から開いている開閉(open を付ける)</summary>
-              <div class="fold-body"><p>details の行に <code>open</code> を書くと、最初から開きます。</p></div>
-            </details>
-            <details class="fold pill">
-              <summary>ボタン風の開閉(class="fold pill")</summary>
-              <div class="fold-body"><p>小さな丸いボタンで開閉します。</p></div>
-            </details>
-            <!-- └─ ここまで ─┘ -->
-
-            <h2>画像・横並びカード・出し分け</h2>
-            <!-- ┌─ パーツ【画像】 ─┐ 画像のURLを src="" に入れます。zoom を使うとタップで拡大できます -->
-            <label class="zoom"><input type="checkbox"><img src="" alt="画像の説明(拡大できる画像)" style="min-height:40px;min-width:120px;background:#faf6ee"></label>
-            <!-- └─ ここまで ─┘ -->
-
-            <!-- ┌─ パーツ【カードを横に並べる】 ─┐ 幅が狭いと自動で縦並びになります -->
-            <div class="cols">
-              <div class="card"><h3>カード1</h3><p>説明文</p></div>
-              <div class="card t2"><h3>カード2</h3><p>説明文</p></div>
-              <div class="card"><h3>カード3</h3><p>説明文</p></div>
-            </div>
-            <!-- └─ ここまで ─┘ -->
-
-
-      <!-- ┌─ パーツ【タブ】 ───────────────────────────
-           ・タブのボタン(label.tab)と中身(section.tabpanel)は「同じ順番」で並べます。
-           ・name="tabs-A" は、このタブのグループ名。別のタブグループを作るときは tabs-B など別の名前にします。
-           ・最初に開いておくタブのボタンにだけ checked を付けます。
-           ・タブを増やすときは、label.tab と section.tabpanel を1組ずつ増やします(最大12)。
-           ─────────────────────────────────────────────┘ -->
-      <div class="tabset">
-        <div class="tabs">
-          <label class="tab"><input type="radio" name="tabs-A" checked=""><span>表のタブ</span></label>
-          <label class="tab"><input type="radio" name="tabs-A"><span>開閉のタブ</span></label>
-          <label class="tab"><input type="radio" name="tabs-A"><span>画像など</span></label>
-        </div>
-        <div class="tabpanels">
-
-          <!-- タブ1の中身 -->
-          <section class="tabpanel">
-
-          </section>
-
-          <!-- タブ2の中身 -->
-          <section class="tabpanel">
-
-          </section>
-
-          <!-- タブ3の中身 -->
-          <section class="tabpanel">
-
-          </section>
-
-        </div>
-      </div>
-      <!-- └─ タブここまで ─┘ -->
-
-
-      <!-- ┌─ パーツ【開閉】(タブの外にも置けます) ─┐ -->
-      <h2>タブの外の開閉</h2>
-      <details class="fold">
-        <summary>入れ子の例: 開閉の中にタブ</summary>
+      <details class="fold" open="">
+        <summary>STR</summary>
         <div class="fold-body">
-          <div class="tabset">
-            <div class="tabs">
-              <label class="tab"><input type="radio" name="tabs-B" checked=""><span>左</span></label>
-              <label class="tab"><input type="radio" name="tabs-B"><span>右</span></label>
-            </div>
-            <div class="tabpanels">
-              <section class="tabpanel"><p>左のタブの中身</p></section>
-              <section class="tabpanel"><p>右のタブの中身</p></section>
-            </div>
-          </div>
+        <div class="table-wrap"><table style="table-layout:fixed"><colgroup><col style="width:72px"><col></colgroup>
+          <tbody>
+            <tr><td>03~04</td><td class="left">箸より重いものが持てない</td></tr>
+            <tr><td>05~06</td><td class="left">貧弱</td></tr>
+            <tr><td>07~08</td><td class="left">運動嫌い</td></tr>
+            <tr><td>09~12</td><td class="left">普通</td></tr>
+            <tr><td>13~14</td><td class="left">運動好き</td></tr>
+            <tr><td>15~16</td><td class="left">アスリート</td></tr>
+            <tr><td>17~18</td><td class="left">見てわかるマッチョ</td></tr>
+          </tbody>
+        </table></div>
         </div>
       </details>
-      <!-- └─ ここまで ─┘ -->
+ 
+      <details class="fold" open="">
+        <summary>CON</summary>
+        <div class="fold-body">
+        <div class="table-wrap"><table style="table-layout:fixed"><colgroup><col style="width:72px"><col></colgroup>
+          <tbody>
+            <tr><td>03~04</td><td class="left">一日の大半寝てる</td></tr>
+            <tr><td>05~06</td><td class="left">病弱</td></tr>
+            <tr><td>07~08</td><td class="left">すぐへばる</td></tr>
+            <tr><td>09~12</td><td class="left">普通</td></tr>
+            <tr><td>13~14</td><td class="left">丈夫</td></tr>
+            <tr><td>15~16</td><td class="left">病気したことない</td></tr>
+            <tr><td>17~18</td><td class="left">不眠不休で働けます</td></tr>
+          </tbody>
+        </table></div>
+        </div>
+      </details>
+ 
+      <details class="fold" open="">
+        <summary>POW</summary>
+        <div class="fold-body">
+        <div class="table-wrap"><table style="table-layout:fixed"><colgroup><col style="width:72px"><col></colgroup>
+          <tbody>
+            <tr><td>03</td><td class="left">精神を病んでいる</td></tr>
+            <tr><td>04</td><td class="left">過去に大きなトラウマがある</td></tr>
+            <tr><td>05~06</td><td class="left">すぐパニックになる</td></tr>
+            <tr><td>07~08</td><td class="left">打たれ弱い</td></tr>
+            <tr><td>09~12</td><td class="left">普通</td></tr>
+            <tr><td>13~14</td><td class="left">打たれ強い</td></tr>
+            <tr><td>15~16</td><td class="left">強靭な精神の持ち主</td></tr>
+            <tr><td>17</td><td class="left">その筋の修業をしている人</td></tr>
+            <tr><td>18</td><td class="left">聖人</td></tr>
+          </tbody>
+        </table></div>
+        </div>
+      </details>
+ 
+      <details class="fold" open="">
+        <summary>DEX</summary>
+        <div class="fold-body">
+        <!-- PC用(2組を横に並べた表) -->
+        <div class="table-wrap fit pc-only"><table style="table-layout:fixed" class="fit"><colgroup><col style="width:72px"><col><col style="width:72px"><col></colgroup>
+          <thead><tr><th></th><th>100m走(秒)</th><th></th><th>100m走(秒)</th></tr></thead>
+          <tbody>
+            <tr><td>03</td><td>20.5</td><td>11</td><td>14.8</td></tr>
+            <tr><td>04</td><td>19.7</td><td>12</td><td>14.1</td></tr>
+            <tr><td>05</td><td>19</td><td>13</td><td>13.4</td></tr>
+            <tr><td>06</td><td>18.3</td><td>14</td><td>12.7</td></tr>
+            <tr><td>07</td><td>17.6</td><td>15</td><td>12</td></tr>
+            <tr><td>08</td><td>16.9</td><td>16</td><td>11.3</td></tr>
+            <tr><td>09</td><td>16.2</td><td>17</td><td>10.6</td></tr>
+            <tr><td>10</td><td>15.5</td><td>18</td><td>10</td></tr>
+          </tbody>
+        </table></div>
+        <!-- スマホ用(1列にした表) -->
+        <div class="table-wrap sp-only"><table style="table-layout:fixed"><colgroup><col style="width:72px"><col></colgroup>
+          <thead><tr><th></th><th>100m走(秒)</th></tr></thead>
+          <tbody>
+            <tr><td>03</td><td>20.5</td></tr>
+            <tr><td>04</td><td>19.7</td></tr>
+            <tr><td>05</td><td>19</td></tr>
+            <tr><td>06</td><td>18.3</td></tr>
+            <tr><td>07</td><td>17.6</td></tr>
+            <tr><td>08</td><td>16.9</td></tr>
+            <tr><td>09</td><td>16.2</td></tr>
+            <tr><td>10</td><td>15.5</td></tr>
+            <tr><td>11</td><td>14.8</td></tr>
+            <tr><td>12</td><td>14.1</td></tr>
+            <tr><td>13</td><td>13.4</td></tr>
+            <tr><td>14</td><td>12.7</td></tr>
+            <tr><td>15</td><td>12</td></tr>
+            <tr><td>16</td><td>11.3</td></tr>
+            <tr><td>17</td><td>10.6</td></tr>
+            <tr><td>18</td><td>10</td></tr>
+          </tbody>
+        </table></div>
+        <div class="spacer s"></div>
+        <div class="table-wrap"><table style="table-layout:fixed"><colgroup><col style="width:72px"><col></colgroup>
+          <tbody>
+            <tr><td>03~04</td><td class="left">触れるもの皆傷付ける</td></tr>
+            <tr><td>05~06</td><td class="left">料理や片付けが苦手</td></tr>
+            <tr><td>07~08</td><td class="left">美術や技術が苦手</td></tr>
+            <tr><td>09~12</td><td class="left">普通</td></tr>
+            <tr><td>13~14</td><td class="left">美術や技術が得意</td></tr>
+            <tr><td>15~16</td><td class="left">技術職につける</td></tr>
+            <tr><td>17~18</td><td class="left">ゴッドハンド</td></tr>
+          </tbody>
+        </table></div>
+        <p class="mut">※足の速さ+手先の器用さ÷2=DEX</p>
+        </div>
+      </details>
+ 
+      <details class="fold" open="">
+        <summary>APP</summary>
+        <div class="fold-body">
+        <div class="table-wrap"><table style="table-layout:fixed"><colgroup><col style="width:72px"><col></colgroup>
+          <tbody>
+            <tr><td>03~04</td><td class="left">目を背けられる</td></tr>
+            <tr><td>05~06</td><td class="left">ブス</td></tr>
+            <tr><td>07~08</td><td class="left">チョイブス</td></tr>
+            <tr><td>09~12</td><td class="left">普通</td></tr>
+            <tr><td>13~14</td><td class="left">チョイモテ</td></tr>
+            <tr><td>15~16</td><td class="left">同性にも好かれる</td></tr>
+            <tr><td>17~18</td><td class="left">誰もが振り返る</td></tr>
+          </tbody>
+        </table></div>
+        </div>
+      </details>
+ 
+      <details class="fold" open="">
+        <summary>SIZ</summary>
+        <div class="fold-body">
+        <!-- PC用(2組を横に並べた表) -->
+        <div class="table-wrap fit pc-only" style="margin-bottom:0"><table style="table-layout:fixed" class="fit"><colgroup><col style="width:72px"><col><col style="width:72px"><col></colgroup>
+          <thead><tr><th></th><th>身長(cm)</th><th></th><th>身長(cm)</th></tr></thead>
+          <tbody>
+            <tr><td>03</td><td>120～125</td><td>11</td><td>160～165</td></tr>
+            <tr><td>04</td><td>125～130</td><td>12</td><td>165～170</td></tr>
+            <tr><td>05</td><td>130～135</td><td>13</td><td>170～175</td></tr>
+            <tr><td>06</td><td>135～140</td><td>14</td><td>175～180</td></tr>
+            <tr><td>07</td><td>140～145</td><td>15</td><td>180～185</td></tr>
+            <tr><td>08</td><td>145～150</td><td>16</td><td>185～190</td></tr>
+            <tr><td>09</td><td>150～155</td><td>17</td><td>190～195</td></tr>
+            <tr><td>10</td><td>155～160</td><td>18</td><td>195～200</td></tr>
+          </tbody>
+        </table></div>
+        <!-- スマホ用(1列にした表) -->
+        <div class="table-wrap sp-only"><table style="table-layout:fixed"><colgroup><col style="width:72px"><col></colgroup>
+          <thead><tr><th></th><th>身長(cm)</th></tr></thead>
+          <tbody>
+            <tr><td>03</td><td>120～125</td></tr>
+            <tr><td>04</td><td>125～130</td></tr>
+            <tr><td>05</td><td>130～135</td></tr>
+            <tr><td>06</td><td>135～140</td></tr>
+            <tr><td>07</td><td>140～145</td></tr>
+            <tr><td>08</td><td>145～150</td></tr>
+            <tr><td>09</td><td>150～155</td></tr>
+            <tr><td>10</td><td>155～160</td></tr>
+            <tr><td>11</td><td>160～165</td></tr>
+            <tr><td>12</td><td>165～170</td></tr>
+            <tr><td>13</td><td>170～175</td></tr>
+            <tr><td>14</td><td>175～180</td></tr>
+            <tr><td>15</td><td>180～185</td></tr>
+            <tr><td>16</td><td>185～190</td></tr>
+            <tr><td>17</td><td>190～195</td></tr>
+            <tr><td>18</td><td>195～200</td></tr>
+          </tbody>
+        </table></div>
+        </div>
+      </details>
+ 
+      <details class="fold" open="">
+        <summary>INT</summary>
+        <div class="fold-body">
+        <div class="table-wrap"><table style="table-layout:fixed"><colgroup><col style="width:72px"><col></colgroup>
+          <tbody>
+            <tr><td>08~09</td><td class="left">物覚えが悪い</td></tr>
+            <tr><td>10~11</td><td class="left">頭が固い</td></tr>
+            <tr><td>12~13</td><td class="left">普通</td></tr>
+            <tr><td>14~15</td><td class="left">柔軟な発想ができる</td></tr>
+            <tr><td>16~17</td><td class="left">キレ者</td></tr>
+            <tr><td>18</td><td class="left">アインシュタイン</td></tr>
+          </tbody>
+        </table></div>
+        </div>
+      </details>
+ 
+      <details class="fold" open="">
+        <summary>EDU</summary>
+        <div class="fold-body">
+        <!-- PC用(2組を横に並べた表) -->
+        <div class="table-wrap fit pc-only" style="margin-bottom:0"><table style="table-layout:fixed" class="fit"><colgroup><col style="width:72px"><col><col style="width:72px"><col></colgroup>
+          <thead><tr><th></th><th>学歴</th><th></th><th>学歴</th></tr></thead>
+          <tbody>
+            <tr><td>06</td><td class="left">中１</td><td>14</td><td class="left">大3／高卒30年〃</td></tr>
+            <tr><td>07</td><td class="left">中２</td><td>15</td><td class="left">大4／高卒40年〃</td></tr>
+            <tr><td>08</td><td class="left">中３</td><td>16</td><td class="left">院1／大卒10年〃</td></tr>
+            <tr><td>09</td><td class="left">高1／中卒10年以内</td><td>17</td><td class="left">院2／大卒20年〃</td></tr>
+            <tr><td>10</td><td class="left">高2／中卒20年〃</td><td>18</td><td class="left">院3／大卒30年〃</td></tr>
+            <tr><td>11</td><td class="left">高3／中卒30年〃</td><td>19</td><td class="left">院4／大卒40年〃</td></tr>
+            <tr><td>12</td><td class="left">大1／高卒10年〃</td><td>20</td><td class="left">院5／院卒10年〃</td></tr>
+            <tr><td>13</td><td class="left">大2／高卒20年〃</td><td>21</td><td class="left">院6／院卒20年〃</td></tr>
+          </tbody>
+        </table></div>
+        <!-- スマホ用(1列にした表) -->
+        <div class="table-wrap sp-only"><table style="table-layout:fixed"><colgroup><col style="width:72px"><col></colgroup>
+          <thead><tr><th></th><th>学歴</th></tr></thead>
+          <tbody>
+            <tr><td>06</td><td class="left">中１</td></tr>
+            <tr><td>07</td><td class="left">中２</td></tr>
+            <tr><td>08</td><td class="left">中３</td></tr>
+            <tr><td>09</td><td class="left">高1／中卒10年以内</td></tr>
+            <tr><td>10</td><td class="left">高2／中卒20年〃</td></tr>
+            <tr><td>11</td><td class="left">高3／中卒30年〃</td></tr>
+            <tr><td>12</td><td class="left">大1／高卒10年〃</td></tr>
+            <tr><td>13</td><td class="left">大2／高卒20年〃</td></tr>
+            <tr><td>14</td><td class="left">大3／高卒30年〃</td></tr>
+            <tr><td>15</td><td class="left">大4／高卒40年〃</td></tr>
+            <tr><td>16</td><td class="left">院1／大卒10年〃</td></tr>
+            <tr><td>17</td><td class="left">院2／大卒20年〃</td></tr>
+            <tr><td>18</td><td class="left">院3／大卒30年〃</td></tr>
+            <tr><td>19</td><td class="left">院4／大卒40年〃</td></tr>
+            <tr><td>20</td><td class="left">院5／院卒10年〃</td></tr>
+            <tr><td>21</td><td class="left">院6／院卒20年〃</td></tr>
+          </tbody>
+        </table></div>
+        </div>
+      </details>
+            <div class="spacer"></div>
 
+      <h2>カラーピッカー</h2>
+
+        <div class="spacer s"></div>
+        <!-- カラースライダー & カラーピッカー(色相環タイプ)(サイト埋め込み用)
+     ■ このファイルの中身を、全部そのまま埋め込み先に貼り付けてください。
+       見た目は #cp-root の中だけに効くので、ほかのページに影響しません。
+     ■ 動かすために、一番下の script を1つ使っています。 -->
+<style>
+#cp-root{--bg:#ffffff;--fg:#333333;--card:#ffffff;--mut:#7a6f62;--line:#e6dccb;--main:#8e632b;--bad:#b3261e;
+text-align:left;margin:0;padding:20px 14px 40px;background:var(--bg);color:var(--fg);font-family:"Hiragino Maru Gothic ProN","Hiragino Sans","Yu Gothic",sans-serif;isolation:isolate}
+#cp-root,#cp-root *{box-sizing:border-box}
+#cp-root main{max-width:620px;margin:0 auto;display:grid;gap:16px}
+#cp-root .sw{min-height:132px;border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;align-items:flex-end;font-size:22px;font-weight:700;letter-spacing:.04em;background:#8e632b;color:#fff}
+#cp-root .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px}
+#cp-root h2{font-size:15px;margin:0 0 4px}
+#cp-root p.n{font-size:12px;color:var(--mut);line-height:1.6;margin:0 0 12px}
+#cp-root p.err{font-size:12px;color:var(--bad);line-height:1.6;margin:8px 0 0;min-height:1.6em}
+#cp-root .res{display:grid;grid-template-columns:1fr auto;gap:8px 10px;align-items:center}
+#cp-root .res span{font-size:12px;color:var(--mut);display:block}
+#cp-root .res b{font-size:17px;font-weight:700;word-break:break-all}
+#cp-root button{font:inherit;font-size:13px;padding:7px 14px;border:1px solid var(--line);border-radius:99px;background:var(--card);color:var(--fg);cursor:pointer}
+#cp-root button:hover{border-color:var(--main)}
+#cp-root button[hidden]{display:none}
+#cp-root button.go{background:var(--main);border-color:var(--main);color:#fff;font-weight:700;padding:8px 20px}
+#cp-root :focus-visible{outline:3px solid var(--main);outline-offset:2px}
+#cp-root .row{display:grid;grid-template-columns:18px 1fr 68px;gap:12px;align-items:center;margin-top:12px}
+#cp-root .row label{font-weight:700;font-size:15px}
+#cp-root input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:14px;margin:0;border-radius:99px;border:1px solid var(--line);background:linear-gradient(to right,var(--lo,#000),var(--hi,#fff))}
+#cp-root input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:#fff;border:3px solid var(--main);box-shadow:0 1px 4px #0004;cursor:pointer}
+#cp-root input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:#fff;border:3px solid var(--main);box-shadow:0 1px 4px #0004;cursor:pointer}
+#cp-root input[type=number],#cp-root input[type=text]{font:inherit;font-size:16px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--fg);width:100%}
+#cp-root input[type=text]{font-family:ui-monospace,Menlo,Consolas,monospace;max-width:11em;text-transform:uppercase}
+#cp-root input.bad{border-color:var(--bad);background:#fff4f3}
+#cp-root .pick{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+#cp-root .inl{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+
+/* 色相環(外側のリング=色相 / 内側の四角=彩度と明るさ) */
+#cp-root .wheel{position:relative;width:min(240px,100%);aspect-ratio:1;border-radius:50%;touch-action:none;cursor:crosshair;flex:none;-webkit-user-select:none;user-select:none}
+#cp-root .ring{position:absolute;inset:0;border-radius:50%;
+background:conic-gradient(from 0deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00);
+-webkit-mask:radial-gradient(circle closest-side,transparent 65.5%,#000 66.5%);mask:radial-gradient(circle closest-side,transparent 65.5%,#000 66.5%)}
+#cp-root .sv{position:absolute;left:27.5%;top:27.5%;width:45%;height:45%;border-radius:4px;box-shadow:0 0 0 1px var(--line);
+background:linear-gradient(to top,#000,#0000),linear-gradient(to right,#fff,hsl(var(--h,0),100%,50%))}
+#cp-root .hh,#cp-root .hs{position:absolute;border-radius:50%;background:transparent;border:3px solid #fff;box-shadow:0 0 0 1px #0008,0 1px 4px #0006;pointer-events:none}
+#cp-root .hh{width:22px;height:22px;margin:-11px 0 0 -11px}
+#cp-root .hs{width:18px;height:18px;margin:-9px 0 0 -9px}
+#cp-root .hh:focus-visible,#cp-root .hs:focus-visible{outline:3px solid var(--main);outline-offset:2px}
+#cp-root .chip{display:inline-block;width:20px;height:20px;border-radius:5px;border:1px solid var(--line);vertical-align:middle;background:#fff}
+</style>
+<div id="cp-root">
+<main>
+  <div class="sw" id="cp-sw"><span id="cp-swt">#8E632B</span></div>
+
+  <section class="card">
+    <div class="res">
+      <div><span>RGBの色</span><b id="cp-vrgb">rgb(142, 99, 43)</b></div>
+      <button type="button" data-copy="#cp-vrgb">コピー</button>
+      <div><span>16進数のRGBの色</span><b id="cp-vhex">#8E632B</b></div>
+      <button type="button" data-copy="#cp-vhex">コピー</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>RGBの色をスライダーで作る</h2>
+     <div class="spacer s"></div>
+    <div class="row"><label for="cp-r">R</label><input type="range" id="cp-r" min="0" max="255" value="142"><input type="number" id="cp-rn" min="0" max="255" inputmode="numeric" aria-label="R の値"></div>
+    <div class="row"><label for="cp-g">G</label><input type="range" id="cp-g" min="0" max="255" value="99"><input type="number" id="cp-gn" min="0" max="255" inputmode="numeric" aria-label="G の値"></div>
+    <div class="row"><label for="cp-b">B</label><input type="range" id="cp-b" min="0" max="255" value="43"><input type="number" id="cp-bn" min="0" max="255" inputmode="numeric" aria-label="B の値"></div>
+  </section>
+
+  <section class="card">
+    <h2>16進数の色を色相環で指定する</h2>
+    <div class="spacer"></div>
+    <div class="pick">
+      <div class="wheel" id="cp-wheel">
+        <div class="ring"></div>
+        <div class="sv" id="cp-sv"><div class="hs" id="cp-hs" tabindex="0" aria-label="彩度と明るさ(矢印キーで調整)"></div></div>
+        <div class="hh" id="cp-hh" tabindex="0" aria-label="色相(左右の矢印キーで調整)"></div>
+      </div>
+      <input type="text" id="cp-hex" value="#8E632B" maxlength="7" spellcheck="false" autocomplete="off" aria-label="16進数のRGB">
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>RGBの値に変換する</h2>
+     <div class="spacer"></div>
+    <div class="inl">
+      <input type="text" id="cp-cin" placeholder="#8E632B" maxlength="7" spellcheck="false" autocomplete="off" aria-label="変換する16進数のRGB">
+      <button type="button" class="go" id="cp-cgo">変換</button>
+    </div>
+    <p class="err" id="cp-cerr" role="status" aria-live="polite"></p>
+    <div class="res">
+      <div>
+        <span>RGBの色</span>
+        <b id="cp-cout">―</b>
+        <span id="cp-cdet" style="margin-top:4px"></span>
+      </div>
+      <button type="button" data-copy="#cp-cout" id="cp-ccopy" hidden>コピー</button>
+    </div>
+  </section>
+</main>
+</div>
+<script>
+(function(){
+  var R=document.getElementById("cp-root");if(!R)return;
+  var $=function(s){return R.querySelector(s)};
+  var ch=["r","g","b"],rng={},num={};
+  ch.forEach(function(k){rng[k]=$("#cp-"+k);num[k]=$("#cp-"+k+"n")});
+  var wheel=$("#cp-wheel"),svb=$("#cp-sv"),hs=$("#cp-hs"),hh=$("#cp-hh");
+  var hx=$("#cp-hex"),sw=$("#cp-sw"),swt=$("#cp-swt"),vr=$("#cp-vrgb"),vh=$("#cp-vhex");
+  var c=[142,99,43];
+  var H=0,S=0,V=0; // 色相環の状態(色相0〜360 / 彩度0〜1 / 明るさ0〜1)
+  var clamp=function(x,a,b){return Math.max(a,Math.min(b,x))};
+  var h2=function(n){return(n<16?"0":"")+n.toString(16).toUpperCase()};
+  var hex=function(){return"#"+c.map(h2).join("")};
+  function parse(s){
+    s=s.trim().replace(/^#/,"");
+    if(/^[0-9a-f]{3}$/i.test(s))s=s.replace(/./g,"$&$&");
+    return/^[0-9a-f]{6}$/i.test(s)?[0,2,4].map(function(i){return parseInt(s.substr(i,2),16)}):null;
+  }
+  function hsv2rgb(h,s,v){
+    var f=function(n){var k=(n+h/60)%6;return v-v*s*Math.max(0,Math.min(k,4-k,1))};
+    return[f(5),f(3),f(1)].map(function(x){return Math.round(x*255)});
+  }
+  // 色相は、白・黒・灰色のとき決められないので、前の値(ph)を残す
+  function rgb2hsv(a,ph){
+    var r=a[0]/255,g=a[1]/255,b=a[2]/255,mx=Math.max(r,g,b),mn=Math.min(r,g,b),d=mx-mn,h=ph;
+    if(d>0){
+      if(mx===r)h=60*(((g-b)/d+6)%6);
+      else if(mx===g)h=60*((b-r)/d+2);
+      else h=60*((r-g)/d+4);
+    }
+    return[h,mx?d/mx:0,mx];
+  }
+  // from = いま操作中の入力欄(その欄は上書きしない)
+  function paint(from){
+    var hs_=hex();
+    ch.forEach(function(k,i){
+      if(from!==k+"r")rng[k].value=c[i];
+      if(from!==k+"n")num[k].value=c[i];
+      var lo=c.slice(),hi=c.slice();lo[i]=0;hi[i]=255;
+      rng[k].style.setProperty("--lo","rgb("+lo.join(",")+")");
+      rng[k].style.setProperty("--hi","rgb("+hi.join(",")+")");
+    });
+    if(from!=="hx"){hx.value=hs_;hx.classList.remove("bad")}
+    // 色相環のつまみ
+    svb.style.setProperty("--h",H.toFixed(1));
+    var a=H*Math.PI/180;
+    hh.style.left=(50+41.5*Math.sin(a))+"%";
+    hh.style.top=(50-41.5*Math.cos(a))+"%";
+    hs.style.left=(S*100)+"%";
+    hs.style.top=((1-V)*100)+"%";
+    sw.style.background=hs_;
+    sw.style.color=(0.299*c[0]+0.587*c[1]+0.114*c[2])>150?"#222":"#fff";
+    swt.textContent=hs_;
+    vr.textContent="rgb("+c.join(", ")+")";
+    vh.textContent=hs_;
+  }
+  // RGBが変わったとき(スライダー・数値・16進数入力)
+  function fromRGB(from){
+    var o=rgb2hsv(c,H);H=o[0];S=o[1];V=o[2];paint(from);
+  }
+  // 色相環が変わったとき
+  function fromHSV(){
+    H=(H%360+360)%360;S=clamp(S,0,1);V=clamp(V,0,1);
+    c=hsv2rgb(H,S,V);paint("");
+  }
+
+  ch.forEach(function(k,i){
+    rng[k].addEventListener("input",function(){c[i]=+rng[k].value;fromRGB(k+"r")});
+    num[k].addEventListener("input",function(){
+      var v=num[k].value;if(v===""||isNaN(+v))return;
+      c[i]=Math.max(0,Math.min(255,Math.round(+v)));
+      if(+v!==c[i])num[k].value=c[i];
+      fromRGB(k+"n");
+    });
+    num[k].addEventListener("blur",function(){num[k].value=c[i]});
+  });
+  hx.addEventListener("input",function(){
+    var p=parse(hx.value);
+    hx.classList.toggle("bad",!p&&hx.value!=="");
+    if(p){c=p;fromRGB("hx")}
+  });
+  hx.addEventListener("blur",function(){hx.value=hex();hx.classList.remove("bad")});
+
+  // ---- 色相環の操作(マウス・タッチ共通) ----
+  var mode=null;
+  function pos(e){
+    var r=wheel.getBoundingClientRect();
+    return{x:(e.clientX-r.left)/r.width-0.5,y:(e.clientY-r.top)/r.height-0.5};
+  }
+  function apply(e){
+    var p=pos(e);
+    if(mode==="h"){
+      H=Math.atan2(p.x,-p.y)*180/Math.PI;
+    }else{
+      S=clamp((p.x+0.225)/0.45,0,1);
+      V=1-clamp((p.y+0.225)/0.45,0,1);
+    }
+    fromHSV();
+  }
+  wheel.addEventListener("pointerdown",function(e){
+    if(e.button!==undefined&&e.button!==0)return;
+    var p=pos(e),d=Math.sqrt(p.x*p.x+p.y*p.y);
+    if(d>0.5)return;
+    mode=d>=0.33?"h":"sv";
+    if(mode==="sv")mode="s";
+    try{wheel.setPointerCapture(e.pointerId)}catch(x){}
+    e.preventDefault();
+    apply(e);
+  });
+  wheel.addEventListener("pointermove",function(e){if(mode)apply(e)});
+  var end=function(){mode=null};
+  wheel.addEventListener("pointerup",end);
+  wheel.addEventListener("pointercancel",end);
+  // キーボード操作
+  hh.addEventListener("keydown",function(e){
+    var st=e.shiftKey?10:1,d=0;
+    if(e.key==="ArrowRight"||e.key==="ArrowUp")d=st;
+    else if(e.key==="ArrowLeft"||e.key==="ArrowDown")d=-st;
+    else return;
+    e.preventDefault();H+=d;fromHSV();
+  });
+  hs.addEventListener("keydown",function(e){
+    var st=e.shiftKey?0.1:0.01;
+    if(e.key==="ArrowRight")S+=st;
+    else if(e.key==="ArrowLeft")S-=st;
+    else if(e.key==="ArrowUp")V+=st;
+    else if(e.key==="ArrowDown")V-=st;
+    else return;
+    e.preventDefault();fromHSV();
+  });
+
+  // ---- 16進数 → RGB 変換 ----
+  var cin=$("#cp-cin"),cgo=$("#cp-cgo"),cout=$("#cp-cout"),cdet=$("#cp-cdet"),cerr=$("#cp-cerr"),ccopy=$("#cp-ccopy");
+  function convert(){
+    var p=parse(cin.value);
+    if(!p){
+      cin.classList.add("bad");
+      cout.textContent="―";cdet.textContent="";ccopy.hidden=true;
+      cerr.textContent=cin.value.trim()===""?"16進数のRGBを入力してください(例: #8E632B)":"#rrggbb の形で入力してください(例: #8E632B)";
+      return;
+    }
+    cin.classList.remove("bad");cerr.textContent="";
+    cout.textContent="rgb("+p.join(", ")+")";
+    cdet.textContent="R: "+p[0]+" / G: "+p[1]+" / B: "+p[2];
+    ccopy.hidden=false;
+  }
+  cgo.addEventListener("click",convert);
+  cin.addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();convert()}});
+  cin.addEventListener("input",function(){cin.classList.remove("bad");cerr.textContent=""});
+
+  R.querySelectorAll("[data-copy]").forEach(function(b){
+    b.addEventListener("click",function(){
+      var t=$(b.getAttribute("data-copy")).textContent,o=b.textContent;
+      function done(){b.textContent="コピーしました";setTimeout(function(){b.textContent=o},1200)}
+      function fb(){var a=document.createElement("textarea");a.value=t;a.style.cssText="position:fixed;opacity:0";document.body.appendChild(a);a.select();try{document.execCommand("copy");done()}catch(e){}document.body.removeChild(a)}
+      if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(done,fb);else fb();
+    });
+  });
+  fromRGB("");
+})();
+</script>
 
 <!-- ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲ ここまで書き換え ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲ -->
 
