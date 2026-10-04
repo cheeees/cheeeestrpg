@@ -71,21 +71,24 @@ html,body{height:100%;margin:0;font:14px/1.4 system-ui,"Noto Sans JP",sans-serif
 .main{display:flex;flex:1;min-height:0}
 .left{width:45%;min-width:240px;display:flex;flex-direction:column}
 .edwrap{flex:1;display:flex;min-height:0}
-#gut{flex:none;position:relative;overflow:hidden;background:#171411;border-right:1px solid #3a322b;color:#7d7264;font:13px/20px ui-monospace,Menlo,Consolas,monospace;text-align:right;user-select:none;width:calc(2ch + 34px)}
-#gn{white-space:pre;padding:10px 8px 30px 22px}
-#gfl{position:absolute;left:0;top:0;width:20px;height:0}
-.gf{position:absolute;left:3px;width:16px;height:20px;line-height:20px;text-align:center;font-size:11px;cursor:pointer;color:#7d7264;opacity:0;transition:opacity .1s;user-select:none}
-#gut:hover .gf,.gf.fd{opacity:1}
-.gf.fd{color:#ffd60a}
-.gf:hover{color:#ffd60a}
+#gut{flex:none;position:relative;overflow:hidden;background:#171411;border-right:1px solid #3a322b;color:#7d7264;font:13px/20px ui-monospace,Menlo,Consolas,monospace;text-align:right;user-select:none;width:calc(2ch + 16px)}
+#gn{white-space:pre;padding:10px 8px 30px 8px}
+#gcv{position:absolute;left:0;top:0;pointer-events:none}
+#afl{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+#gfl{position:absolute;left:0;top:0;width:0;height:0;will-change:transform}
+.gf{position:absolute;width:12px;height:20px;line-height:20px;text-align:center;font-size:11px;cursor:pointer;color:#9a8c78;opacity:.6;user-select:none;pointer-events:auto}
+.mk{position:absolute;height:20px;overflow:hidden;font:13px/20px ui-monospace,Menlo,Consolas,monospace;white-space:pre;background:#1e1b18;color:#5f5547;pointer-events:none}
+.mk.cl{background:#292624}
+.gf.fd{color:#ffd60a;opacity:1}
+.gf:hover{color:#ffd60a;opacity:1}
 #gcur{position:absolute;left:0;right:0;top:10px;height:20px;background:rgba(255,214,10,.16);pointer-events:none}
 .stack{position:relative;flex:1;min-width:0;overflow:hidden;background:#1e1b18}
 #cl{position:absolute;left:0;right:0;top:0;height:20px;background:rgba(255,255,255,.05);pointer-events:none}
 #bd{position:absolute;inset:0;overflow:hidden;pointer-events:none}
-#bdt{padding:10px 30px 30px 10px;font:13px/20px ui-monospace,Menlo,Consolas,monospace;tab-size:2;white-space:pre;color:transparent}
+#bdt{padding:10px 30px 30px 20px;font:13px/20px ui-monospace,Menlo,Consolas,monospace;tab-size:2;white-space:pre;color:transparent}
 #bdt mark{color:transparent;background:rgba(255,214,10,.3);border-radius:2px}
 #bdt mark.cur{background:rgba(255,150,0,.7)}
-#ed{position:absolute;inset:0;width:100%;height:100%;border:0;resize:none;padding:10px;background:transparent;color:#f3ead9;font:13px/20px ui-monospace,Menlo,Consolas,monospace;tab-size:2;white-space:pre;outline:0;overflow:auto}
+#ed{position:absolute;inset:0;width:100%;height:100%;border:0;resize:none;padding:10px 10px 10px 20px;background:transparent;color:#f3ead9;font:13px/20px ui-monospace,Menlo,Consolas,monospace;tab-size:2;white-space:pre;outline:0;overflow:auto}
 #fbar{background:#3a322b;border-bottom:1px solid #8e632b;padding:6px;display:flex;flex-direction:column;gap:4px}
 #fbar[hidden]{display:none}
 #fbar .fr{display:flex;gap:4px;align-items:center}
@@ -154,11 +157,13 @@ iframe{border:0;background:#fff;height:100%;width:100%}
     </div>
   </div>
   <div class="edwrap">
-    <div id="gut"><div id="gn"></div><div id="gfl"></div><div id="gcur"></div></div>
+    <div id="gut"><div id="gn"></div><div id="gcur"></div></div>
     <div class="stack">
+      <canvas id="gcv"></canvas>
       <div id="cl"></div>
       <div id="bd"><div id="bdt"></div></div>
       <textarea id="ed" spellcheck="false" placeholder="まず「siteフォルダを開く」か「GitHubを開く」を押してください"></textarea>
+      <div id="afl"><div id="gfl"></div></div>
     </div>
   </div>
 </div>
@@ -1056,23 +1061,89 @@ function placeCur(){
   var y=PAD+curLine*LH;
   gcur.style.top=y+"px";
   clEl.style.transform="translateY("+(y-ed.scrollTop)+"px)";
+  /* ⟪…N行⟫ の目隠しは、カーソル行のハイライトと同じ色にする(そこだけ暗く見えないように) */
+  var mks=gfl.querySelectorAll(".mk");
+  for(var i=0;i<mks.length;i++)mks[i].classList.toggle("cl",+mks[i].dataset.k===curLine);
 }
 function updateCur(){curLine=nlCount(dispVal(),dS.get.call(ed));placeCur()}
-function syncScroll(){gutBox.scrollTop=ed.scrollTop;bd.scrollTop=ed.scrollTop;bd.scrollLeft=ed.scrollLeft;placeCur()}
-function renderArrows(){
-  var D=dispVal().split("\n"),mp=flMap(D,FOLDS),R=getRanges(),items=[];
-  for(var k=0;k<D.length;k++){
-    if(hasMk(D[k]))items.push(k+"f");
-    else if(R.map[mp.fl[k]]!=null)items.push(k+"o");
+var PADX=20,stackEl=document.querySelector(".stack"),gcv=$("gcv"),gctx=gcv.getContext("2d");
+var gdV=null,gdL=[],gdI=[];
+function lineIndent(l){var n=0;for(var i=0;i<l.length;i++){var c=l.charAt(i);if(c===" ")n++;else if(c==="\t")n+=2;else break}return n}
+function chWidth(){
+  var f=getComputedStyle(ed).font;
+  gctx.font=f||"13px ui-monospace,Menlo,Consolas,monospace";
+  var w=gctx.measureText("0").width;
+  if(!w){gctx.font="13px ui-monospace,Menlo,Consolas,monospace";w=gctx.measureText("0").width||7.8}
+  return w;
+}
+/* 縦のインデント線(2文字ぶんごと。空行は前後の行に合わせて途切れさせない) */
+function drawGuides(){
+  var w=stackEl.clientWidth,h=stackEl.clientHeight,dpr=window.devicePixelRatio||1;
+  if(gcv.width!==Math.round(w*dpr)||gcv.height!==Math.round(h*dpr)){
+    gcv.width=Math.round(w*dpr);gcv.height=Math.round(h*dpr);gcv.style.width=w+"px";gcv.style.height=h+"px";
   }
-  var key=items.join(",");
+  gctx.setTransform(dpr,0,0,dpr,0,0);gctx.clearRect(0,0,w,h);
+  if(!cur)return;
+  var v=dispVal();
+  if(v!==gdV){
+    /* 行頭の <タグ と、同じ桁にある </タグ をペアにして、その間だけ線を引く */
+    gdV=v;gdL=v.split("\n");
+    var segs=[],stk=[],k,m;
+    for(k=0;k<gdL.length;k++){
+      var L=gdL[k],col=lineIndent(L),t=L.replace(/^[ \t]+/,"");
+      if(m=/^<\/([a-zA-Z][\w:-]*)/.exec(t)){
+        var nm=m[1].toLowerCase();
+        for(var j=stk.length-1;j>=0;j--)if(stk[j].n===nm){
+          var o=stk[j];stk.length=j;
+          if(o.col===col&&k-o.k>1)segs.push({col:col,s:o.k+1,e:k-1});
+          break;
+        }
+      }else if(m=/^<([a-zA-Z][\w:-]*)/.exec(t)){
+        var n2=m[1].toLowerCase();
+        if(!VOID.test(n2)&&!/\/>\s*$/.test(t)&&t.toLowerCase().indexOf("</"+n2,m[0].length)<0)stk.push({n:n2,col:col,k:k});
+      }
+    }
+    gdI=segs;
+  }
+  var cw=chWidth(),st=ed.scrollTop,sl=ed.scrollLeft,
+    first=Math.max(0,Math.floor((st-PAD)/LH)),last=Math.ceil((st+h-PAD)/LH);
+  gctx.fillStyle="rgba(255,255,255,.12)";
+  for(var r=0;r<gdI.length;r++){
+    var sg=gdI[r];
+    if(sg.e<first||sg.s>last)continue;
+    gctx.fillRect(Math.round(PADX+sg.col*cw-sl),PAD+sg.s*LH-st,1,(sg.e-sg.s+1)*LH);
+  }
+}
+function syncScroll(){gutBox.scrollTop=ed.scrollTop;bd.scrollTop=ed.scrollTop;bd.scrollLeft=ed.scrollLeft;
+  gfl.style.transform="translate("+(-ed.scrollLeft)+"px,"+(-ed.scrollTop)+"px)";drawGuides();placeCur()}
+if(window.ResizeObserver)new ResizeObserver(drawGuides).observe(stackEl);
+/* 折りたたみの矢印は、各行の先頭のタグの真左(v<p> の位置)に置く */
+function renderArrows(){
+  var D=dispVal().split("\n"),mp=flMap(D,FOLDS),R=getRanges(),items=[],marks=[],cw=chWidth();
+  for(var k=0;k<D.length;k++){
+    if(hasMk(D[k])){
+      items.push(k+"f"+lineIndent(D[k]));
+      var mm=MK.exec(D[k]),pre=D[k].slice(0,mm.index).replace(/\t/g,"  ");
+      marks.push({k:k,x:PADX+gctx.measureText(pre).width,w:gctx.measureText(mm[0]).width,t:mm[0]});
+    }
+    else if(R.map[mp.fl[k]]!=null)items.push(k+"o"+lineIndent(D[k]));
+  }
+  var key=items.join(",")+"|"+cw+"|"+marks.map(function(x){return x.k+":"+x.x+":"+x.t}).join(",");
   if(key===lastArrows)return;
   lastArrows=key;
   var frag=document.createDocumentFragment();
+  /* 「⟪…N行⟫」は textarea の中の文字なので色を変えられない → 背景色で隠して、うすい色の同じ文字を上に重ねる */
+  marks.forEach(function(x){
+    var el=document.createElement("span");
+    el.className="mk"+(x.k===curLine?" cl":"");el.dataset.k=x.k;el.textContent=x.t;
+    el.style.top=(PAD+x.k*LH)+"px";el.style.left=x.x+"px";el.style.width=Math.ceil(x.w)+"px";
+    frag.appendChild(el);
+  });
   items.forEach(function(s){
-    var k=parseInt(s,10),f=s.charAt(s.length-1)==="f",el=document.createElement("span");
+    var m=/^(\d+)([fo])(\d+)$/.exec(s),k=+m[1],f=m[2]==="f",el=document.createElement("span");
     el.className="gf"+(f?" fd":"");el.textContent=f?"▸":"▾";
-    el.style.top=(PAD+k*LH)+"px";el.dataset.k=k;el.title=f?"開く":"折りたたむ";
+    el.style.top=(PAD+k*LH)+"px";el.style.left=Math.max(1,Math.round(PADX+(+m[3])*cw-13))+"px";
+    el.dataset.k=k;el.title=f?"開く":"折りたたむ";
     frag.appendChild(el);
   });
   gfl.textContent="";gfl.appendChild(frag);
@@ -1083,7 +1154,7 @@ function refreshEdNow(){
   var txt=a.join("\n");
   if(txt!==lastGn){
     lastGn=txt;gn.textContent=txt;
-    gutBox.style.width="calc("+Math.max(2,String(mp.total).length)+"ch + 34px)";
+    gutBox.style.width="calc("+Math.max(2,String(mp.total).length)+"ch + 16px)";
   }
   renderFind();updateCur();syncScroll();
   clearTimeout(arrowTimer);renderArrows();
@@ -1094,7 +1165,7 @@ function refreshEd(){
   var txt=a.join("\n");
   if(txt!==lastGn){
     lastGn=txt;gn.textContent=txt;
-    gutBox.style.width="calc("+Math.max(2,String(mp.total).length)+"ch + 34px)";
+    gutBox.style.width="calc("+Math.max(2,String(mp.total).length)+"ch + 16px)";
   }
   renderFind();updateCur();syncScroll();
   clearTimeout(arrowTimer);arrowTimer=setTimeout(renderArrows,150);
@@ -1147,7 +1218,7 @@ function scrollToPos(p){
   if(y<ed.scrollTop+LH||y+LH>ed.scrollTop+ed.clientHeight-LH*2)ed.scrollTop=Math.max(0,y-ed.clientHeight/2);
   var ls=v.lastIndexOf("\n",dp-1)+1;
   cvs.font=getComputedStyle(ed).font;
-  var w=cvs.measureText("0").width,x=PAD+v.slice(ls,dp).replace(/\t/g,"  ").length*w;
+  var w=cvs.measureText("0").width,x=PADX+v.slice(ls,dp).replace(/\t/g,"  ").length*w;
   if(x<ed.scrollLeft+20||x>ed.scrollLeft+ed.clientWidth-80)ed.scrollLeft=Math.max(0,x-ed.clientWidth/3);
 }
 function show(k){
