@@ -46,13 +46,15 @@ progress{width:200px;height:12px}
 <body>
 <div class="wrap">
 <h1>らくらくWebP(PNG → WebP 一括変換)</h1>
-<div id="warn">このブラウザではフォルダを直接読み書きできません。<b>Chrome または Edge</b> で開いてください。</div>
+<div id="warn">このブラウザではパソコンのフォルダを直接読み書きできません。<b>Chrome または Edge</b> で開いてください(「GitHubから開く」は他のブラウザでも使えます)。</div>
 
 <div class="bar">
   <button id="bFolder">フォルダを選ぶ</button>
+  <button id="bGh" title="GitHubのリポジトリ内のフォルダを直接読み込み、変換結果をそのままコミットします">🐙 GitHubから開く</button>
   <button id="bAll">全選択</button>
   <button id="bNone">全解除</button>
   <span class="drop" id="drop">フォルダをここへドラッグ&ドロップでも読み込めます</span>
+  <span class="hint" id="ghTag"></span>
 </div>
 <div class="tablebox"><table>
   <thead><tr><th class="c"><input type="checkbox" id="chkAll" checked></th><th>PNGファイル名</th><th class="r">元のサイズ</th><th>保存名</th><th class="r">変換後</th><th class="r">削減率</th><th>状態</th></tr></thead>
@@ -136,9 +138,10 @@ function setRow(it,cls,status){
 async function loadDir(h){
   try{if(h.requestPermission){const p=await h.requestPermission({mode:'readwrite'});if(p!=='granted'){alert('フォルダへの書き込み許可が必要です');return;}}}catch(e){}
   dirHandle=h;items=[];
+  $('ghTag').textContent=h.isGh?'GitHub: '+h.label:'';
   for await(const [name,handle] of h.entries()){
     if(handle.kind!=='file'||!/\.png$/i.test(name))continue;
-    const f=await handle.getFile();
+    const f=handle.isGh?{size:handle.ghSize}:await handle.getFile();   // GitHubのときは中身をダウンロードせず、サイズだけ使う
     items.push({handle,name,size:f.size,checked:true,out:name.replace(/\.png$/i,'.webp'),outSize:null,status:'',cls:''});
   }
   items.sort((a,b)=>collator.compare(a.name,b.name));
@@ -147,6 +150,13 @@ async function loadDir(h){
 $('bFolder').onclick=async()=>{
   if(!window.showDirectoryPicker){$('warn').style.display='block';return;}
   try{await loadDir(await showDirectoryPicker({mode:'readwrite'}));}catch(e){if(e.name!=='AbortError')alert('フォルダを開けませんでした: '+e.message);}
+};
+$('bGh').onclick=async()=>{
+  if(running)return;
+  if(!window.GhFS){alert('ghfs.js が読み込まれていません。webp.html と同じフォルダに ghfs.js を置いてください');return;}
+  const h=await GhFS.pick({purpose:'webp',title:'GitHubのPNGフォルダを開く(WebP変換)',
+    describe:i=>{const n=i.names.filter(x=>/\.png$/i.test(x)).length;return n?`PNG ${n} 件`:null;}});
+  if(h)await loadDir(h);
 };
 const drop=$('drop');
 ['dragenter','dragover'].forEach(ev=>document.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('on');}));
@@ -189,7 +199,10 @@ $('bRun').onclick=async()=>{
   if(!list.length)return;
   const o={q:$('q').value/100,max:Math.max(0,parseInt($('max').value)||0),skipBig:$('skipBig').checked,del:$('delOrig').checked,
            sub:document.querySelector('input[name=dest]:checked').value==='sub',over:$('exist').value==='over'};
-  if(o.del&&!confirm(`変換に成功した ${list.length} 件までのPNGを削除します。削除したファイルは元に戻せません。よろしいですか?`))return;
+  const gh=!!dirHandle.isGh;
+  if(gh&&!dirHandle.repo.token){alert('GitHubに保存するには、アクセストークンが必要です。\n「GitHubから開く」でトークンを入れて開き直してください。');return;}
+  if(o.del&&!confirm(gh?`変換に成功した PNG(最大 ${list.length} 件)を、GitHubのリポジトリから削除します。\n(Gitの履歴には残るので、後から戻すことはできます)よろしいですか?`
+    :`変換に成功した ${list.length} 件までのPNGを削除します。削除したファイルは元に戻せません。よろしいですか?`))return;
   running=true;stopFlag=false;update();
   let outDir;
   try{outDir=o.sub?await dirHandle.getDirectoryHandle('webp',{create:true}):dirHandle;}
@@ -217,15 +230,30 @@ $('bRun').onclick=async()=>{
   }
   await Promise.all([worker(),worker(),worker()]);
   list.forEach(i=>{if(i.status==='待機中')setRow(i,'gray','中止');});
+  let ghMsg='';
+  if(gh){
+    // GitHubのときは、ここまでの変換結果(WebPの追加・PNGの削除)を1回のコミットにまとめて送る
+    $('info').textContent='GitHubに保存中…';
+    try{
+      const n=await dirHandle.fs.commit(`editterでWebP変換: ${ok} 件${o.del?'(元PNGを削除)':''}`);
+      ghMsg=n?' ・ GitHubに保存しました(1コミット)':'';
+    }catch(e){
+      dirHandle.fs.discard();
+      list.forEach(i=>{if(i.cls==='ok')setRow(i,'bad','GitHub保存失敗: '+e.message);});
+      ng+=ok;ok=0;
+      alert('GitHubへの保存に失敗しました。変換結果は保存されていません。\n\n'+e.message);
+    }
+  }
   running=false;
   if(o.del){items=items.filter(i=>!(i.cls==='ok'));render();}
   const saved=before-after;
-  $('info').textContent=`${stopFlag?'中止しました':'完了'}:成功 ${ok} 件 / スキップ ${skip} 件 / 失敗 ${ng} 件`+(ok?` ・ ${fmt(before)} → ${fmt(after)}(${fmt(saved)} 削減)`:'');
   prog.style.display='none';
-  update();
+  update();   // 先に画面の状態を更新してから、結果の文を出す(逆だと結果の文がすぐ上書きされて読めない)
+  $('info').textContent=`${stopFlag?'中止しました':'完了'}:成功 ${ok} 件 / スキップ ${skip} 件 / 失敗 ${ng} 件`+(ok?` ・ ${fmt(before)} → ${fmt(after)}(${fmt(saved)} 削減)`:'')+ghMsg;
 };
 $('bStop').onclick=()=>{stopFlag=true;$('bStop').disabled=true;};
 </script>
-</body>
 <script src="editter.js"></script>
+<script src="ghfs.js"></script>
+</body>
 </html>

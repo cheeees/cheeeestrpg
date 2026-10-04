@@ -9,11 +9,12 @@
 (function () {
   /* ■ メニューの項目(上から順に左→右へ並ぶ)。href は editter フォルダ内のファイル名 */
   var TOOLS = [
-    { href: "main.html",         label: "embedエディタ", sub: "editter" },
-    { href: "webp.html",         label: "WebP変換",      sub: "webp" },
+    { href: "main.html",         label: "エディタ", sub: "editter" },
     { href: "chara-editter.html", label: "キャラ編集",    sub: "chara" },
     { href: "formatter.html",    label: "ログ整形",      sub: "formatter" },
-    { href: "rename.html",       label: "リネーム",      sub: "rename" }
+    { href: "webp.html",         label: "WebP変換",      sub: "webp" },
+    { href: "rename.html",       label: "リネーム",      sub: "rename" },
+    { href: "icon.html",         label: "アイコン変換",  sub: "icon" }
   ];
   /* ■ 右端の「サイトを見る」リンク先(空文字にするとリンクごと消える) */
   var SITE_URL = "../site/main.html";

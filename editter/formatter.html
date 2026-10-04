@@ -118,7 +118,9 @@ button.sub{background:#e9e9ec;color:#333}
     </div>
     <div class="controls" style="margin-top:12px">
       <button id="make">✨ 生成</button>
+      <button id="makeGh" class="sub" title="整形したHTMLを、GitHubのリポジトリ内のフォルダに直接保存(コミット)します">🐙 GitHubに保存</button>
     </div>
+    <div id="ghNote" class="note" style="margin-top:8px"></div>
   </div>
 
 </div>
@@ -1405,6 +1407,36 @@ function scrollToMessage(el,opts){
     setTimeout(()=>{URL.revokeObjectURL(url);a.remove()},1000);
   }
 
+  // GitHubのフォルダに、整形したHTMLを直接保存する(1コミット)
+  let ghBusy=false;
+  async function saveGh(){
+    if(ghBusy)return;
+    const note=$("ghNote");
+    if(!window.GhFS){alert("ghfs.js が読み込まれていません。formatter.html と同じフォルダに ghfs.js を置いてください");return;}
+    build();
+    if(!currentOutput)return;
+    const base=cleanName($("saveName").value) || defaultSaveName("");
+    const name=base+".html";
+    const dir=await GhFS.pick({purpose:"formatter",title:"GitHubの保存先フォルダを選ぶ(ログ整形)",newFolder:true});
+    if(!dir)return;
+    if(!dir.repo.token){alert("GitHubに保存するには、アクセストークンが必要です。\n「GitHubに保存」を押し直して、トークンを入れてください。");return;}
+    const full=(dir.path?dir.path+"/":"")+name;
+    if(dir.repo.cur.has(full) && !confirm("GitHubの「"+full+"」は既にあります。上書きしますか?\n(Gitの履歴には残るので、後から戻すことはできます)"))return;
+    ghBusy=true;$("makeGh").disabled=true;note.textContent="GitHubに保存中…";
+    try{
+      const fh=await dir.getFileHandle(name,{create:true});
+      const w=await fh.createWritable();
+      await w.write(new Blob([currentOutput],{type:"text/html;charset=utf-8"}));
+      await w.close();
+      const n=await dir.fs.commit("editterでログ整形を保存: "+full);
+      note.textContent=n?"GitHubに保存しました: "+dir.repo.repo+"@"+dir.repo.branch+" / "+full:"変更がないため、保存はありませんでした";
+    }catch(err){
+      try{dir.fs.discard();}catch(_){}
+      note.textContent="";
+      alert("GitHubへの保存に失敗しました。\n\n"+(err&&err.message||err));
+    }finally{ghBusy=false;$("makeGh").disabled=false;}
+  }
+
   initStillUpload();
 
   drop.addEventListener("dragover",e=>{e.preventDefault();drop.classList.add("drag")});
@@ -1413,9 +1445,11 @@ function scrollToMessage(el,opts){
   $("allOn").onclick=()=>document.querySelectorAll("#channels input").forEach(x=>x.checked=true);
   $("allOff").onclick=()=>document.querySelectorAll("#channels input").forEach(x=>x.checked=x.dataset.channel==="[メイン]");
   $("make").onclick=save;
+  $("makeGh").onclick=saveGh;
 })();
 </script>
 
 </body>
 <script src="editter.js"></script>
+<script src="ghfs.js"></script>
 </html>

@@ -5,16 +5,16 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>アイコン用画像メーカー</title>
 <style>
-:root{--bg:#fff;--fg:#333;--mut:#7a6f62;--line:#e6dccb;--main:#8e632b;--on:#fff;--soft:#fff8d6;--card:#fff;--ng:#b3261e}
+:root{--bg:#fff;--fg:#333;--mut:#7a6f62;--line:#e6dccb;--main:#8e632b;--on:#fff;--soft:#fff8d6;--card:#fff;--ng:#b3261e;--panel:var(--card);--text:var(--fg);--sub:var(--mut);--acc:var(--main);--acc-t:var(--on);--err:var(--ng)}
 *{box-sizing:border-box}
-body{margin:0;padding:20px 14px 60px;background:var(--bg);color:var(--fg);font-family:"Hiragino Maru Gothic ProN","Hiragino Sans","Yu Gothic",sans-serif;line-height:1.6}
-main{max-width:760px;margin:0 auto}
+body{margin:0;padding:0 0 60px;background:var(--bg);color:var(--fg);font-family:"Hiragino Maru Gothic ProN","Hiragino Sans","Yu Gothic",sans-serif;line-height:1.6}
+main{max-width:760px;margin:0 auto;padding:20px 14px 0}
 h1{font-size:20px;margin:0 0 8px;color:var(--main)}
 h2{font-size:14px;margin:22px 0 6px;padding-left:8px;border-left:4px solid #ffd60a;color:var(--main)}
 p.n{font-size:13px;color:var(--mut);margin:6px 0}
 ol{font-size:13px;color:var(--mut);padding-left:20px;margin:6px 0}
 textarea{width:100%;height:150px;font:12px/1.5 monospace;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg)}
-input[type=text],input[type=number]{padding:7px 8px;border:1px solid var(--line);border-radius:6px;font:inherit;background:var(--bg);color:var(--fg)}
+input[type=text],input[type=number],select{padding:7px 8px;border:1px solid var(--line);border-radius:6px;font:inherit;background:var(--bg);color:var(--fg)}
 input[type=number]{width:80px}
 input.wide{width:min(100%,320px)}
 .row{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin:10px 0}
@@ -41,6 +41,7 @@ summary{cursor:pointer;font-size:13px}
 <body>
 <main>
 <h1>アイコン用の小さい画像を作る</h1>
+<p class="n">GitHubのフォルダを直接読み書きできます(下の「GitHubから直接作る」)。ZIPをダウンロードしてアップロードし直す方法も、そのまま使えます。</p>
 <p class="n">円の中のアイコンは、元の画像を小さく縮めて表示しているので、元画像が大きいとPCでギザギザに見えます。このページで、アイコン専用の小さい画像(<b>○○_icon.webp</b>)を作ります。画像はこのページの中だけで処理され、どこにも送信されません。</p>
 <ol>
  <li>編集モードの「アイコンURLの一覧をコピー」を押して、下の枠に貼り付けます。</li>
@@ -67,6 +68,18 @@ summary{cursor:pointer;font-size:13px}
  <p class="n" id="dirn"></p>
 </details>
 
+<h2>GitHubから直接作る</h2>
+<p class="n">GitHubの <b>pic フォルダ</b>を選ぶと、そこから画像を読み込み、<b>○○_icon.webp</b> を元の画像と同じ場所に作って、そのまま1回のコミットで保存します(ZIP・アップロードは不要)。上の枠にURLを入れたときは<b>そのURLの画像だけ</b>、空欄のときはフォルダ内の画像すべて(_icon を除く)が対象です。</p>
+<div class="row">
+ <button id="gh" type="button">🐙 GitHubから開く</button>
+ <span class="n" id="ghTag"></span>
+</div>
+<div class="row">
+ <label>既に _icon.webp があるとき <select id="exist"><option value="skip">スキップ</option><option value="over">上書き</option></select></label>
+ <button class="p" id="goGh" type="button" disabled>作成してGitHubに保存</button>
+</div>
+
+<h2>サイト/手元のフォルダから作る(ZIP)</h2>
 <div class="row">
  <button class="p" id="go" type="button">作成</button>
  <button id="zip" type="button" disabled>ZIPでダウンロード</button>
@@ -163,36 +176,108 @@ async function readBitmap(url,rel){
   return {bmp:await createImageBitmap(await r.blob()),from:"サイト"};
 }
 
-$("go").onclick=async()=>{
+const IMG=/\.(webp|png|jpe?g|gif)$/i,ICON=/_icon\.[a-z]+$/i;
+let ghDir=null;
+
+// GitHubのフォルダを開く(下の階層も含めて、画像のあるフォルダを候補に出す)
+$("gh").onclick=async()=>{
+  if(!window.GhFS){alert("ghfs.js が読み込まれていません。icon.html と同じフォルダに ghfs.js を置いてください");return}
+  const d=await GhFS.pick({purpose:"icon",title:"GitHubの pic フォルダを開く(アイコン画像)",deep:true,prefer:"site/pic",
+    describe:i=>{const n=i.names.filter(x=>IMG.test(x)&&!ICON.test(x)).length;return n?"画像 "+n+" 件":null}});
+  if(d){ghDir=d;$("ghTag").textContent="GitHub: "+d.label;$("goGh").disabled=!canWebp}
+};
+// フォルダの中の画像を、下の階層まで集める
+async function walk(dir,base,out){
+  for await(const [name,h] of dir.entries()){
+    if(h.kind==="directory")await walk(h,base+name+"/",out);
+    else if(IMG.test(name)&&!ICON.test(name))out.push({rel:base+name,full:h.full,handle:h,parent:dir});
+  }
+}
+
+async function run(gh){
   const size=Math.max(32,Math.min(1024,+$("size").value||256)),q=Math.max(50,Math.min(100,+$("q").value||90))/100,origin=$("origin").value.trim()||"https://cheeees.github.io";
-  const seen=new Set(),jobs=[];let skip=0;
-  $("list").value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean).forEach(u=>{
-    const rel=relOf(u);
-    if(!rel||/_icon\.[a-z]+$/i.test(rel)){skip++;return}
-    if(seen.has(rel))return;seen.add(rel);jobs.push({u,rel});
-  });
+  const seen=new Set(),jobs=[];let skip=0,exists=0;
+  const lines=$("list").value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+  if(gh){
+    if(!ghDir){alert("先に「GitHubから開く」でフォルダを開いてください");return}
+    if(!ghDir.repo.token){alert("GitHubに保存するには、アクセストークンが必要です。\n「GitHubから開く」でトークンを入れて開き直してください。");return}
+  }
   $("grid").innerHTML="";$("sum").textContent="";made=[];$("zip").disabled=true;
-  if(!jobs.length){$("prog").textContent="作成できるURLがありません(/pic/ を含む画像のURLを1行に1つ入れてください)。";return}
-  $("go").disabled=true;let ok=0,ng=0;
+  if(gh){
+    $("go").disabled=true;$("goGh").disabled=true;$("prog").textContent="GitHubのフォルダを調べています…";
+    const files=[];
+    try{await walk(ghDir,"",files)}catch(e){$("prog").textContent="";$("sum").textContent="フォルダを調べられませんでした: "+e.message;$("go").disabled=!canWebp;$("goGh").disabled=!canWebp;return}
+    if(lines.length){
+      lines.forEach(u=>{
+        const rel=relOf(u);
+        if(!rel||ICON.test(rel)){skip++;return}
+        const f=files.find(x=>("/"+x.full).endsWith("/pic/"+rel));
+        const key=f?f.full:"?"+rel;
+        if(seen.has(key))return;seen.add(key);
+        jobs.push(f?{rel:f.rel,file:f}:{rel,missing:true});
+      });
+    }else{
+      files.forEach(f=>jobs.push({rel:f.rel,file:f}));
+      if(jobs.length&&!confirm("URLの一覧が空なので、開いたフォルダ内の画像 "+jobs.length+" 件すべてから _icon.webp を作ります。よろしいですか?\n(一部だけ作りたいときは「キャンセル」して、上の枠にURLを入れてください)")){
+        $("prog").textContent="";$("go").disabled=!canWebp;$("goGh").disabled=!canWebp;return;
+      }
+    }
+  }else{
+    lines.forEach(u=>{
+      const rel=relOf(u);
+      if(!rel||ICON.test(rel)){skip++;return}
+      if(seen.has(rel))return;seen.add(rel);jobs.push({u,rel});
+    });
+  }
+  if(!jobs.length){$("prog").textContent=gh?"作成できる画像がありません(フォルダ内に画像がない、またはURLが /pic/ を含んでいません)。":"作成できるURLがありません(/pic/ を含む画像のURLを1行に1つ入れてください)。";$("go").disabled=!canWebp;$("goGh").disabled=!(canWebp&&ghDir);return}
+  $("go").disabled=true;$("goGh").disabled=true;let ok=0,ng=0;
+  const over=$("exist").value==="over",outSeen=new Set();
   for(let i=0;i<jobs.length;i++){
-    const {u,rel}=jobs[i];
+    const job=jobs[i],rel=job.rel;
     $("prog").textContent="作成中… "+(i+1)+" / "+jobs.length+"  "+rel;
     try{
-      const {bmp,from}=await readBitmap(absUrl(u,origin),rel);
+      if(job.missing)throw new Error("開いたGitHubのフォルダの中に見つかりません(pic フォルダを選んでいますか?)");
+      let outFull="";
+      if(job.file){
+        outFull=job.file.full.replace(/\.[^./]+$/,"")+"_icon.webp";
+        if(outSeen.has(outFull))continue;outSeen.add(outFull);          // 同じ名前(png と webp など)は1回だけ
+        if(!over&&ghDir.repo.cur.has(outFull)){exists++;continue}
+      }
+      let bmp,from;
+      if(job.file){bmp=await createImageBitmap(await job.file.handle.getFile());from="GitHub"}
+      else ({bmp,from}=await readBitmap(absUrl(job.u,origin),rel));
       const cv=squareIcon(bmp,size),sw=bmp.width,sh=bmp.height;
       const blob=await new Promise(r=>cv.toBlob(r,"image/webp",q));
       if(!blob||blob.type!=="image/webp")throw new Error("webpに変換できませんでした");
       const out=rel.replace(/\.[^./]+$/,"")+"_icon.webp",data=new Uint8Array(await blob.arrayBuffer()),url=URL.createObjectURL(blob);
+      if(job.file){   // GitHubのメモリ上に書く(実際の送信は最後に1回のコミットで)
+        const wh=await job.file.parent.getFileHandle(outFull.split("/").pop(),{create:true});
+        const w=await wh.createWritable();await w.write(blob);await w.close();
+      }
       made.push({name:out,data});ok++;
       card("",`<img src="${url}" alt=""><div>${esc(out)}</div><div>${sw}×${sh} → ${cv.width}×${cv.height}<br>${kb(blob.size)}(${from})</div><div class="sm"><img src="${url}" alt=""><img src="${url}" alt=""></div><br><a href="${url}" download="${esc(out.split("/").pop())}">この1枚だけ保存</a>`);
     }catch(e){
       ng++;card("ng",`<div>${esc(rel)}</div><div class="e">${esc(e.message||e)}</div>`);
     }
   }
+  let ghMsg="";
+  if(gh&&ok){
+    $("prog").textContent="GitHubに保存中…";
+    try{
+      const n=await ghDir.fs.commit("editterでアイコン画像を作成: "+ok+" 件");
+      ghMsg=n?" / GitHubに保存しました(1コミット)。次は編集モードの「アイコンのURLを _icon.webp にする」を押してください":"";
+    }catch(e){
+      ghDir.fs.discard();
+      ghMsg=" / GitHubへの保存に失敗しました(何も保存されていません): "+e.message+"  ※読み込み直すときは「GitHubから開く」を押し直してください";
+      ng+=ok;ok=0;
+    }
+  }
   $("prog").textContent="";
-  $("sum").textContent="作成 "+ok+" 件 / 失敗 "+ng+" 件"+(skip?" / 対象外 "+skip+" 件(/pic/ を含まない・すでに _icon)":"");
-  $("zip").disabled=!ok;$("go").disabled=!canWebp;
-};
+  $("sum").textContent="作成 "+ok+" 件 / 失敗 "+ng+" 件"+(exists?" / 既にあるのでスキップ "+exists+" 件":"")+(skip?" / 対象外 "+skip+" 件(/pic/ を含まない・すでに _icon)":"")+ghMsg;
+  $("zip").disabled=!made.length||(gh&&!ok);$("go").disabled=!canWebp;$("goGh").disabled=!(canWebp&&ghDir);
+}
+$("go").onclick=()=>run(false);
+$("goGh").onclick=()=>run(true);
 
 $("zip").onclick=()=>{
   if(!made.length)return;
@@ -200,5 +285,7 @@ $("zip").onclick=()=>{
   document.body.appendChild(a);a.click();a.remove();
 };
 </script>
+<script src="editter.js"></script>
+<script src="ghfs.js"></script>
 </body>
 </html>

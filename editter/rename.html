@@ -48,16 +48,18 @@ label{cursor:pointer}
 <body>
 <div class="wrap">
 <h1>らくらくリネーム</h1>
-<div id="warn">このブラウザではフォルダ内のファイル名を直接変更できません。<b>Chrome または Edge</b> で開いてください。</div>
+<div id="warn">このブラウザではパソコンのフォルダ内のファイル名を直接変更できません。<b>Chrome または Edge</b> で開いてください(「GitHubから開く」は他のブラウザでも使えます)。</div>
 
 <div class="bar">
   <button id="bFolder">フォルダを選ぶ</button>
+  <button id="bGh" title="GitHubのリポジトリ内のフォルダを直接読み込み、名前の変更をそのままコミットします">🐙 GitHubから開く</button>
   <button id="bAll">全選択</button>
   <button id="bNone">全解除</button>
   <button id="bUp" title="選んだ行を上へ">↑</button>
   <button id="bDown" title="選んだ行を下へ">↓</button>
   <button id="bSort">名前順</button>
   <span class="drop" id="drop">フォルダをここへドラッグ&ドロップでも読み込めます</span>
+  <span class="hint" id="ghTag"></span>
 </div>
 <div class="tablebox"><table>
   <thead><tr><th class="c"><input type="checkbox" id="chkAll" checked></th><th>元の名前</th><th>仮の名前</th><th>プレビュー</th><th>状態</th></tr></thead>
@@ -341,10 +343,11 @@ async function loadDir(h){
     if(h.requestPermission){const p=await h.requestPermission({mode:'readwrite'}); if(p!=='granted'){alert('フォルダへの書き込み許可が必要です');return;}}
   }catch(e){}
   dirHandle=h; items.length=0; undoList=[]; $('bUndo').disabled=true; sel=-1;
+  $('ghTag').textContent=h.isGh?'GitHub: '+h.label+'(日時の挿入は最新コミットの時刻になります)':'';
   const list=[];
   for await(const [name,handle] of h.entries()){
     if(handle.kind!=='file') continue;
-    const f=await handle.getFile();
+    const f=handle.isGh?await handle.ghMeta():await handle.getFile();   // GitHubのときは中身をダウンロードしない
     list.push({handle,name,cur:name,mtime:f.lastModified,checked:true,newName:'',status:'',kind:'skip'});
   }
   list.sort((a,b)=>collator.compare(a.name,b.name));
@@ -356,6 +359,14 @@ $('bFolder').onclick=async()=>{
   if(!window.showDirectoryPicker){$('warn').style.display='block';return;}
   try{ await loadDir(await showDirectoryPicker({mode:'readwrite'})); }catch(e){ if(e.name!=='AbortError') alert('フォルダを開けませんでした: '+e.message); }
 };
+$('bGh').onclick=async()=>{
+  if(!window.GhFS){alert('ghfs.js が読み込まれていません。rename.html と同じフォルダに ghfs.js を置いてください');return;}
+  const h=await GhFS.pick({purpose:'rename',title:'GitHubのフォルダを開く(リネーム)',
+    describe:i=>`ファイル ${i.names.length} 件`});
+  if(h)await loadDir(h);
+};
+// GitHubへの保存に失敗したときは、メモリ上の変更を捨てて GitHub の最新を読み直す
+async function ghReload(){ await loadDir(await GhFS.reopen(dirHandle)); }
 const drop=$('drop');
 ['dragenter','dragover'].forEach(ev=>document.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('on');}));
 ['dragleave','drop'].forEach(ev=>document.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('on');}));
@@ -463,23 +474,45 @@ $('bRun').onclick=async()=>{
   let msg=`${pend.length} 件のファイルの名前を実際に変更します。よろしいですか?`;
   if(plan.length) msg+='\n\n※プレビュー中で「一時反映」していない変更は含まれません。';
   if(!confirm(msg)) return;
+  const gh=!!dirHandle.isGh;
+  if(gh&&!dirHandle.repo.token){alert('GitHubに保存するには、アクセストークンが必要です。\n「GitHubから開く」でトークンを入れて開き直してください。');return;}
   $('bRun').disabled=true;
   const pairs=pend.map(it=>({item:it,to:it.cur}));
   const undo=pairs.map(p=>({item:p.item,to:p.item.name}));
-  try{ await doRenames(pairs); }
-  catch(e){ alert('名前の変更に失敗しました。変更は元に戻しました。\n\n'+e.message); update(); return; }
+  try{
+    await doRenames(pairs);
+    if(gh){$('info').textContent='GitHubに保存中…';await dirHandle.fs.commit(`editterでリネーム: ${pairs.length} 件`);}
+  }
+  catch(e){
+    if(gh){
+      alert('GitHubへの保存に失敗しました。名前は変更されていません。GitHubの最新を読み直します。\n\n'+e.message);
+      try{await ghReload();}catch(e2){alert('読み直しに失敗しました: '+e2.message);}
+    }else{ alert('名前の変更に失敗しました。変更は元に戻しました。\n\n'+e.message); update(); }
+    return;
+  }
   undoList=undo; $('bUndo').disabled=false;
   update();
-  alert(`${pairs.length} 件の名前を変更しました。`);
+  alert(`${pairs.length} 件の名前を変更しました。`+(gh?'\n(GitHubに1コミットで保存しました)':''));
 };
 $('bUndo').onclick=async()=>{
   if(!undoList.length)return;
   const pairs=undoList.map(u=>({item:u.item,to:u.to}));
-  try{ await doRenames(pairs); }catch(e){ alert('元に戻せませんでした。\n\n'+e.message); update(); return; }
+  const gh=!!dirHandle.isGh;
+  try{
+    await doRenames(pairs);
+    if(gh){$('info').textContent='GitHubに保存中…';await dirHandle.fs.commit(`editterでリネームを元に戻す: ${pairs.length} 件`);}
+  }catch(e){
+    if(gh){
+      alert('GitHubへの保存に失敗しました。GitHubの最新を読み直します。\n\n'+e.message);
+      try{await ghReload();}catch(e2){alert('読み直しに失敗しました: '+e2.message);}
+    }else{ alert('元に戻せませんでした。\n\n'+e.message); update(); }
+    return;
+  }
   items.forEach(i=>i.cur=i.name); undoList=[]; $('bUndo').disabled=true; update();
 };
 update();
 </script>
-</body>
 <script src="editter.js"></script>
+<script src="ghfs.js"></script>
+</body>
 </html>
