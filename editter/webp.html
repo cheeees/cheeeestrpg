@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>らくらくWebP</title>
+<style>
+:root{--bg:#f4f5f7;--panel:#fff;--line:#d5d9e0;--text:#1f2430;--sub:#6b7280;--acc:#2563eb;--acc-t:#fff;--err:#dc2626;--ok:#15803d;--sel:#e6efff}
+@media (prefers-color-scheme:dark){:root{--bg:#171a21;--panel:#20242d;--line:#363c49;--text:#e6e8ee;--sub:#9aa3b2;--acc:#4f8cff;--acc-t:#fff;--err:#f87171;--ok:#4ade80;--sel:#26324d}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 "Yu Gothic UI","Meiryo",system-ui,sans-serif}
+.wrap{max-width:1100px;margin:0 auto;padding:12px 16px 40px}
+h1{font-size:18px;margin:4px 0 10px}
+.bar{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;align-items:center}
+button{font:inherit;color:var(--text);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:5px 11px;cursor:pointer}
+button:hover{border-color:var(--acc)}
+button.pri{background:var(--acc);color:var(--acc-t);border-color:var(--acc);font-weight:600;padding:8px 22px}
+button:disabled{opacity:.45;cursor:default}
+input[type=text],input[type=number],select{font:inherit;color:var(--text);background:var(--panel);border:1px solid var(--line);border-radius:5px;padding:4px 7px}
+input[type=number]{width:80px}
+input[type=range]{width:220px;vertical-align:middle}
+.drop{border:2px dashed var(--line);border-radius:8px;padding:5px 12px;color:var(--sub);font-size:13px}
+.drop.on{border-color:var(--acc);background:var(--sel)}
+.tablebox{background:var(--panel);border:1px solid var(--line);border-radius:8px;height:340px;overflow:auto}
+table{border-collapse:collapse;width:100%}
+th,td{text-align:left;padding:4px 8px;border-bottom:1px solid var(--line);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:380px}
+th{position:sticky;top:0;background:var(--panel);z-index:1;font-weight:600}
+td.c,th.c{width:34px;text-align:center}
+td.r,th.r{text-align:right}
+tr.gray td{color:var(--sub)}
+tr.bad td{color:var(--err)}
+tr.ok td.st{color:var(--ok);font-weight:600}
+tr.run td.st{color:var(--acc);font-weight:600}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 14px 10px;margin-top:12px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:6px 0}
+.grp{border:1px solid var(--line);border-radius:6px;padding:6px 12px 8px;margin:4px 0;flex:1;min-width:300px}
+.grp legend{color:var(--sub);font-size:12px;padding:0 4px}
+label{cursor:pointer}
+.hint{color:var(--sub);font-size:12px}
+.foot{display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap}
+#info{color:var(--sub)}
+#warn{display:none;background:#fef3c7;color:#92400e;border:1px solid #f59e0b;border-radius:6px;padding:8px 12px;margin-bottom:10px}
+progress{width:200px;height:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>らくらくWebP(PNG → WebP 一括変換)</h1>
+<div id="warn">このブラウザではフォルダを直接読み書きできません。<b>Chrome または Edge</b> で開いてください。</div>
+
+<div class="bar">
+  <button id="bFolder">フォルダを選ぶ</button>
+  <button id="bAll">全選択</button>
+  <button id="bNone">全解除</button>
+  <span class="drop" id="drop">フォルダをここへドラッグ&ドロップでも読み込めます</span>
+</div>
+<div class="tablebox"><table>
+  <thead><tr><th class="c"><input type="checkbox" id="chkAll" checked></th><th>PNGファイル名</th><th class="r">元のサイズ</th><th>保存名</th><th class="r">変換後</th><th class="r">削減率</th><th>状態</th></tr></thead>
+  <tbody id="tb"></tbody>
+</table></div>
+
+<div class="panel">
+  <div class="row" style="align-items:flex-start">
+    <fieldset class="grp"><legend>画質</legend>
+      <div class="row">品質 <input type="range" id="q" min="1" max="100" value="80"> <b id="qv">80</b></div>
+      <div class="hint">※数値が大きいほど高画質・大きいサイズ。透明部分はそのまま保持されます。</div>
+      <div class="row">長辺の最大 <input type="number" id="max" value="0" min="0" step="100"> px <span class="hint">(0 = 縮小しない)</span></div>
+    </fieldset>
+    <fieldset class="grp"><legend>保存先</legend>
+      <div class="row"><label><input type="radio" name="dest" value="sub" checked> 「webp」サブフォルダに保存</label></div>
+      <div class="row"><label><input type="radio" name="dest" value="same"> 同じフォルダに保存</label></div>
+      <div class="row">同名のWebPが既にあるとき
+        <select id="exist"><option value="skip">スキップ</option><option value="over">上書き</option></select></div>
+    </fieldset>
+    <fieldset class="grp"><legend>オプション</legend>
+      <div class="row"><label><input type="checkbox" id="skipBig" checked> WebPの方が大きくなる場合は保存しない</label></div>
+      <div class="row"><label><input type="checkbox" id="delOrig"> 変換成功後に元のPNGを削除する</label></div>
+      <div class="hint">※削除したファイルは元に戻せません。</div>
+    </fieldset>
+  </div>
+</div>
+
+<div class="foot">
+  <button class="pri" id="bRun" disabled>変換を実行</button>
+  <button id="bStop" disabled>中止</button>
+  <progress id="prog" value="0" max="1" style="display:none"></progress>
+  <span id="info">「フォルダを選ぶ」から、PNGが入っているフォルダを選んでください</span>
+</div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const fmt=n=>n<1024?n+' B':n<1048576?(n/1024).toFixed(1)+' KB':(n/1048576).toFixed(2)+' MB';
+const collator=new Intl.Collator('ja',{numeric:true,sensitivity:'base'});
+let dirHandle=null,items=[],running=false,stopFlag=false;
+
+function update(){
+  const n=items.filter(i=>i.checked).length;
+  $('bRun').disabled=running||!n;
+  $('bStop').disabled=!running;
+  $('chkAll').checked=items.length>0&&items.every(i=>i.checked);
+  if(!running){
+    if(!dirHandle) return;
+    const total=items.filter(i=>i.checked).reduce((s,i)=>s+i.size,0);
+    $('info').textContent=items.length?`PNG ${items.length} 件中 ${n} 件を選択中(合計 ${fmt(total)})`:'このフォルダにPNGファイルがありません';
+  }
+}
+function render(){
+  const tb=$('tb');tb.textContent='';
+  items.forEach(it=>{
+    const tr=document.createElement('tr');
+    tr.className=it.cls||'';
+    const c=document.createElement('td');c.className='c';
+    const cb=document.createElement('input');cb.type='checkbox';cb.checked=it.checked;
+    cb.onclick=()=>{it.checked=cb.checked;update();};
+    c.appendChild(cb);tr.appendChild(c);
+    const cells=[[it.name,''],[fmt(it.size),'r'],[it.out,''],[it.outSize!=null?fmt(it.outSize):'','r'],[it.outSize!=null?Math.round((1-it.outSize/it.size)*100)+'%':'','r'],[it.status,'st']];
+    for(const [t,cls] of cells){
+      const td=document.createElement('td');td.textContent=t;td.title=t;if(cls)td.className=cls;tr.appendChild(td);
+    }
+    tb.appendChild(tr);
+    it.tr=tr;
+  });
+  update();
+}
+function setRow(it,cls,status){
+  it.cls=cls;it.status=status;
+  const tr=it.tr;if(!tr)return;
+  tr.className=cls;
+  const t=tr.children;
+  t[3].textContent=it.out;t[4].textContent=it.outSize!=null?fmt(it.outSize):'';
+  t[5].textContent=it.outSize!=null?Math.round((1-it.outSize/it.size)*100)+'%':'';
+  t[6].textContent=status;t[6].title=status;
+}
+
+async function loadDir(h){
+  try{if(h.requestPermission){const p=await h.requestPermission({mode:'readwrite'});if(p!=='granted'){alert('フォルダへの書き込み許可が必要です');return;}}}catch(e){}
+  dirHandle=h;items=[];
+  for await(const [name,handle] of h.entries()){
+    if(handle.kind!=='file'||!/\.png$/i.test(name))continue;
+    const f=await handle.getFile();
+    items.push({handle,name,size:f.size,checked:true,out:name.replace(/\.png$/i,'.webp'),outSize:null,status:'',cls:''});
+  }
+  items.sort((a,b)=>collator.compare(a.name,b.name));
+  render();
+}
+$('bFolder').onclick=async()=>{
+  if(!window.showDirectoryPicker){$('warn').style.display='block';return;}
+  try{await loadDir(await showDirectoryPicker({mode:'readwrite'}));}catch(e){if(e.name!=='AbortError')alert('フォルダを開けませんでした: '+e.message);}
+};
+const drop=$('drop');
+['dragenter','dragover'].forEach(ev=>document.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('on');}));
+['dragleave','drop'].forEach(ev=>document.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('on');}));
+document.addEventListener('drop',async e=>{
+  const it=[...e.dataTransfer.items].find(x=>x.kind==='file');
+  if(!it||!it.getAsFileSystemHandle){alert('このブラウザではドラッグ&ドロップに対応していません。「フォルダを選ぶ」を使ってください');return;}
+  const h=await it.getAsFileSystemHandle();
+  if(h&&h.kind==='directory')await loadDir(h);else alert('フォルダをドロップしてください(ファイル単体は不可)');
+});
+$('bAll').onclick=()=>{items.forEach(i=>i.checked=true);render();};
+$('bNone').onclick=()=>{items.forEach(i=>i.checked=false);render();};
+$('chkAll').onclick=e=>{items.forEach(i=>i.checked=e.target.checked);render();};
+$('q').oninput=()=>{$('qv').textContent=$('q').value;};
+
+function toBlob(cv,q){return new Promise(r=>cv.toBlob(r,'image/webp',q));}
+
+async function convertOne(it,o,outDir){
+  const f=await it.handle.getFile();
+  const bmp=await createImageBitmap(f);
+  let w=bmp.width,h=bmp.height;
+  if(o.max>0&&Math.max(w,h)>o.max){const r=o.max/Math.max(w,h);w=Math.max(1,Math.round(w*r));h=Math.max(1,Math.round(h*r));}
+  const cv=document.createElement('canvas');cv.width=w;cv.height=h;
+  const ctx=cv.getContext('2d');ctx.imageSmoothingQuality='high';ctx.drawImage(bmp,0,0,w,h);bmp.close();
+  const blob=await toBlob(cv,o.q);
+  cv.width=cv.height=0;
+  if(!blob||blob.type!=='image/webp')throw new Error('このブラウザはWebP出力に対応していません');
+  it.outSize=blob.size;
+  if(o.skipBig&&blob.size>=f.size){it.outSize=null;return 'skip:PNGの方が小さいため保存せず';}
+  const nh=await outDir.getFileHandle(it.out,{create:true});
+  const wr=await nh.createWritable();
+  try{await wr.write(blob);await wr.close();}
+  catch(e){try{await wr.abort();}catch(_){}throw e;}
+  if(o.del){await dirHandle.removeEntry(it.name);}
+  return 'ok:'+(o.del?'完了(元PNGを削除)':'完了');
+}
+
+$('bRun').onclick=async()=>{
+  const list=items.filter(i=>i.checked);
+  if(!list.length)return;
+  const o={q:$('q').value/100,max:Math.max(0,parseInt($('max').value)||0),skipBig:$('skipBig').checked,del:$('delOrig').checked,
+           sub:document.querySelector('input[name=dest]:checked').value==='sub',over:$('exist').value==='over'};
+  if(o.del&&!confirm(`変換に成功した ${list.length} 件までのPNGを削除します。削除したファイルは元に戻せません。よろしいですか?`))return;
+  running=true;stopFlag=false;update();
+  let outDir;
+  try{outDir=o.sub?await dirHandle.getDirectoryHandle('webp',{create:true}):dirHandle;}
+  catch(e){alert('保存先を準備できませんでした: '+e.message);running=false;update();return;}
+  list.forEach(i=>{i.outSize=null;setRow(i,'gray','待機中');});
+  const prog=$('prog');prog.style.display='';prog.max=list.length;prog.value=0;
+  let idx=0,done=0,ok=0,skip=0,ng=0,before=0,after=0;
+  async function worker(){
+    while(!stopFlag&&idx<list.length){
+      const it=list[idx++];
+      setRow(it,'run','変換中…');
+      try{
+        if(!o.over){
+          let ex=true;try{await outDir.getFileHandle(it.out);}catch(e){ex=false;}
+          if(ex){skip++;setRow(it,'gray','スキップ(同名あり)');done++;prog.value=done;continue;}
+        }
+        const r=await convertOne(it,o,outDir);
+        const [k,msg]=[r.slice(0,r.indexOf(':')),r.slice(r.indexOf(':')+1)];
+        if(k==='ok'){ok++;before+=it.size;after+=it.outSize;setRow(it,'ok',msg);}
+        else{skip++;setRow(it,'gray',msg);}
+      }catch(e){ng++;it.outSize=null;setRow(it,'bad','失敗: '+e.message);}
+      done++;prog.value=done;
+      $('info').textContent=`変換中… ${done} / ${list.length}`;
+    }
+  }
+  await Promise.all([worker(),worker(),worker()]);
+  list.forEach(i=>{if(i.status==='待機中')setRow(i,'gray','中止');});
+  running=false;
+  if(o.del){items=items.filter(i=>!(i.cls==='ok'));render();}
+  const saved=before-after;
+  $('info').textContent=`${stopFlag?'中止しました':'完了'}:成功 ${ok} 件 / スキップ ${skip} 件 / 失敗 ${ng} 件`+(ok?` ・ ${fmt(before)} → ${fmt(after)}(${fmt(saved)} 削減)`:'');
+  prog.style.display='none';
+  update();
+};
+$('bStop').onclick=()=>{stopFlag=true;$('bStop').disabled=true;};
+</script>
+</body>
+<script src="editter.js"></script>
+</html>

@@ -1,0 +1,46 @@
+/* ================================================================
+   editter 共通メニュー  ─  editter/editter.css(見た目)
+   ・メニューは editter.js が各ページの先頭に入れます
+   ・色を変えたいときは、下の「色の設定」だけ書き換える
+   ・ほかの部分と名前がぶつからないよう、すべて et- で始めています
+   ================================================================ */
+:root {
+  --et-bg: #3a322b;      /* メニューの背景(茶) */
+  --et-line: #8e632b;    /* 下の縁・区切り */
+  --et-accent: #ffd60a;  /* 今のページの下線・ホバー */
+  --et-text: #f3ead9;    /* 文字 */
+}
+
+.et-nav {
+  flex: none; width: 100%;   /* ページ側が flex や 100% 高さでも崩れないように */
+  display: flex; align-items: stretch; justify-content: space-between; gap: 8px;
+  margin: 0; padding: 0 10px;
+  background: var(--et-bg); border-bottom: 2px solid var(--et-accent);
+  font: 13px/1.2 system-ui, "Noto Sans JP", sans-serif; letter-spacing: .04em;
+  box-sizing: border-box; overflow-x: auto; white-space: nowrap;
+}
+.et-nav * { box-sizing: border-box; }
+.et-nav ul { display: flex; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.et-nav a {
+  position: relative; display: block; padding: 11px 12px 9px;
+  color: var(--et-text); text-decoration: none; text-align: center;
+}
+.et-nav ul a small { display: block; margin-top: 3px; font-size: 10px; opacity: .55; }
+/* 下線: 茶色が中央に縮み、黄色が中央から広がる(サイト本体のメニューと同じ動き) */
+.et-nav ul a::before, .et-nav ul a::after { content: ""; position: absolute; bottom: 0; height: 2px; transition: .15s; }
+.et-nav ul a::before { left: 0; right: 0; background: var(--et-line); }
+.et-nav ul a::after { left: 50%; right: 50%; background: var(--et-accent); transition-delay: .15s; }
+.et-nav ul a:hover::before, .et-nav ul a[aria-current="page"]::before { left: 50%; right: 50%; }
+.et-nav ul a:hover::after, .et-nav ul a[aria-current="page"]::after { left: 0; right: 0; }
+.et-nav ul a[aria-current="page"] { color: var(--et-accent); font-weight: 700; }
+.et-nav a:focus-visible { outline: 2px solid var(--et-accent); outline-offset: -2px; }
+
+.et-nav .et-site { align-self: center; flex: none; padding: 5px 10px; border: 1px solid var(--et-line); border-radius: 6px; font-size: 12px; }
+.et-nav .et-site:hover { background: var(--et-accent); border-color: var(--et-accent); color: #222; }
+
+@media (max-width: 600px) {
+  .et-nav { padding: 0 4px; }
+  .et-nav a { padding: 9px 8px 8px; }
+  .et-nav ul a small { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .et-nav ul a::before, .et-nav ul a::after { transition: none; } }

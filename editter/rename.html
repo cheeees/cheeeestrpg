@@ -1,0 +1,485 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>らくらくリネーム</title>
+<style>
+:root{--bg:#f4f5f7;--panel:#fff;--line:#d5d9e0;--text:#1f2430;--sub:#6b7280;--acc:#2563eb;--acc-t:#fff;--err:#dc2626;--ok:#15803d;--sel:#e6efff}
+@media (prefers-color-scheme:dark){:root{--bg:#171a21;--panel:#20242d;--line:#363c49;--text:#e6e8ee;--sub:#9aa3b2;--acc:#4f8cff;--acc-t:#fff;--err:#f87171;--ok:#4ade80;--sel:#26324d}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 "Yu Gothic UI","Meiryo",system-ui,sans-serif}
+.wrap{max-width:1100px;margin:0 auto;padding:12px 16px 40px}
+h1{font-size:18px;margin:4px 0 10px}
+.bar{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;align-items:center}
+button{font:inherit;color:var(--text);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:5px 11px;cursor:pointer}
+button:hover{border-color:var(--acc)}
+button.pri{background:var(--acc);color:var(--acc-t);border-color:var(--acc);font-weight:600;padding:8px 22px}
+button:disabled{opacity:.45;cursor:default}
+input[type=text],input[type=number],select{font:inherit;color:var(--text);background:var(--panel);border:1px solid var(--line);border-radius:5px;padding:4px 7px}
+input[type=number]{width:70px}
+.drop{border:2px dashed var(--line);border-radius:8px;padding:5px 12px;color:var(--sub);font-size:13px}
+.drop.on{border-color:var(--acc);background:var(--sel)}
+.tablebox{background:var(--panel);border:1px solid var(--line);border-radius:8px;height:340px;overflow:auto}
+table{border-collapse:collapse;width:100%}
+th,td{text-align:left;padding:4px 8px;border-bottom:1px solid var(--line);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:380px}
+th{position:sticky;top:0;background:var(--panel);z-index:1;font-weight:600}
+td.c,th.c{width:34px;text-align:center}
+tr.sel td{background:var(--sel)}
+tr.gray td{color:var(--sub)}
+tr.bad td{color:var(--err)}
+td.pend{color:var(--acc);font-weight:600}
+tr:not(.gray):not(.bad) td.after{color:var(--ok);font-weight:600}
+.tabs{display:flex;gap:2px;margin-top:12px}
+.tab{padding:6px 18px;border:1px solid var(--line);border-bottom:none;border-radius:8px 8px 0 0;background:var(--bg);cursor:pointer}
+.tab.on{background:var(--panel);font-weight:600;color:var(--acc)}
+.pane{display:none;background:var(--panel);border:1px solid var(--line);border-radius:0 8px 8px 8px;padding:12px 14px}
+.pane.on{display:block}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:6px 0}
+.grp{border:1px solid var(--line);border-radius:6px;padding:6px 12px 8px;margin:4px 0}
+.grp legend{color:var(--sub);font-size:12px;padding:0 4px}
+label{cursor:pointer}
+.hint{color:var(--sub);font-size:12px}
+.foot{display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap}
+#info{color:var(--sub)}
+#warn{display:none;background:#fef3c7;color:#92400e;border:1px solid #f59e0b;border-radius:6px;padding:8px 12px;margin-bottom:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>らくらくリネーム</h1>
+<div id="warn">このブラウザではフォルダ内のファイル名を直接変更できません。<b>Chrome または Edge</b> で開いてください。</div>
+
+<div class="bar">
+  <button id="bFolder">フォルダを選ぶ</button>
+  <button id="bAll">全選択</button>
+  <button id="bNone">全解除</button>
+  <button id="bUp" title="選んだ行を上へ">↑</button>
+  <button id="bDown" title="選んだ行を下へ">↓</button>
+  <button id="bSort">名前順</button>
+  <span class="drop" id="drop">フォルダをここへドラッグ&ドロップでも読み込めます</span>
+</div>
+<div class="tablebox"><table>
+  <thead><tr><th class="c"><input type="checkbox" id="chkAll" checked></th><th>元の名前</th><th>仮の名前</th><th>プレビュー</th><th>状態</th></tr></thead>
+  <tbody id="tb"></tbody>
+</table></div>
+
+<div class="tabs" id="tabs">
+  <div class="tab on" data-i="0">追加</div><div class="tab" data-i="1">削除</div><div class="tab" data-i="2">変換</div><div class="tab" data-i="3">置換</div>
+</div>
+
+<!-- 追加 -->
+<div class="pane on" data-i="0">
+  <div class="row" style="align-items:flex-start">
+    <fieldset class="grp"><legend>挿入位置</legend>
+      <div class="row"><label><input type="radio" name="apos" value="first" checked> 先頭に追加</label></div>
+      <div class="row"><label><input type="radio" name="apos" value="last"> 末尾に追加(拡張子の前)</label></div>
+      <div class="row"><label><input type="radio" name="apos" value="pos"> 先頭から</label><input type="number" id="aPos" value="1" min="0"> 文字の後ろに追加</div>
+    </fieldset>
+    <fieldset class="grp" style="flex:1;min-width:420px"><legend>追加する内容</legend>
+      <div class="row"><label><input type="radio" name="akind" value="str" checked> 文字列</label><input type="text" id="aStr" size="30"></div>
+      <div class="row"><label><input type="radio" name="akind" value="num"> 連番</label>
+        開始値 <input type="text" id="aStart" value="01" size="8">
+        増分 <input type="number" id="aDiff" value="1">
+        前に <input type="text" id="aPre" size="6"> 後に <input type="text" id="aSuf" size="6"></div>
+      <div class="hint">※開始値に入力した桁数でゼロ埋めされます。0はいくつでもOK(例: 001 → 001, 002, 003 / 00001 → 00001, 00002…)</div>
+      <div class="row"><label><input type="radio" name="akind" value="date"> 日時</label>
+        <select id="aDate"></select>
+        <label><input type="checkbox" id="aMtime"> ファイルの更新日時を使う</label></div>
+    </fieldset>
+  </div>
+</div>
+
+<!-- 削除 -->
+<div class="pane" data-i="1">
+  <div class="row"><label><input type="radio" name="dkind" value="first" checked> 先頭から</label><input type="number" id="dFirst" value="1" min="1"> 文字を削除</div>
+  <div class="row"><label><input type="radio" name="dkind" value="last"> 末尾から</label><input type="number" id="dLast" value="1" min="1"> 文字を削除</div>
+  <div class="row"><label><input type="radio" name="dkind" value="pos"> 位置を指定</label><input type="number" id="dStart" value="1" min="1"> 文字目から <input type="number" id="dLen" value="1" min="1"> 文字を削除</div>
+  <div class="row"><label><input type="radio" name="dkind" value="str"> 文字列を削除</label><input type="text" id="dStr" size="28"> <label><input type="checkbox" id="dRe"> 正規表現</label></div>
+  <div class="row"><label><input type="radio" name="dkind" value="sym"> 記号などを削除</label><select id="dSym"></select></div>
+</div>
+
+<!-- 変換 -->
+<div class="pane" data-i="2">
+  <div class="row" style="align-items:flex-start;gap:40px">
+    <div>
+      <div class="row"><label><input type="radio" name="ckind" value="up" checked> 大文字にする (abc → ABC)</label></div>
+      <div class="row"><label><input type="radio" name="ckind" value="low"> 小文字にする (ABC → abc)</label></div>
+      <div class="row"><label><input type="radio" name="ckind" value="wide"> 全角にする (英数記号・カナ)</label></div>
+      <div class="row"><label><input type="radio" name="ckind" value="narrow"> 半角にする (英数記号・カナ)</label></div>
+    </div>
+    <div>
+      <div class="row"><label><input type="radio" name="ckind" value="hk2fk"> 半角カナ → 全角カナ</label></div>
+      <div class="row"><label><input type="radio" name="ckind" value="fk2hk"> 全角カナ → 半角カナ</label></div>
+      <div class="row"><label><input type="radio" name="ckind" value="k2h"> カタカナ → ひらがな</label></div>
+      <div class="row"><label><input type="radio" name="ckind" value="h2k"> ひらがな → カタカナ</label></div>
+    </div>
+  </div>
+  <div class="row"><label><input type="checkbox" id="cExt"> 拡張子も変換する</label></div>
+</div>
+
+<!-- 置換 -->
+<div class="pane" data-i="3">
+  <div class="row">置換前: <input type="text" id="rBefore" size="40"></div>
+  <div class="row">置換後: <input type="text" id="rAfter" size="40"></div>
+  <div class="row"><label><input type="checkbox" id="rRe"> 正規表現</label><label><input type="checkbox" id="rIc"> 大文字小文字を区別しない</label><label><input type="checkbox" id="rExt"> 拡張子も対象にする</label></div>
+  <div class="hint">※置換後を空にすると、置換前の文字列を削除できます</div>
+</div>
+
+<div class="foot">
+  <button id="bTemp" disabled title="プレビューの内容を仮の名前として保存します(実際のファイルはまだ変わりません)">一時反映</button>
+  <button id="bReset" disabled title="仮の名前をすべて元の名前に戻します">仮を取り消す</button>
+  <button class="pri" id="bRun" disabled title="仮の名前を実際のファイルに反映します">実行</button>
+  <button id="bUndo" disabled>元に戻す</button>
+  <span id="info">「フォルダを選ぶ」から、リネームしたいファイルが入っているフォルダを選んでください</span>
+</div>
+</div>
+
+<script>
+/*LOGIC*/
+const KANA_H = '｡｢｣､･ｦｧｨｩｪｫｬｭｮｯｰｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ';
+const KANA_F = '。「」、・ヲァィゥェォャュョッーアイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワン';
+function hk2fk(s){
+  let out='';
+  for(const ch of s){
+    const i=KANA_H.indexOf(ch);
+    if(i>=0) out+=KANA_F[i];
+    else if(ch==='ﾞ') out+='゙';
+    else if(ch==='ﾟ') out+='゚';
+    else out+=ch;
+  }
+  return out.normalize('NFC');
+}
+function fk2hk(s){
+  let out='';
+  s=s.replace(/[\u30A1-\u30FA]/g,c=>c.normalize('NFD'));
+  for(const ch of s){
+    const i=KANA_F.indexOf(ch);
+    if(i>=0) out+=KANA_H[i];
+    else if(ch==='゙') out+='ﾞ';
+    else if(ch==='゚') out+='ﾟ';
+    else out+=ch;
+  }
+  return out;
+}
+function asciiWide(s){return s.replace(/[!-~]/g,c=>String.fromCharCode(c.charCodeAt(0)+0xFEE0)).replace(/ /g,'　');}
+function asciiNarrow(s){return s.replace(/[！-～]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0)).replace(/　/g,' ');}
+function toWide(s){return hk2fk(asciiWide(s));}
+function toNarrow(s){return fk2hk(asciiNarrow(s));}
+function k2h(s){return hk2fk(s).replace(/[ァ-ヶ]/g,c=>String.fromCharCode(c.charCodeAt(0)-0x60));}
+function h2k(s){return s.replace(/[ぁ-ゖ]/g,c=>String.fromCharCode(c.charCodeAt(0)+0x60));}
+function convert(kind,s){
+  switch(kind){
+    case 'up':return s.toUpperCase();
+    case 'low':return s.toLowerCase();
+    case 'wide':return toWide(s);
+    case 'narrow':return toNarrow(s);
+    case 'hk2fk':return hk2fk(s);
+    case 'fk2hk':return fk2hk(s);
+    case 'k2h':return k2h(s);
+    case 'h2k':return h2k(s);
+  }
+  return s;
+}
+function splitExt(name){
+  const i=name.lastIndexOf('.');
+  if(i>0) return [name.slice(0,i),name.slice(i)];
+  return [name,''];
+}
+const pad2=(n,w=2)=>String(n).padStart(w,'0');
+function fmtDate(fmt,d){
+  const map={yyyy:d.getFullYear(),MM:pad2(d.getMonth()+1),dd:pad2(d.getDate()),HH:pad2(d.getHours()),mm:pad2(d.getMinutes()),ss:pad2(d.getSeconds()),fff:pad2(d.getMilliseconds(),3)};
+  return fmt.replace(/yyyy|MM|dd|HH|mm|ss|fff/g,t=>map[t]);
+}
+function seqText(startStr,diff,seq,pre,suf){
+  const s=startStr.trim();
+  if(!/^[0-9]+$/.test(s)) throw new Error('開始値は半角数字で入力してください');
+  let v=BigInt(s)+BigInt(diff)*BigInt(seq);
+  if(v<0n) v=0n;
+  return pre+v.toString().padStart(s.length,'0')+suf;
+}
+const SYMS=[
+  ['" (1)" のような連番(前の空白ごと)',/ \(\d+\)/g],
+  ['"(1)" のような連番',/\(\d+\)/g],
+  ['( ) 内を中身ごと',/\([^)]*\)/g],
+  ['[ ] 内を中身ごと',/\[[^\]]*\]/g],
+  ['【 】内を中身ごと',/【[^】]*】/g],
+  ['空白(半角・全角)すべて',/[\s　]+/g],
+];
+// opts: {tab, ...}
+function newName(name,seq,mtime,o){
+  let [base,ext]=splitExt(name);
+  if(o.tab===0){
+    let ins;
+    if(o.akind==='str') ins=o.aStr;
+    else if(o.akind==='num') ins=seqText(o.aStart,o.aDiff,seq,o.aPre,o.aSuf);
+    else ins=fmtDate(o.aDate,o.aMtime?new Date(mtime):o.now);
+    if(o.apos==='first') base=ins+base;
+    else if(o.apos==='last') base=base+ins;
+    else {const p=Math.min(Math.max(0,o.aPos),base.length);base=base.slice(0,p)+ins+base.slice(p);}
+  }else if(o.tab===1){
+    const L=base.length;
+    if(o.dkind==='first') base=o.dFirst>=L?'':base.slice(o.dFirst);
+    else if(o.dkind==='last') base=o.dLast>=L?'':base.slice(0,L-o.dLast);
+    else if(o.dkind==='pos'){const st=o.dStart-1; if(st<L) base=base.slice(0,st)+base.slice(st+o.dLen);}
+    else if(o.dkind==='str'){
+      if(o.dStr!==''){ base=o.dRe?base.replace(new RegExp(o.dStr,'g'),''):base.split(o.dStr).join(''); }
+    }else base=base.replace(SYMS[o.dSym][1],'');
+  }else if(o.tab===2){
+    if(o.cExt) return convert(o.ckind,base+ext);
+    base=convert(o.ckind,base);
+  }else{
+    const rep=s=>{
+      if(o.rBefore==='') return s;
+      const fl='g'+(o.rIc?'i':'');
+      if(o.rRe) return s.replace(new RegExp(o.rBefore,fl),o.rAfter);
+      return s.replace(new RegExp(o.rBefore.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),fl),()=>o.rAfter);
+    };
+    if(o.rExt) return rep(base+ext);
+    base=rep(base);
+  }
+  return base+ext;
+}
+function checkName(n){
+  if(n.trim()==='') throw new Error('名前が空になります');
+  if(/[\\\/:*?"<>|\u0000-\u001f]/.test(n)) throw new Error('使えない文字が含まれます');
+  if(/[. ]$/.test(n)) throw new Error('末尾が . か空白です');
+  if(/^(con|prn|aux|nul|com[1-9]|lpt[1-9])(\..*)?$/i.test(n)) throw new Error('予約された名前です');
+  if(n.length>255) throw new Error('名前が長すぎます');
+}
+/*END*/
+
+/* ============ UI ============ */
+const $=id=>document.getElementById(id);
+const items=[]; // {handle,name,mtime,checked,newName,status,kind}
+let dirHandle=null, sel=-1, undoList=[];
+const collator=new Intl.Collator('ja',{numeric:true,sensitivity:'base'});
+
+if(!window.showDirectoryPicker) $('warn').style.display='block';
+
+['yyyyMMdd','yyyyMMdd-HHmmss','yyyyMMdd_HHmmss','yyyy-MM-dd','yyyy_MM_dd','yyyy-MM-dd_HH-mm-ss','yyyy_MM_dd_HH_mm_ss','yyyyMM','yyyy-MM','yyyy_MM','HHmmss','HH-mm-ss','HH_mm_ss','yyyy-MM-dd_HH-mm','yyyy_MM_dd_HH_mm','yyyyMMddHHmmssfff'].forEach(f=>$('aDate').add(new Option(f,f)));
+SYMS.forEach((s,i)=>$('dSym').add(new Option(s[0],i)));
+
+const radio=n=>document.querySelector(`input[name="${n}"]:checked`).value;
+function opts(){
+  return {
+    tab:+document.querySelector('.tab.on').dataset.i, now:new Date(),
+    apos:radio('apos'),akind:radio('akind'),
+    aStr:$('aStr').value,aStart:$('aStart').value,aDiff:+$('aDiff').value||0,aPre:$('aPre').value,aSuf:$('aSuf').value,
+    aDate:$('aDate').value,aMtime:$('aMtime').checked,aPos:+$('aPos').value||0,
+    dkind:radio('dkind'),dFirst:+$('dFirst').value||1,dLast:+$('dLast').value||1,dStart:+$('dStart').value||1,dLen:+$('dLen').value||1,
+    dStr:$('dStr').value,dRe:$('dRe').checked,dSym:+$('dSym').value,
+    ckind:radio('ckind'),cExt:$('cExt').checked,
+    rBefore:$('rBefore').value,rAfter:$('rAfter').value,rRe:$('rRe').checked,rIc:$('rIc').checked,rExt:$('rExt').checked
+  };
+}
+
+let plan=[], problems=0;
+function update(){
+  const o=opts(); plan=[]; problems=0;
+  let seq=0, nChecked=0;
+  for(const it of items){
+    it.newName='';it.status=(it.cur!==it.name?'仮反映済み':'');it.kind='skip';
+    if(!it.checked) continue;
+    nChecked++;
+    try{
+      const n=newName(it.cur,seq,it.mtime,o);
+      checkName(n);
+      it.newName=n;
+      if(n===it.cur){it.kind='same';it.status='変更なし';}
+      else {it.kind='ok';it.status='OK';}
+    }catch(e){it.kind='bad';it.status='エラー: '+e.message;}
+    if(it.kind==='same'&&it.cur!==it.name) it.status='変更なし(仮反映済み)';
+    seq++;
+  }
+  // 重複チェック(最終的な名前で比較)
+  const cnt=new Map();
+  for(const it of items){
+    const fin=(it.kind==='ok')?it.newName:it.cur;
+    const k=fin.toLowerCase();
+    cnt.set(k,(cnt.get(k)||0)+1);
+  }
+  let changed=0, dups=0;
+  for(const it of items){
+    if(it.kind==='ok'){
+      if(cnt.get(it.newName.toLowerCase())>1){it.kind='dup';it.status='重複する名前があります(実行前に解消が必要)';dups++;}
+      changed++;plan.push(it);
+    }
+    if(it.kind==='bad') problems++;
+  }
+  const cc=new Map();
+  for(const it of items){const k=it.cur.toLowerCase();cc.set(k,(cc.get(k)||0)+1);}
+  for(const it of items){ if(it.cur!==it.name&&cc.get(it.cur.toLowerCase())>1&&it.kind!=='dup'&&it.kind!=='ok') it.status='仮の名前が重複しています'; }
+  render();
+  $('info').textContent=items.length?`${items.length} 件中 ${nChecked} 件チェック ・ 変更あり ${changed} 件`+(problems?` ・ 問題あり ${problems} 件`:'')+(dups?` ・ 名前の重複 ${dups} 件`:''):'「フォルダを選ぶ」から、リネームしたいファイルが入っているフォルダを選んでください';
+  const pend=items.filter(i=>i.cur!==i.name).length;
+  $('bTemp').disabled=!plan.length;
+  $('bReset').disabled=!pend;
+  $('bRun').disabled=!pend;
+  if(pend) $('info').textContent+=` ・ 仮反映 ${pend} 件(実行で実ファイルに反映)`;
+  $('chkAll').checked=items.length>0&&items.every(i=>i.checked);
+}
+function render(){
+  const tb=$('tb'); tb.textContent='';
+  items.forEach((it,i)=>{
+    const tr=document.createElement('tr');
+    tr.className=(i===sel?'sel ':'')+(it.kind==='bad'||it.kind==='dup'?'bad':(it.kind==='same'||it.kind==='skip')?'gray':'');
+    const c=document.createElement('td');c.className='c';
+    const cb=document.createElement('input');cb.type='checkbox';cb.checked=it.checked;
+    cb.onclick=e=>{e.stopPropagation();it.checked=cb.checked;update();};
+    c.appendChild(cb);tr.appendChild(c);
+    for(const [t,cls] of [[it.name,''],[it.cur!==it.name?it.cur:'','pend'],[it.newName,'after'],[it.status,'']]){
+      const td=document.createElement('td');td.textContent=t;td.title=t;if(cls)td.className=cls;tr.appendChild(td);
+    }
+    tr.onclick=()=>{sel=i;render();};
+    tb.appendChild(tr);
+  });
+}
+
+async function loadDir(h){
+  try{
+    if(h.requestPermission){const p=await h.requestPermission({mode:'readwrite'}); if(p!=='granted'){alert('フォルダへの書き込み許可が必要です');return;}}
+  }catch(e){}
+  dirHandle=h; items.length=0; undoList=[]; $('bUndo').disabled=true; sel=-1;
+  const list=[];
+  for await(const [name,handle] of h.entries()){
+    if(handle.kind!=='file') continue;
+    const f=await handle.getFile();
+    list.push({handle,name,cur:name,mtime:f.lastModified,checked:true,newName:'',status:'',kind:'skip'});
+  }
+  list.sort((a,b)=>collator.compare(a.name,b.name));
+  items.push(...list);
+  update();
+}
+
+$('bFolder').onclick=async()=>{
+  if(!window.showDirectoryPicker){$('warn').style.display='block';return;}
+  try{ await loadDir(await showDirectoryPicker({mode:'readwrite'})); }catch(e){ if(e.name!=='AbortError') alert('フォルダを開けませんでした: '+e.message); }
+};
+const drop=$('drop');
+['dragenter','dragover'].forEach(ev=>document.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('on');}));
+['dragleave','drop'].forEach(ev=>document.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('on');}));
+document.addEventListener('drop',async e=>{
+  const it=[...e.dataTransfer.items].find(x=>x.kind==='file');
+  if(!it||!it.getAsFileSystemHandle){alert('このブラウザではドラッグ&ドロップに対応していません。「フォルダを選ぶ」を使ってください');return;}
+  const h=await it.getAsFileSystemHandle();
+  if(h&&h.kind==='directory') await loadDir(h); else alert('フォルダをドロップしてください(ファイル単体は不可)');
+});
+
+$('bAll').onclick=()=>{items.forEach(i=>i.checked=true);update();};
+$('bNone').onclick=()=>{items.forEach(i=>i.checked=false);update();};
+$('chkAll').onclick=e=>{items.forEach(i=>i.checked=e.target.checked);update();};
+function move(d){
+  if(sel<0)return; const j=sel+d; if(j<0||j>=items.length)return;
+  [items[sel],items[j]]=[items[j],items[sel]]; sel=j; update();
+}
+$('bUp').onclick=()=>move(-1);
+$('bDown').onclick=()=>move(1);
+$('bSort').onclick=()=>{items.sort((a,b)=>collator.compare(a.name,b.name));sel=-1;update();};
+
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x===t));
+  document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('on',p.dataset.i===t.dataset.i));
+  update();
+});
+document.querySelectorAll('.pane input,.pane select').forEach(e=>{e.addEventListener('input',update);e.addEventListener('change',update);});
+
+/* ---- 実リネーム ---- */
+let useCopy=false; // move() が使えない環境ではコピー+削除に切り替え
+async function renameOne(handle,newN){
+  if(!useCopy && handle.move){
+    try{ await handle.move(newN); return handle; }
+    catch(e){ useCopy=true; }
+  }
+  // コピーして元を削除(更新日時は引き継がれません)
+  let exists=true;
+  try{ await dirHandle.getFileHandle(newN); }catch(e){ exists=false; }
+  if(exists) throw new Error('同名のファイルが既にあります: '+newN);
+  const f=await handle.getFile();
+  const nh=await dirHandle.getFileHandle(newN,{create:true});
+  try{
+    const w=await nh.createWritable();
+    await f.stream().pipeTo(w);
+  }catch(e){
+    try{ await dirHandle.removeEntry(newN); }catch(e2){}
+    throw e;
+  }
+  await dirHandle.removeEntry(handle.name);
+  return nh;
+}
+// pairs: [{item, to}]。名前が衝突しうる場合だけ仮名経由の2段階にする。失敗時は戻す。
+async function doRenames(pairs){
+  const src=new Set(pairs.map(p=>p.item.name.toLowerCase()));
+  const two=pairs.some(p=>src.has(p.to.toLowerCase()));
+  const done=[];
+  const tmpName=()=>'~rr_'+Math.random().toString(36).slice(2)+Date.now().toString(36)+'.tmp';
+  try{
+    if(two){
+      for(const p of pairs){
+        const orig=p.item.name, tmp=tmpName();
+        p.item.handle=await renameOne(p.item.handle,tmp);
+        p.item.name=tmp;
+        done.push({item:p.item,orig});
+      }
+      for(const d of done){
+        const to=pairs.find(p=>p.item===d.item).to;
+        d.item.handle=await renameOne(d.item.handle,to);
+        d.item.name=to;
+      }
+    }else{
+      for(const p of pairs){
+        const orig=p.item.name;
+        p.item.handle=await renameOne(p.item.handle,p.to);
+        p.item.name=p.to;
+        done.push({item:p.item,orig});
+      }
+    }
+  }catch(err){
+    for(const d of done){
+      try{ d.item.handle=await renameOne(d.item.handle,d.orig); d.item.name=d.orig; }catch(e2){}
+    }
+    throw err;
+  }
+}
+
+$('bTemp').onclick=()=>{
+  update();
+  if(problems){alert(`状態欄に問題のある項目が ${problems} 件あります。直してから一時反映してください。`);return;}
+  if(!plan.length)return;
+  for(const it of plan) it.cur=it.newName;
+  update();
+  if(items.some((a,i)=>items.some((b,j)=>i<j&&a.cur.toLowerCase()===b.cur.toLowerCase()))) $('info').textContent+=' ・ ⚠仮の名前に重複あり(実行前に直してください)';
+};
+$('bReset').onclick=()=>{
+  if(!confirm('仮の名前をすべて取り消して、元の名前に戻します。よろしいですか?'))return;
+  items.forEach(i=>i.cur=i.name); update();
+};
+$('bRun').onclick=async()=>{
+  const pend=items.filter(i=>i.cur!==i.name);
+  if(!pend.length){alert('仮反映された変更がありません。先に「一時反映」を押してください。');return;}
+  const seen=new Map(); let dup=null;
+  for(const i of items){const k=i.cur.toLowerCase(); if(seen.has(k)) dup=i.cur; seen.set(k,1);}
+  if(dup){alert('仮の名前が重複しています: '+dup+'\n「仮を取り消す」で戻すか、設定を直して仮反映し直してください。');return;}
+  let msg=`${pend.length} 件のファイルの名前を実際に変更します。よろしいですか?`;
+  if(plan.length) msg+='\n\n※プレビュー中で「一時反映」していない変更は含まれません。';
+  if(!confirm(msg)) return;
+  $('bRun').disabled=true;
+  const pairs=pend.map(it=>({item:it,to:it.cur}));
+  const undo=pairs.map(p=>({item:p.item,to:p.item.name}));
+  try{ await doRenames(pairs); }
+  catch(e){ alert('名前の変更に失敗しました。変更は元に戻しました。\n\n'+e.message); update(); return; }
+  undoList=undo; $('bUndo').disabled=false;
+  update();
+  alert(`${pairs.length} 件の名前を変更しました。`);
+};
+$('bUndo').onclick=async()=>{
+  if(!undoList.length)return;
+  const pairs=undoList.map(u=>({item:u.item,to:u.to}));
+  try{ await doRenames(pairs); }catch(e){ alert('元に戻せませんでした。\n\n'+e.message); update(); return; }
+  items.forEach(i=>i.cur=i.name); undoList=[]; $('bUndo').disabled=true; update();
+};
+update();
+</script>
+</body>
+<script src="editter.js"></script>
+</html>

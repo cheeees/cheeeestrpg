@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>アイコン用画像メーカー</title>
+<style>
+:root{--bg:#fff;--fg:#333;--mut:#7a6f62;--line:#e6dccb;--main:#8e632b;--on:#fff;--soft:#fff8d6;--card:#fff;--ng:#b3261e}
+*{box-sizing:border-box}
+body{margin:0;padding:20px 14px 60px;background:var(--bg);color:var(--fg);font-family:"Hiragino Maru Gothic ProN","Hiragino Sans","Yu Gothic",sans-serif;line-height:1.6}
+main{max-width:760px;margin:0 auto}
+h1{font-size:20px;margin:0 0 8px;color:var(--main)}
+h2{font-size:14px;margin:22px 0 6px;padding-left:8px;border-left:4px solid #ffd60a;color:var(--main)}
+p.n{font-size:13px;color:var(--mut);margin:6px 0}
+ol{font-size:13px;color:var(--mut);padding-left:20px;margin:6px 0}
+textarea{width:100%;height:150px;font:12px/1.5 monospace;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg)}
+input[type=text],input[type=number]{padding:7px 8px;border:1px solid var(--line);border-radius:6px;font:inherit;background:var(--bg);color:var(--fg)}
+input[type=number]{width:80px}
+input.wide{width:min(100%,320px)}
+.row{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin:10px 0}
+.row label{font-size:13px;color:var(--mut)}
+button,a.btn{padding:9px 16px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--fg);font:inherit;cursor:pointer;text-decoration:none;display:inline-block}
+button.p{background:var(--main);color:var(--on);border-color:var(--main)}
+button:disabled{opacity:.4;cursor:not-allowed}
+details{margin:10px 0;padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--soft)}
+summary{cursor:pointer;font-size:13px}
+#warn{display:none;margin:10px 0;padding:8px 12px;border-radius:8px;background:#fde7e5;color:var(--ng);font-size:13px}
+#prog{font-size:13px;color:var(--mut);margin:8px 0;min-height:1.6em}
+#sum{font-size:14px;font-weight:700;margin:10px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.it{border:1px solid var(--line);border-radius:10px;padding:8px;text-align:center;background:var(--card);font-size:11px;color:var(--mut);word-break:break-all}
+.it img{width:96px;height:96px;border-radius:50%;object-fit:cover;border:2px solid var(--line);display:block;margin:0 auto 6px;background:#f4efe6}
+.it.ng{border-color:var(--ng)}
+.it.ng .e{color:var(--ng)}
+.it a{color:var(--main);display:inline-block;margin-top:4px}
+.sm{display:inline-flex;gap:3px;margin-top:4px}
+.sm img{width:44px;height:44px;margin:0;border-width:3px}
+.sm img+img{width:16px;height:16px;border-width:2px;align-self:center}
+</style>
+</head>
+<body>
+<main>
+<h1>アイコン用の小さい画像を作る</h1>
+<p class="n">円の中のアイコンは、元の画像を小さく縮めて表示しているので、元画像が大きいとPCでギザギザに見えます。このページで、アイコン専用の小さい画像(<b>○○_icon.webp</b>)を作ります。画像はこのページの中だけで処理され、どこにも送信されません。</p>
+<ol>
+ <li>編集モードの「アイコンURLの一覧をコピー」を押して、下の枠に貼り付けます。</li>
+ <li>「作成」を押すと、サイトから元画像を読み込んで、小さい画像を作ります。</li>
+ <li>「ZIPでダウンロード」で、まとめて保存します。解凍して、中のフォルダを <b>pic フォルダに重ねてアップロード</b>(元の画像と同じ場所に ○○_icon.webp が並ぶようにします)。</li>
+ <li>編集モードの「アイコンのURLを _icon.webp にする」を押します。</li>
+</ol>
+
+<div id="warn">このブラウザは webp の書き出しに対応していません。Chrome / Edge / Firefox で開いてください。</div>
+
+<h2>アイコンURLの一覧</h2>
+<textarea id="list" placeholder="https://cheeees.github.io/cheeeestrpg/pic/hajime/02_00.webp&#10;/cheeeestrpg/pic/makoto/01_00.webp&#10;…(1行に1つ)" spellcheck="false"></textarea>
+
+<div class="row">
+ <label>大きさ <input type="number" id="size" value="256" min="32" max="1024"> px</label>
+ <label>画質 <input type="number" id="q" value="90" min="50" max="100"> %</label>
+ <label>/ から始まるURLの取得元 <input type="text" id="origin" class="wide" value="https://cheeees.github.io"></label>
+</div>
+
+<details>
+ <summary>サイトから読み込めないとき(手元の pic フォルダを使う)</summary>
+ <p class="n">ここで手元の <b>pic フォルダ</b>(または、その中のキャラごとのフォルダをまとめて入れた親フォルダ)を選ぶと、サイトではなくそちらの画像を使います。選ばなければ、サイトから読み込みます。</p>
+ <input type="file" id="dir" webkitdirectory multiple>
+ <p class="n" id="dirn"></p>
+</details>
+
+<div class="row">
+ <button class="p" id="go" type="button">作成</button>
+ <button id="zip" type="button" disabled>ZIPでダウンロード</button>
+</div>
+<div id="prog"></div>
+<div id="sum"></div>
+<div class="grid" id="grid"></div>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+const canWebp=document.createElement("canvas").toDataURL("image/webp").startsWith("data:image/webp");
+if(!canWebp){$("warn").style.display="block";$("go").disabled=true}
+
+// ---- URLの扱い ----
+// 「/pic/ より後ろ」を相対パスにする(例: hajime/02_00.webp)
+function relOf(u){
+  u=u.trim().split("#")[0].split("?")[0];
+  const m=u.match(/\/pic\/(.+)$/);
+  if(!m)return null;
+  try{return decodeURIComponent(m[1])}catch(e){return m[1]}
+}
+function absUrl(u,origin){
+  u=u.trim();
+  if(/^https?:\/\//i.test(u))return u;
+  return origin.replace(/\/+$/,"")+(u.startsWith("/")?"":"/")+u;
+}
+
+// ---- 手元のフォルダ ----
+let local=[];
+$("dir").onchange=e=>{
+  local=[...e.target.files].filter(f=>/^image\//.test(f.type)||/\.(webp|png|jpe?g|gif)$/i.test(f.name));
+  $("dirn").textContent=local.length?"画像 "+local.length+" 件を読み込みました。":"画像が見つかりませんでした。";
+};
+function findLocal(rel){
+  for(const f of local){const p=f.webkitRelativePath||f.name;if(p===rel||p.endsWith("/"+rel))return f}
+  return null;
+}
+
+// ---- 縮小(半分ずつ縮めてから最後に合わせる=一気に縮めるよりギザギザが出にくい)----
+function mk(n){const c=document.createElement("canvas");c.width=c.height=n;return c}
+function squareIcon(bmp,size){
+  const w=bmp.width,h=bmp.height,m=Math.min(w,h);
+  let cur=mk(m);
+  cur.getContext("2d").drawImage(bmp,(w-m)/2,(h-m)/2,m,m,0,0,m,m);   // 中央を正方形に切り抜く
+  if(m<=size)return cur;                                              // 元が小さいときは拡大しない
+  while(cur.width/2>=size){
+    const n=mk(Math.round(cur.width/2)),g=n.getContext("2d");
+    g.imageSmoothingQuality="high";g.drawImage(cur,0,0,n.width,n.height);cur=n;
+  }
+  const f=mk(size),g=f.getContext("2d");
+  g.imageSmoothingQuality="high";g.drawImage(cur,0,0,size,size);
+  return f;
+}
+
+// ---- ZIP(無圧縮・外部ライブラリなし)----
+const CRC=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
+function crc32(b){let c=0xFFFFFFFF;for(let i=0;i<b.length;i++)c=CRC[(c^b[i])&255]^(c>>>8);return(c^0xFFFFFFFF)>>>0}
+function makeZip(files){
+  const enc=new TextEncoder(),parts=[],cd=[];let off=0;
+  const d=new Date(),dt=(((d.getFullYear()-1980)<<9)|((d.getMonth()+1)<<5)|d.getDate())&0xFFFF,tm=((d.getHours()<<11)|(d.getMinutes()<<5)|(d.getSeconds()>>1))&0xFFFF;
+  files.forEach(f=>{
+    const nm=enc.encode(f.name),crc=crc32(f.data),sz=f.data.length;
+    const lh=new DataView(new ArrayBuffer(30));
+    lh.setUint32(0,0x04034b50,true);lh.setUint16(4,20,true);lh.setUint16(6,0x0800,true);lh.setUint16(8,0,true);
+    lh.setUint16(10,tm,true);lh.setUint16(12,dt,true);lh.setUint32(14,crc,true);lh.setUint32(18,sz,true);lh.setUint32(22,sz,true);
+    lh.setUint16(26,nm.length,true);lh.setUint16(28,0,true);
+    parts.push(new Uint8Array(lh.buffer),nm,f.data);
+    const ch=new DataView(new ArrayBuffer(46));
+    ch.setUint32(0,0x02014b50,true);ch.setUint16(4,20,true);ch.setUint16(6,20,true);ch.setUint16(8,0x0800,true);ch.setUint16(10,0,true);
+    ch.setUint16(12,tm,true);ch.setUint16(14,dt,true);ch.setUint32(16,crc,true);ch.setUint32(20,sz,true);ch.setUint32(24,sz,true);
+    ch.setUint16(28,nm.length,true);ch.setUint32(42,off,true);
+    cd.push(new Uint8Array(ch.buffer),nm);
+    off+=30+nm.length+sz;
+  });
+  const cdSize=cd.reduce((a,b)=>a+b.length,0),end=new DataView(new ArrayBuffer(22));
+  end.setUint32(0,0x06054b50,true);end.setUint16(8,files.length,true);end.setUint16(10,files.length,true);end.setUint32(12,cdSize,true);end.setUint32(16,off,true);
+  return new Blob([...parts,...cd,new Uint8Array(end.buffer)],{type:"application/zip"});
+}
+
+// ---- 作成 ----
+let made=[];
+const kb=n=>(n/1024).toFixed(n<10240?1:0)+"KB";
+function card(cls,html){const d=document.createElement("div");d.className="it "+cls;d.innerHTML=html;$("grid").appendChild(d);return d}
+const esc=s=>String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
+
+async function readBitmap(url,rel){
+  const lf=local.length?findLocal(rel):null;
+  if(lf)return {bmp:await createImageBitmap(lf),from:"手元のフォルダ"};
+  if(local.length)throw new Error("選んだフォルダに見つかりません: "+rel);
+  let r;
+  try{r=await fetch(url,{mode:"cors"})}catch(e){throw new Error("サイトから読み込めませんでした(下の「手元の pic フォルダを使う」を試してください)")}
+  if(!r.ok)throw new Error("サイトに画像がありません(HTTP "+r.status+")");
+  return {bmp:await createImageBitmap(await r.blob()),from:"サイト"};
+}
+
+$("go").onclick=async()=>{
+  const size=Math.max(32,Math.min(1024,+$("size").value||256)),q=Math.max(50,Math.min(100,+$("q").value||90))/100,origin=$("origin").value.trim()||"https://cheeees.github.io";
+  const seen=new Set(),jobs=[];let skip=0;
+  $("list").value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean).forEach(u=>{
+    const rel=relOf(u);
+    if(!rel||/_icon\.[a-z]+$/i.test(rel)){skip++;return}
+    if(seen.has(rel))return;seen.add(rel);jobs.push({u,rel});
+  });
+  $("grid").innerHTML="";$("sum").textContent="";made=[];$("zip").disabled=true;
+  if(!jobs.length){$("prog").textContent="作成できるURLがありません(/pic/ を含む画像のURLを1行に1つ入れてください)。";return}
+  $("go").disabled=true;let ok=0,ng=0;
+  for(let i=0;i<jobs.length;i++){
+    const {u,rel}=jobs[i];
+    $("prog").textContent="作成中… "+(i+1)+" / "+jobs.length+"  "+rel;
+    try{
+      const {bmp,from}=await readBitmap(absUrl(u,origin),rel);
+      const cv=squareIcon(bmp,size),sw=bmp.width,sh=bmp.height;
+      const blob=await new Promise(r=>cv.toBlob(r,"image/webp",q));
+      if(!blob||blob.type!=="image/webp")throw new Error("webpに変換できませんでした");
+      const out=rel.replace(/\.[^./]+$/,"")+"_icon.webp",data=new Uint8Array(await blob.arrayBuffer()),url=URL.createObjectURL(blob);
+      made.push({name:out,data});ok++;
+      card("",`<img src="${url}" alt=""><div>${esc(out)}</div><div>${sw}×${sh} → ${cv.width}×${cv.height}<br>${kb(blob.size)}(${from})</div><div class="sm"><img src="${url}" alt=""><img src="${url}" alt=""></div><br><a href="${url}" download="${esc(out.split("/").pop())}">この1枚だけ保存</a>`);
+    }catch(e){
+      ng++;card("ng",`<div>${esc(rel)}</div><div class="e">${esc(e.message||e)}</div>`);
+    }
+  }
+  $("prog").textContent="";
+  $("sum").textContent="作成 "+ok+" 件 / 失敗 "+ng+" 件"+(skip?" / 対象外 "+skip+" 件(/pic/ を含まない・すでに _icon)":"");
+  $("zip").disabled=!ok;$("go").disabled=!canWebp;
+};
+
+$("zip").onclick=()=>{
+  if(!made.length)return;
+  const a=document.createElement("a");a.href=URL.createObjectURL(makeZip(made));a.download="icons.zip";
+  document.body.appendChild(a);a.click();a.remove();
+};
+</script>
+</body>
+</html>

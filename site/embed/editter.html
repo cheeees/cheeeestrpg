@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>embedプレビュー(editter)</title>
+<!--
+  使い方(Chrome / Edge 専用。インストール不要)
+  1. このファイルをダブルクリックで開く(どこに置いてもOK)
+  2. 「siteフォルダを開く」→ main.html があるフォルダを選ぶ → 「編集を許可」
+  3. 左でコードを書く → 右のプレビューにはすぐ反映される。実ファイルへは「💾保存」(Ctrl+S)を押したときだけ書き込む
+  ・別のエディタ(VS Codeなど)で保存した変更、style.css / main.js / main.html の変更も自動で反映
+  ・新規作成は template_v7.html をコピーして作る(site フォルダに置いておく)
+  ・プルダウン先頭の「main.html」を選ぶと、サイト本体(main.html)も同じように編集・自動保存できる
+  ・行番号は自動表示(カーソル行はハイライト)
+  ■ ショートカットキー(Macは Ctrl → Cmd)
+    Ctrl+S          保存
+    Ctrl+F          検索を開く(選択中の文字が検索欄に入る)
+    Ctrl+H          置換を開く
+    Enter / F3      次の一致へ        Shift+Enter / Shift+F3  前の一致へ
+    (置換欄で)Enter  今の1件を置換して次へ
+    Esc             検索・置換を閉じる
+    Ctrl+Z          元に戻す(置換も戻せる)
+    ── 以下は「入力補助: ON」のとき ──
+    Tab             略語を展開(p / div.cls / card / cols / fold / kv / legend / table / tr / red / blue / side / tabs / spacer / box)
+                    展開できないときは半角スペース2つ。複数行を選択中ならまとめてインデント
+    Shift+Tab       インデントを戻す(複数行OK)
+    Enter           前の行のインデントを引き継ぐ。<p>|</p> の間なら中を改行して整形
+    >               <タグ名 ...> の直後で押すと閉じタグを自動挿入
+    </              直前の開きタグに合わせて閉じタグを補完
+    "               タグの中で " を押すと "" を自動挿入
+    Ctrl+/          選択行(なければ現在行)のコメントアウト切り替え
+  ・画像は site フォルダの中(img など、どの階層でも)を自動で読み込む
+  ■ GitHub につないで編集する場合(フォルダを開く代わり。読み込み〜保存まで GitHub だけで完結)
+  1.「🐙 GitHubを開く」→ リポジトリ(例: cheeees/cheeeestrpg)・ブランチ(main)・アクセストークンを入れて「開く」
+     ・siteの場所は空欄でOK(main.html を自動で探す)。docs/ などに置いているときだけ入れる
+     ・アクセストークンは GitHub の Settings → Developer settings → Fine-grained tokens で作る
+       (対象リポジトリだけ選び、Repository permissions の Contents を「Read and write」にする)
+  2. 編集 → 右のプレビューに反映(この時点ではまだ GitHub に送られない)
+  3.「💾保存」(Ctrl+S)で、変更したファイルをまとめて1回のコミットとして main に送る
+     ・GitHub Pages に反映されるまで1〜2分かかる
+  ・トークンはこのブラウザの localStorage にだけ保存される(ファイルには書かれない)。共用のパソコンでは「記憶しない」を選ぶ
+  ・GitHub モードでは他のエディタでの変更の自動反映はしない(「↻更新」で GitHub の最新を読み直す)
+-->
+<style>
+#ghdlg{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:16px}
+#ghdlg[hidden]{display:none}
+#ghdlg .box{width:min(520px,100%);max-height:100%;overflow:auto;background:#3a322b;border:2px solid #ffd60a;border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:8px}
+#ghdlg h3{margin:0 0 4px;font-size:16px}
+#ghdlg label{font-size:12px;opacity:.9;display:flex;flex-direction:column;gap:3px}
+#ghdlg input[type=text],#ghdlg input[type=password]{font:inherit;padding:6px 8px;border-radius:5px;border:1px solid #8e632b;background:#1e1b18;color:#f3ead9;outline:0}
+#ghdlg input:focus{border-color:#ffd60a}
+#ghdlg .chk{flex-direction:row;align-items:center;gap:6px}
+#ghdlg .note{font-size:11px;line-height:1.6;opacity:.75;margin:0}
+#ghdlg .row{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
+#ghdlg button{font:inherit;padding:6px 14px;border-radius:6px;border:1px solid #8e632b;background:#fff;color:#222;cursor:pointer}
+#ghdlg button#gok{background:#ffd60a;border-color:#ffd60a;font-weight:700}
+#ghdlg button:hover{background:#ffd60a}
+
+*{box-sizing:border-box}
+body{display:flex;flex-direction:column}
+html,body{height:100%;margin:0;font:14px/1.4 system-ui,"Noto Sans JP",sans-serif;background:#2b2622;color:#eee}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:8px 10px;background:#3a322b;border-bottom:2px solid #ffd60a}
+.bar select,.bar button{font:inherit;padding:5px 10px;border-radius:6px;border:1px solid #8e632b;background:#fff;color:#222;cursor:pointer}
+.bar button.on{background:#8e632b;color:#fff}
+.bar button.dirty{background:#ffd60a;color:#222;border-color:#ffd60a;font-weight:700}
+.bar button:hover{background:#ffd60a;color:#222}
+.sp{flex:1}
+#keys{flex-basis:100%;font-size:11px;line-height:1.3;opacity:.5;white-space:normal}
+#st{font-size:12px;opacity:.85;min-width:9em;max-width:40vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right}
+.main{display:flex;flex:1;min-height:0}
+.left{width:45%;min-width:240px;display:flex;flex-direction:column}
+.edwrap{flex:1;display:flex;min-height:0}
+#gut{flex:none;position:relative;overflow:hidden;background:#171411;border-right:1px solid #3a322b;color:#7d7264;font:13px/20px ui-monospace,Menlo,Consolas,monospace;text-align:right;user-select:none;width:calc(2ch + 20px)}
+#gn{white-space:pre;padding:10px 8px 30px 10px}
+#gcur{position:absolute;left:0;right:0;top:10px;height:20px;background:rgba(255,214,10,.16);pointer-events:none}
+.stack{position:relative;flex:1;min-width:0;overflow:hidden;background:#1e1b18}
+#cl{position:absolute;left:0;right:0;top:0;height:20px;background:rgba(255,255,255,.05);pointer-events:none}
+#bd{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+#bdt{padding:10px 30px 30px 10px;font:13px/20px ui-monospace,Menlo,Consolas,monospace;tab-size:2;white-space:pre;color:transparent}
+#bdt mark{color:transparent;background:rgba(255,214,10,.3);border-radius:2px}
+#bdt mark.cur{background:rgba(255,150,0,.7)}
+#ed{position:absolute;inset:0;width:100%;height:100%;border:0;resize:none;padding:10px;background:transparent;color:#f3ead9;font:13px/20px ui-monospace,Menlo,Consolas,monospace;tab-size:2;white-space:pre;outline:0;overflow:auto}
+#fbar{background:#3a322b;border-bottom:1px solid #8e632b;padding:6px;display:flex;flex-direction:column;gap:4px}
+#fbar[hidden]{display:none}
+#fbar .fr{display:flex;gap:4px;align-items:center}
+#fbar input{flex:1;min-width:0;font:inherit;padding:4px 6px;border-radius:5px;border:1px solid #8e632b;background:#1e1b18;color:#f3ead9;outline:0}
+#fbar input:focus{border-color:#ffd60a}
+#fbar input.bad{border-color:#ff5a5a}
+#fbar button{font:inherit;padding:3px 8px;border-radius:5px;border:1px solid #8e632b;background:#fff;color:#222;cursor:pointer;white-space:nowrap}
+#fbar button.on{background:#8e632b;color:#fff}
+#fbar button:hover{background:#ffd60a;color:#222}
+#fcnt{font-size:12px;opacity:.85;min-width:4.5em;text-align:center}
+.drag{width:6px;cursor:col-resize;background:#8e632b}
+.drag:hover{background:#ffd60a}
+.right{flex:1;display:flex;justify-content:center;background:#555;overflow:auto;min-width:0}
+iframe{border:0;background:#fff;height:100%;width:100%}
+.right.sp-mode iframe{width:390px;flex:none;box-shadow:0 0 0 3px #000}
+.right.tab-mode iframe{width:768px;flex:none}
+#msg{padding:30px;font-size:15px;line-height:1.8}
+@media(max-width:800px){.main{flex-direction:column}.left{width:100%;height:45%}.drag{display:none}}
+</style></head><body>
+<div class="bar">
+  <button id="pick">📁 siteフォルダを開く</button>
+  <button id="gh" title="GitHub のリポジトリを直接読み込んで、直接保存する">🐙 GitHubを開く</button>
+  <select id="sel" title="編集するembedファイル"></select>
+  <button id="save" title="未保存の変更を実ファイルに書き込む (Ctrl+S)">💾 保存</button>
+  <button id="new">＋新規(テンプレから)</button>
+  <span class="sp"></span>
+  <button id="w-pc" class="on">PC</button>
+  <button id="w-tab">タブレット</button>
+  <button id="w-sp">スマホ</button>
+  <button id="assist">入力補助</button>
+  <button id="reload">↻更新</button>
+  <span id="st"></span>
+  <div id="keys">Ctrl+S 保存 ｜ Ctrl+F 検索 ｜ Ctrl+H 置換 ｜ Enter/F3 次へ ｜ Shift+Enter/Shift+F3 前へ ｜ Esc 閉じる ｜ Ctrl+Z 元に戻す ｜ Tab 略語展開・インデント ｜ Shift+Tab インデント戻す ｜ Ctrl+/ コメント切替</div>
+</div>
+<div id="ghdlg" hidden>
+  <div class="box">
+    <h3>🐙 GitHubのリポジトリを開く</h3>
+    <label>リポジトリ(ユーザー名/リポジトリ名)<input type="text" id="g-repo" placeholder="cheeees/cheeeestrpg" spellcheck="false"></label>
+    <label>ブランチ<input type="text" id="g-branch" placeholder="main" spellcheck="false"></label>
+    <label>siteの場所(空欄=main.html を自動で探す。docs/ などのときだけ入力)<input type="text" id="g-dir" placeholder="(空欄でOK)" spellcheck="false"></label>
+    <label>アクセストークン(保存するときに必要。読み込みだけなら空欄でも可)<input type="password" id="g-token" placeholder="github_pat_..." autocomplete="off" spellcheck="false"></label>
+    <label class="chk"><input type="checkbox" id="g-remember" checked>このブラウザにトークンを記憶する</label>
+    <p class="note">トークンは Fine-grained token で、このリポジトリだけを選び「Contents: Read and write」にしたものを使います。トークンを入れずに読み込むと、GitHub の回数制限(1時間に60回)に早く達しやすくなります。</p>
+    <div class="row"><button id="gcancel">キャンセル</button><button id="gok">開く</button></div>
+  </div>
+</div>
+<div class="main">
+  <div class="left">
+  <div id="fbar" hidden>
+    <div class="fr">
+      <input id="fi" placeholder="検索 (Enter:次へ / Shift+Enter:前へ)" spellcheck="false">
+      <button id="fcase" title="大文字・小文字を区別">Aa</button>
+      <button id="freg" title="正規表現">.*</button>
+      <span id="fcnt"></span>
+      <button id="fprev" title="前へ (Shift+F3)">↑</button>
+      <button id="fnext" title="次へ (F3)">↓</button>
+      <button id="fclose" title="閉じる (Esc)">✕</button>
+    </div>
+    <div class="fr">
+      <input id="ri" placeholder="置換後 (正規表現ONなら $1 \n \t が使えます)" spellcheck="false">
+      <button id="rone" title="今の1件を置換して次へ (Enter)">置換</button>
+      <button id="rall" title="すべて置換">すべて置換</button>
+    </div>
+  </div>
+  <div class="edwrap">
+    <div id="gut"><div id="gn"></div><div id="gcur"></div></div>
+    <div class="stack">
+      <div id="cl"></div>
+      <div id="bd"><div id="bdt"></div></div>
+      <textarea id="ed" spellcheck="false" placeholder="まず「siteフォルダを開く」か「GitHubを開く」を押してください"></textarea>
+    </div>
+  </div>
+</div>
+  <div class="drag" id="drag"></div>
+  <div class="right" id="right"><iframe id="fr"></iframe></div>
+</div>
+<script>
+var $=function(i){return document.getElementById(i)};
+var sel=$("sel"),ed=$("ed"),fr=$("fr"),st=$("st"),right=$("right");
+var root=null,embedDir=null,imgUrls={},imgLower={},site={},embeds={},handles={},stamps={};
+var cur="",dirtySet={},timer=null,blobUrl="",building=false;
+var srcMode="folder";   /* "folder"=パソコンのフォルダ / "gh"=GitHub */
+var gh={repo:"",branch:"main",dir:"",token:"",head:"",base:"",sha:{},cache:{}};
+function status(t){st.textContent=t}
+function opened(){return srcMode==="gh"?!!gh.head:!!root}
+
+/* ---------- GitHub API ---------- */
+function encPath(p){return p.split("/").map(encodeURIComponent).join("/")}
+async function ghApi(path,opt){
+  opt=opt||{};
+  var h={"Accept":opt.raw?"application/vnd.github.raw+json":"application/vnd.github+json","X-GitHub-Api-Version":"2022-11-28"};
+  if(gh.token)h["Authorization"]="Bearer "+gh.token;
+  if(opt.body)h["Content-Type"]="application/json";
+  var r=await fetch("https://api.github.com/repos/"+gh.repo+path,{method:opt.method||"GET",headers:h,body:opt.body?JSON.stringify(opt.body):undefined,cache:"no-store"});
+  if(!r.ok){
+    var m="";try{m=(await r.json()).message||""}catch(e){}
+    var hint=r.status===401?"(トークンが正しくないか期限切れです)":
+      r.status===403?"(権限不足、または回数制限です)":
+      r.status===404?"(リポジトリ・ブランチ名が違うか、トークンにこのリポジトリの権限がありません)":"";
+    throw new Error(r.status+" "+m+hint);
+  }
+  return opt.raw?r.text():r.json();
+}
+/* 中身は sha ごとに覚えておき、同じものは取り直さない */
+async function ghBlob(sha){
+  if(!sha)return "";
+  if(gh.cache[sha]!=null)return gh.cache[sha];
+  var t=await ghApi("/git/blobs/"+sha,{raw:true});
+  gh.cache[sha]=t;return t;
+}
+function ghH(rel){var p=gh.base+rel;return {gh:true,path:p,sha:gh.sha[p]||""}}
+/* GitHub から読み込む: ブランチの最新 → ファイル一覧 → main.html / css / js / embed / 画像 */
+async function ghScan(){
+  var ref=await ghApi("/git/ref/heads/"+encPath(gh.branch));
+  gh.head=ref.object.sha;
+  var tr=await ghApi("/git/trees/"+gh.head+"?recursive=1");
+  if(tr.truncated)status("ファイルが多すぎて一覧が途中までです");
+  gh.sha={};
+  tr.tree.forEach(function(e){if(e.type==="blob")gh.sha[e.path]=e.sha});
+  var base="";
+  var dir=(gh.dir||"").replace(/^\/+|\/+$/g,"");
+  if(dir){
+    base=dir+"/";
+    if(!gh.sha[base+"main.html"]){alert(dir+"/main.html が見つかりません。\nsiteの場所を確認してください。");gh.head="";return false}
+  }else{
+    var c=Object.keys(gh.sha).filter(function(p){return p==="main.html"||/\/main\.html$/.test(p)})
+      .sort(function(a,b){return a.split("/").length-b.split("/").length});
+    if(!c.length){alert("リポジトリの中に main.html が見つかりません。\nブランチ名・リポジトリ名を確認してください。");gh.head="";return false}
+    base=c[0].slice(0,-9);
+  }
+  gh.base=base;
+  Object.keys(handles).forEach(function(k){delete handles[k]});
+  site={};stamps={};embeds={};embedDir=null;
+  var mh=ghH("main.html");
+  site["main.html"]=(await readFile(mh)).text;stamps["main.html"]=0;handles["main.html"]=mh;
+  await loadAssets();
+  var names=Object.keys(gh.sha).filter(function(p){
+    return p.indexOf(base+"embed/")===0&&p.slice(base.length+6).indexOf("/")<0&&/\.html$/.test(p)});
+  await Promise.all(names.map(async function(p){
+    var n=p.slice(base.length+6),h=ghH("embed/"+n);
+    embeds[n]=(await readFile(h)).text;stamps["embed/"+n]=0;handles["embed/"+n]=h;
+  }));
+  /* 画像などは raw.githubusercontent.com の URL をそのままプレビューに渡す(読み込まずに済む) */
+  Object.keys(imgUrls).forEach(function(k){URL.revokeObjectURL(imgUrls[k])});imgUrls={};imgLower={};
+  var rawBase="https://raw.githubusercontent.com/"+gh.repo+"/"+encPath(gh.branch)+"/";
+  Object.keys(gh.sha).forEach(function(p){
+    if(p.indexOf(base)!==0||!MEDIA_RE.test(p)||/(^|\/)(node_modules|\.git|\.vscode|\.idea)\//.test(p))return;
+    imgUrls[p.slice(base.length)]=rawBase+encPath(p);
+  });
+  Object.keys(imgUrls).forEach(function(k){imgLower[k.toLowerCase()]=imgUrls[k]});
+  return true;
+}
+/* 変更したファイルを、1回のコミットにまとめて GitHub に送る。送ったら true */
+async function ghSave(keys){
+  var ref=await ghApi("/git/ref/heads/"+encPath(gh.branch)),head=ref.object.sha;
+  if(head!==gh.head&&!confirm("GitHub 側が、読み込んだ後に更新されています(別の場所で保存した可能性があります)。\n今編集しているファイルだけを上書きして保存しますか?\n(ほかのファイルは GitHub 側の最新のまま残ります)"))return false;
+  var commit=await ghApi("/git/commits/"+head);
+  var items=[],texts={};
+  for(var k of keys){
+    var t=getText(k);texts[k]=t;
+    var b=await ghApi("/git/blobs",{method:"POST",body:{content:t,encoding:"utf-8"}});
+    items.push({path:gh.base+k,mode:"100644",type:"blob",sha:b.sha});
+  }
+  var tree=await ghApi("/git/trees",{method:"POST",body:{base_tree:commit.tree.sha,tree:items}});
+  var msg="editterから更新: "+keys.join(", ");
+  var nc=await ghApi("/git/commits",{method:"POST",body:{message:msg,tree:tree.sha,parents:[head]}});
+  await ghApi("/git/refs/heads/"+encPath(gh.branch),{method:"PATCH",body:{sha:nc.sha}});
+  gh.head=nc.sha;
+  items.forEach(function(it,i){gh.sha[it.path]=it.sha;gh.cache[it.sha]=texts[keys[i]];if(handles[keys[i]])handles[keys[i]].sha=it.sha});
+  return true;
+}
+
+if(!window.showDirectoryPicker){
+  document.body.innerHTML='<div id="msg">このツールは <b>Chrome / Edge</b>(パソコン版)で開いてください。<br>Firefox・Safari・スマホでは、フォルダへの保存機能が使えません。</div>';
+}
+
+/* ---------- フォルダの読み込み ---------- */
+async function readFile(h){
+  if(h.gh)return {text:await ghBlob(h.sha),t:0};
+  var f=await h.getFile();return {text:await f.text(),t:f.lastModified}}
+/* フォルダ内のパス("css/style.css" など)からファイルを取る */
+async function getByPath(p){
+  if(srcMode==="gh"){
+    var out=[];p.split("/").forEach(function(x){if(x===".."&&out.length)out.pop();else if(x&&x!=="."&&x!=="..")out.push(x)});
+    var full=gh.base+out.join("/");
+    return gh.sha[full]?{gh:true,path:full,sha:gh.sha[full]}:null;
+  }
+  var parts=p.replace(/^\.\//,"").split("/").filter(Boolean),d=root;
+  try{
+    for(var i=0;i<parts.length-1;i++)d=await d.getDirectoryHandle(parts[i]);
+    return await d.getFileHandle(parts[parts.length-1]);
+  }catch(e){return null}
+}
+function localPath(h){return h&&!/^(https?:)?\/\/|^data:|^\//.test(h)?h.split(/[?#]/)[0]:null}
+var JS_RE=/<script\b[^>]*\bsrc=["']([^"']+)["'][^>]*>\s*<\/script>/gi;
+function cssHref(tag){
+  if(!/rel=["']stylesheet["']/i.test(tag))return null;
+  return localPath((tag.match(/href=["']([^"']+)["']/i)||[])[1]);
+}
+/* main.html が読んでいる css / js を、書かれているパスのとおりに読み込む(最新の main.html に追従) */
+async function loadAssets(){
+  Object.keys(handles).forEach(function(k){if(k.indexOf("a:")===0){delete handles[k];delete site[k];delete stamps[k]}});
+  var html=site["main.html"],list=[],missing=[];
+  (html.match(/<link\b[^>]*>/gi)||[]).forEach(function(t){var p=cssHref(t);if(p)list.push(p)});
+  html.replace(JS_RE,function(a,s){var p=localPath(s);if(p)list.push(p);return a});
+  for(var p of list){
+    var fh=await getByPath(p);
+    if(fh){var r=await readFile(fh);site["a:"+p]=r.text;stamps["a:"+p]=r.t;handles["a:"+p]=fh}else missing.push(p);
+  }
+  if(missing.length)status("見つからない: "+missing.join(", "));
+}
+var MEDIA_RE=/\.(png|jpe?g|gif|webp|svg|avif|ico|bmp|mp4|webm|mp3|ogg|wav|woff2?|ttf|otf)$/i;
+var SKIP_DIR=/^(\.git|node_modules|\.vscode|\.idea)$/;
+async function walkImg(dir,prefix){
+  for await(var [n,h] of dir.entries()){
+    if(h.kind==="file"){if(MEDIA_RE.test(n))imgUrls[prefix+n]=URL.createObjectURL(await h.getFile())}
+    else if(!SKIP_DIR.test(n))await walkImg(h,prefix+n+"/");
+  }
+}
+async function scan(){
+  if(srcMode==="gh")return ghScan();
+  Object.keys(handles).forEach(function(k){delete handles[k]});
+  try{
+    var h=await root.getFileHandle("main.html");var r=await readFile(h);
+    site["main.html"]=r.text;stamps["main.html"]=r.t;handles["main.html"]=h;
+  }catch(e){alert("main.html が見つかりません。\nmain.html があるフォルダ(site)を選んでください。");root=null;return false}
+  await loadAssets();
+  embedDir=await root.getDirectoryHandle("embed",{create:true});
+  embeds={};
+  for await(var [name,h2] of embedDir.entries()){
+    if(h2.kind==="file"&&name.endsWith(".html")){var r2=await readFile(h2);embeds[name]=r2.text;stamps["embed/"+name]=r2.t;handles["embed/"+name]=h2}
+  }
+  Object.keys(imgUrls).forEach(function(k){URL.revokeObjectURL(imgUrls[k])});imgUrls={};imgLower={};
+  try{await walkImg(root,"")}catch(e){}
+  Object.keys(imgUrls).forEach(function(k){imgLower[k.toLowerCase()]=imgUrls[k]});
+  return true;
+}
+function optLabel(key){
+  var d=dirtySet[key]?"● ":"";
+  if(key==="main.html")return d+"main.html  (サイト本体)";
+  var n=key.slice(6),pm=pageMap();
+  return d+n+(pm[n]?"  (#"+pm[n]+")":"  (未登録→プレビューページ)");
+}
+function fillSelect(want){
+  var keys=["main.html"].concat(Object.keys(embeds).sort().map(function(n){return "embed/"+n}));
+  sel.innerHTML="";
+  keys.forEach(function(k){var o=document.createElement("option");o.value=k;o.textContent=optLabel(k);sel.appendChild(o)});
+  if(want&&want!=="main.html"&&want.indexOf("embed/")!==0)want="embed/"+want;
+  if(keys.indexOf(want)<0)want=keys.length>1?keys[1]:keys[0];
+  sel.value=want;openFile(want);
+}
+function updateLabels(){Array.prototype.forEach.call(sel.options,function(o){o.textContent=optLabel(o.value)})}
+$("pick").onclick=async function(){
+  if(anyDirty()&&!confirm("未保存の変更があります。破棄して別のフォルダを開きますか?"))return;
+  try{root=await showDirectoryPicker({mode:"readwrite"})}catch(e){return}
+  srcMode="folder";localStorage.removeItem("ghAuto");
+  dirtySet={};updateSaveBtn();
+  if(await scan()){
+    var lf=localStorage.getItem("lastFile");if(lf==="main.html")lf=null;
+    fillSelect(lf);status("読み込み済み(画像 "+Object.keys(imgUrls).length+" 件)");
+  }
+};
+
+/* ---------- GitHub を開く(入力画面) ---------- */
+var ghdlg=$("ghdlg");
+function ghLoadCfg(){
+  try{return JSON.parse(localStorage.getItem("ghCfg")||"{}")}catch(e){return {}}
+}
+$("gh").onclick=function(){
+  var c=ghLoadCfg();
+  $("g-repo").value=c.repo||"cheeees/cheeeestrpg";
+  $("g-branch").value=c.branch||"main";
+  $("g-dir").value=c.dir||"";
+  $("g-token").value=localStorage.getItem("ghToken")||gh.token||"";
+  $("g-remember").checked=c.remember!==false;
+  ghdlg.hidden=false;
+  ($("g-token").value?$("g-repo"):$("g-token")).focus();
+};
+$("gcancel").onclick=function(){ghdlg.hidden=true};
+ghdlg.addEventListener("mousedown",function(e){if(e.target===ghdlg)ghdlg.hidden=true});
+ghdlg.addEventListener("keydown",function(e){
+  if(e.key==="Escape")ghdlg.hidden=true;
+  else if(e.key==="Enter"&&!e.isComposing&&e.keyCode!==229&&e.target.tagName==="INPUT"){e.preventDefault();$("gok").click()}
+});
+async function ghOpen(cfg,quiet){
+  var repo=(cfg.repo||"").trim().replace(/^https?:\/\/github\.com\//i,"").replace(/\.git$/,"").replace(/\/+$/,"");
+  if(!/^[\w.-]+\/[\w.-]+$/.test(repo)){alert("リポジトリは「ユーザー名/リポジトリ名」の形で入れてください\n(例: cheeees/cheeeestrpg)");return false}
+  gh={repo:repo,branch:(cfg.branch||"main").trim()||"main",dir:(cfg.dir||"").trim(),token:(cfg.token||"").trim(),head:"",base:"",sha:{},cache:{}};
+  srcMode="gh";root=null;dirtySet={};updateSaveBtn();
+  status("GitHubから読み込み中…");
+  try{
+    if(await scan()){
+      var lf=localStorage.getItem("lastFile");if(lf==="main.html")lf=null;
+      fillSelect(lf);
+      status("GitHub読み込み済み "+repo+"@"+gh.branch+(gh.base?" ("+gh.base+")":"")+"(画像 "+Object.keys(imgUrls).length+" 件)"+(gh.token?"":" ※トークンなし=保存不可"));
+      return true;
+    }
+  }catch(e){
+    gh.head="";status("読み込めません: "+e.message);
+    if(!quiet)alert("GitHubから読み込めませんでした。\n\n"+e.message);
+  }
+  return false;
+}
+$("gok").onclick=async function(){
+  if(anyDirty()&&!confirm("未保存の変更があります。破棄してGitHubを開きますか?"))return;
+  var cfg={repo:$("g-repo").value,branch:$("g-branch").value,dir:$("g-dir").value,token:$("g-token").value};
+  var rem=$("g-remember").checked;
+  if(await ghOpen(cfg,false)){
+    ghdlg.hidden=true;
+    localStorage.setItem("ghCfg",JSON.stringify({repo:gh.repo,branch:gh.branch,dir:gh.dir,remember:rem}));
+    if(rem&&gh.token)localStorage.setItem("ghToken",gh.token);else localStorage.removeItem("ghToken");
+    localStorage.setItem("ghAuto","1");
+  }
+};
+
+/* ---------- ページ対応・プレビュー生成 ---------- */
+function pageMap(){
+  var m={},re=/<section[^>]*id="p-([^"]+)"[^>]*>([\s\S]*?)<\/section>/g,x;
+  while((x=re.exec(site["main.html"]||""))){
+    var re2=/data-include="embed\/([^"]+)"/g,y;
+    while((y=re2.exec(x[2]))){if(!m[y[1]])m[y[1]]=x[1]}
+  }
+  return m;
+}
+/* 画像などのパスを、読み込んだフォルダ内のファイルに置き換える(どの階層でも可) */
+function normPath(base,p){
+  if(!p||/^(?:[a-z][a-z0-9+.-]*:|\/\/|#)/i.test(p))return null;
+  var q=p.split(/[?#]/)[0];try{q=decodeURI(q)}catch(e){}
+  var out=[];(q.charAt(0)==="/"?q:base+q).split("/").forEach(function(x){if(x==="..")out.pop();else if(x&&x!==".")out.push(x)});
+  return out.join("/");
+}
+function urlFor(base,p){
+  var k=normPath(base,p);if(!k)return null;
+  var a=k.split("/");
+  for(var i=0;i<a.length;i++){var t=a.slice(i).join("/");if(imgUrls[t])return imgUrls[t];if(imgLower[t.toLowerCase()])return imgLower[t.toLowerCase()]}
+  return null;
+}
+function dirOf(p){var i=p.lastIndexOf("/");return i<0?"":p.slice(0,i+1)}
+function fixCssUrl(s,base){base=base||"";
+  return s.replace(/url\(\s*(['"]?)([^)'"]+?)\1\s*\)/g,function(a,q,p){var u=urlFor(base,p);return u?"url("+u+")":a})}
+function fixImg(s){
+  s=s.replace(/\b(src|href|poster|data-[\w-]+)=(["'])([^"']+)\2/g,function(a,at,q,p){var u=urlFor("",p);return u?at+"="+q+u+q:a});
+  s=s.replace(/\bsrcset=(["'])([^"']+)\1/g,function(a,q,v){
+    return "srcset="+q+v.split(",").map(function(it){var t=it.trim().split(/\s+/);var u=urlFor("",t[0]);if(u)t[0]=u;return t.join(" ")}).join(", ")+q});
+  return fixCssUrl(s,"");
+}
+/* JS の中の "img/xxx.webp" のような文字列も置き換える */
+function fixJsStr(s){
+  return s.replace(/(["'`])([^"'`\n]+?\.(?:png|jpe?g|gif|webp|svg|avif|ico|bmp))\1/gi,function(a,q,p){var u=urlFor("",p);return u?q+u+q:a});
+}
+/* プレビュー側で fetch を差し替え、embed/○○.html をメモリ上の最新の内容で返す */
+function installFetch(){
+  window.fetch=function(u){
+    var k=String(u&&u.url||u).split(/[?#]/)[0].replace(/^(\.\/|\/)+/,"");
+    var t=window.__E[k];
+    return Promise.resolve(t==null?new Response("",{status:404}):new Response(t,{status:200}));
+  };
+}
+/* プレビュー側で動く: JS が後から入れる画像 src / srcset / style の背景も置き換え、読めない画像を親に報告する */
+function installImg(){
+  var I=window.__I||{},L={};
+  Object.keys(I).forEach(function(k){L[k.toLowerCase()]=I[k]});
+  function look(p){
+    if(!p||/^(?:[a-z][a-z0-9+.-]*:|\/\/|#)/i.test(p))return null;
+    var q=p.split(/[?#]/)[0];try{q=decodeURI(q)}catch(e){}
+    var a=[];q.split("/").forEach(function(x){if(x==="..")a.pop();else if(x&&x!==".")a.push(x)});
+    for(var i=0;i<a.length;i++){var t=a.slice(i).join("/");if(I[t])return I[t];if(L[t.toLowerCase()])return L[t.toLowerCase()]}
+    return null;
+  }
+  var AT=["src","srcset","poster","href","style","data-src","data-bg","data-img","data-image"];
+  function fixAttr(el,n){
+    var v=el.getAttribute(n);if(v==null||v===""||/^(blob:|data:)/.test(v))return;var nv=null;
+    if(n==="style"){nv=v.replace(/url\(\s*(['"]?)([^)'"]+?)\1\s*\)/g,function(a,q,p){var u=look(p);return u?"url("+u+")":a})}
+    else if(n==="srcset"){nv=v.split(",").map(function(it){var t=it.trim().split(/\s+/);var u=look(t[0]);if(u)t[0]=u;return t.join(" ")}).join(", ")}
+    else nv=look(v);
+    if(nv&&nv!==v)el.setAttribute(n,nv);
+  }
+  function fixEl(el){AT.forEach(function(n){if(el.hasAttribute&&el.hasAttribute(n))fixAttr(el,n)})}
+  function fixTree(n){fixEl(n);if(n.querySelectorAll)n.querySelectorAll("[src],[srcset],[poster],[href],[style],[data-src],[data-bg],[data-img],[data-image]").forEach(fixEl)}
+  fixTree(document.documentElement);
+  new MutationObserver(function(ms){ms.forEach(function(m){
+    if(m.type==="attributes")fixAttr(m.target,m.attributeName);
+    else m.addedNodes.forEach(function(n){if(n.nodeType===1)fixTree(n)});
+  })}).observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:AT});
+  var miss={},tm=null;
+  window.addEventListener("error",function(e){
+    var t=e.target;if(!t||t.tagName!=="IMG")return;
+    var s=t.getAttribute("src");if(!s||/^(blob:|data:)/.test(s))return;
+    miss[s]=1;clearTimeout(tm);
+    tm=setTimeout(function(){try{parent.postMessage({__miss:Object.keys(miss)},"*")}catch(x){}},300);
+  },true);
+}
+window.addEventListener("message",function(e){
+  var d=e.data;if(!d||!d.__miss||e.source!==fr.contentWindow)return;
+  var l=d.__miss;
+  status("画像が見つかりません: "+l.slice(0,2).join(", ")+(l.length>2?" 他"+(l.length-2)+"件":""));
+  st.title=l.join("\n");
+});
+async function build(){
+  if(!site["main.html"])return;
+  var y=0;try{y=fr.contentWindow.scrollY}catch(e){}
+  var isMain=cur==="main.html",name=cur.indexOf("embed/")===0?cur.slice(6):"";
+  var pm=pageMap(),page=isMain?"":(pm[name]||"__preview");
+  if(isMain){try{page=fr.contentWindow.location.hash.slice(1)}catch(e){}if(page==="__preview")page=""}
+  var html=site["main.html"];
+  if(name&&!pm[name]){
+    var sec='<section class="page" id="p-__preview" data-title="プレビュー"><div class="hero"><img src="img/hero.webp" alt=""></div><div class="wrap"><div class="sec"><div class="hn"><h2>プレビュー</h2><span class="sub">'+name+'</span></div><div class="embed" data-include="embed/'+name+'"></div></div></div></section>';
+    html=html.replace("</main>",function(){return sec+"\n</main>"});
+  }
+  var map={};
+  Object.keys(embeds).forEach(function(n){map["embed/"+n]=fixImg(embeds[n])});
+  /* CSS: main.html の <link> を、読み込んだ中身に置き換える */
+  html=html.replace(/<link\b[^>]*>/gi,function(tag){
+    var p=cssHref(tag);if(!p||site["a:"+p]==null)return tag;
+    return "<style>"+fixCssUrl(site["a:"+p],dirOf(p))+"</style>";
+  });
+  /* main.html 内のインラインスクリプト(src なし)の画像パスも置き換える */
+  html=html.replace(/<script\b(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi,function(a,c){
+    if(!c.trim())return a;return a.replace(c,function(){return fixJsStr(c)});
+  });
+  /* JS: main.html の <script src> を外し、最後にまとめて(元の順番で)差し込む */
+  var scripts=[];
+  html=html.replace(JS_RE,function(a,s){var p=localPath(s);if(!p||site["a:"+p]==null)return a;scripts.push(fixJsStr(site["a:"+p]));return ""});
+  var tail="<script>window.__E="+JSON.stringify(map).replace(/</g,"\\u003c")+";window.__I="+JSON.stringify(imgUrls).replace(/</g,"\\u003c")+";("+installFetch.toString()+")();("+installImg.toString()+")();<\/script>"
+    +scripts.map(function(t){return "<script>"+t.replace(/<\/script/gi,"<\\/script")+"<\/script>"}).join("\n");
+  html=html.indexOf("</body>")>=0?html.replace("</body>",function(){return tail+"\n</body>"}):html+tail;
+  html=fixImg(html);
+  if(blobUrl)URL.revokeObjectURL(blobUrl);
+  blobUrl=URL.createObjectURL(new Blob([html],{type:"text/html"}));
+  fr.onload=function(){fr.onload=null;
+    [120,450,1000].forEach(function(t){setTimeout(function(){try{fr.contentWindow.scrollTo({top:y,behavior:"instant"})}catch(e){}},t)})};
+  fr.src=blobUrl+(page?"#"+page:"");
+}
+
+/* ---------- 編集・保存 ---------- */
+function getText(k){return k==="main.html"?site["main.html"]:embeds[k.slice(6)]}
+function setText(k,t){if(k==="main.html")site["main.html"]=t;else embeds[k.slice(6)]=t}
+function openFile(k){cur=k;localStorage.setItem("lastFile",k);ed.value=getText(k)||"";refreshEd();status(dirtySet[k]?"未保存の変更あり":"読み込み済み");build()}
+sel.onchange=function(){openFile(sel.value)};
+async function writeTo(key,text){
+  var w=await handles[key].createWritable();await w.write(text);await w.close();
+  stamps[key]=(await handles[key].getFile()).lastModified;
+}
+function anyDirty(){return Object.keys(dirtySet).length>0}
+function updateSaveBtn(){
+  var n=Object.keys(dirtySet).length;
+  $("save").classList.toggle("dirty",n>0);
+  $("save").textContent=n>0?"💾 保存("+n+"件)":"💾 保存";
+  updateLabels();
+}
+/* 保存ボタン: 未保存のファイルをすべて実ファイルに書き込む */
+async function saveAll(){
+  clearTimeout(timer);
+  var keys=Object.keys(dirtySet);
+  if(!opened()){alert("先にsiteフォルダか、GitHubを開いてください");return}
+  if(!keys.length){status("未保存の変更はありません");return}
+  if(srcMode==="gh"){
+    if(!gh.token){alert("GitHubに保存するには、アクセストークンが必要です。\n「🐙 GitHubを開く」でトークンを入れて開き直してください。\n(開き直すと未保存の変更は消えるので、先に内容をコピーしておいてください)");return}
+    status("GitHubに保存中…");
+    try{
+      if(await ghSave(keys)){
+        keys.forEach(function(k){delete dirtySet[k]});
+        status("GitHubに保存しました "+new Date().toLocaleTimeString()+(keys.length>1?"("+keys.length+"件)":"")+" ※公開サイトへの反映は1〜2分後");
+      }else status("保存をやめました");
+    }catch(e){status("保存できません: "+e.message);alert("GitHubへの保存に失敗しました。\n\n"+e.message)}
+    updateSaveBtn();return;
+  }
+  status("保存中…");
+  var ok=[],ng=[];
+  for(var k of keys){
+    try{await writeTo(k,getText(k));delete dirtySet[k];ok.push(k)}
+    catch(e){ng.push(k+" ("+e.message+")")}
+  }
+  updateSaveBtn();
+  status(ng.length?"保存できません: "+ng.join(", "):"保存しました "+new Date().toLocaleTimeString()+(ok.length>1?"("+ok.length+"件)":""));
+}
+$("save").onclick=saveAll;
+/* プレビュー更新(実ファイルには書き込まない) */
+async function preview(){
+  if(cur==="main.html"){await loadAssets();updateLabels()}
+  build();
+}
+ed.addEventListener("input",function(){
+  if(!cur)return;
+  dirtySet[cur]=true;setText(cur,ed.value);updateSaveBtn();status("未保存の変更あり");
+  clearTimeout(timer);timer=setTimeout(preview,400);
+});
+window.addEventListener("beforeunload",function(e){if(anyDirty()){e.preventDefault();e.returnValue=""}});
+/* ---------- 入力補助(自動で閉じタグ・インデント・略語展開) ---------- */
+var assist=localStorage.getItem("assist")!=="0";
+function setAssistBtn(){$("assist").textContent="入力補助: "+(assist?"ON":"OFF");$("assist").classList.toggle("on",assist)}
+$("assist").onclick=function(){assist=!assist;localStorage.setItem("assist",assist?"1":"0");setAssistBtn();ed.focus()};
+setAssistBtn();
+var VOID=/^(img|br|hr|input|meta|link|source|area|base|col|embed|wbr)$/i;
+var TAGS=/^(p|div|span|h1|h2|h3|ul|ol|li|strong|table|thead|tbody|tr|td|th|dl|dt|dd|details|summary|section|aside|label|small|code)$/;
+var SNIP={
+  spacer:'<div class="spacer"></div>',
+  box:'<div class="box"><p>|</p></div>',
+  card:'<div class="card">\n  |\n</div>',
+  cols:'<div class="cols">\n  <div class="card"><h3>|</h3><p></p></div>\n  <div class="card"><h3></h3><p></p></div>\n</div>',
+  fold:'<details class="fold">\n  <summary>|</summary>\n  <div class="fold-body">\n    <p></p>\n  </div>\n</details>',
+  kv:'<dl class="kv">\n  <dt>|</dt><dd></dd>\n</dl>',
+  legend:'<ul class="legend">\n  <li><span class="sym">|</span><span class="bar" aria-hidden="true"></span><span class="desc"></span></li>\n</ul>',
+  table:'<div class="table-wrap"><table>\n  <thead><tr><th>|</th></tr></thead>\n  <tbody>\n    <tr><td class="name"></td></tr>\n  </tbody>\n</table></div>',
+  tr:'<tr><td>|</td></tr>',
+  red:'<span class="c-red">|</span>',
+  blue:'<span class="c-blue">|</span>',
+  side:'<aside class="side">\n  <label class="side-toggle"><input type="checkbox"><span>|</span><span class="mark"></span></label>\n  <div class="side-body">\n    \n  </div>\n</aside>',
+  tabs:function(){var n="tabs-"+Math.random().toString(36).slice(2,6);
+    return '<div class="tabset">\n  <div class="tabs">\n    <label class="tab"><input type="radio" name="'+n+'" checked><span>|</span></label>\n    <label class="tab"><input type="radio" name="'+n+'"><span></span></label>\n  </div>\n  <div class="tabpanels">\n    <section class="tabpanel">\n      \n    </section>\n    <section class="tabpanel">\n      \n    </section>\n  </div>\n</div>'}
+};
+function ins(t){if(!document.execCommand("insertText",false,t)){ed.setRangeText(t,ed.selectionStart,ed.selectionEnd,"end");ed.dispatchEvent(new Event("input"))}}
+function setCur(p){ed.selectionStart=ed.selectionEnd=p}
+function lineInfo(){var v=ed.value,s=ed.selectionStart,ls=v.lastIndexOf("\n",s-1)+1;return {v:v,s:s,ls:ls,line:v.slice(ls,s),ind:v.slice(ls,s).match(/^[ \t]*/)[0]}}
+/* カーソルより前で、まだ閉じていない一番近いタグ名 */
+function openTagBefore(txt){
+  var re=/<!--[\s\S]*?-->|<(\/?)([a-zA-Z][\w-]*)[^<>]*?(\/?)>/g,st=[],m;
+  while((m=re.exec(txt))){
+    if(m[0].indexOf("<!--")===0)continue;
+    var n=m[2].toLowerCase();if(VOID.test(n)||m[3])continue;
+    if(m[1]){var i=st.lastIndexOf(n);if(i>=0)st.length=i}else st.push(n);
+  }
+  return st.length?st[st.length-1]:null;
+}
+function blockEdit(fn){
+  var v=ed.value,a=ed.selectionStart,b=ed.selectionEnd,ls=v.lastIndexOf("\n",a-1)+1,le=v.indexOf("\n",b);if(le<0)le=v.length;
+  var t=fn(v.slice(ls,le).split("\n")).join("\n");
+  ed.setSelectionRange(ls,le);ins(t);ed.setSelectionRange(ls,ls+t.length);
+}
+function expandAbbr(){
+  var L=lineInfo(),m=L.line.match(/(^|[\s>])([a-z][a-z0-9]*(?:\.[\w-]+)*)$/);if(!m)return false;
+  var ab=m[2],parts=ab.split("."),tag=parts[0],cls=parts.slice(1).join(" "),out=null;
+  if(SNIP[tag]&&!cls){out=typeof SNIP[tag]==="function"?SNIP[tag]():SNIP[tag]}
+  else if(TAGS.test(tag)){out="<"+tag+(cls?' class="'+cls+'"':"")+">|</"+tag+">"}
+  if(out==null)return false;
+  out=out.replace(/\n/g,"\n"+L.ind);
+  var k=out.indexOf("|");out=out.replace("|","");
+  var start=L.s-ab.length;
+  ed.setSelectionRange(start,L.s);ins(out);setCur(start+(k<0?out.length:k));
+  return true;
+}
+ed.addEventListener("keydown",function(e){
+  if((e.ctrlKey||e.metaKey)&&e.key==="s"){e.preventDefault();saveAll();return}
+  if(!assist||e.isComposing||e.ctrlKey&&e.key!=="/"||e.metaKey&&e.key!=="/"||e.altKey)return;
+  var sel=ed.selectionStart!==ed.selectionEnd,L=lineInfo(),before=L.v.slice(0,L.s),after=L.v.slice(L.s);
+
+  if(e.key==="Enter"&&!sel){
+    var mm=before.match(/<([a-zA-Z][\w-]*)[^<>]*>$/);
+    if(mm&&!VOID.test(mm[1])&&after.toLowerCase().indexOf("</"+mm[1].toLowerCase()+">")===0){
+      e.preventDefault();ins("\n"+L.ind+"  \n"+L.ind);setCur(L.s+1+L.ind.length+2);return;
+    }
+    var open=L.line.match(/<([a-zA-Z][\w-]*)[^<>]*>\s*$/);
+    e.preventDefault();ins("\n"+L.ind+(open&&!VOID.test(open[1])?"  ":""));return;
+  }
+  if(e.key===">"&&!sel){
+    var m=before.match(/<([a-zA-Z][\w-]*)(\s[^<>]*)?$/);
+    if(m&&!VOID.test(m[1])&&!/\/$/.test(before)){e.preventDefault();ins("></"+m[1]+">");setCur(L.s+1)}
+    return;
+  }
+  if(e.key==="/"&&!sel&&/<$/.test(before)){
+    var nm=openTagBefore(before.slice(0,-1));
+    if(nm){e.preventDefault();ins("/"+nm+">")}
+    return;
+  }
+  if(e.key==='"'&&!sel&&/<[a-zA-Z][^<>]*$/.test(before)){
+    e.preventDefault();
+    if(after.charAt(0)==='"')setCur(L.s+1);else{ins('""');setCur(L.s+1)}
+    return;
+  }
+  if(e.key==="Tab"){
+    e.preventDefault();
+    if(e.shiftKey){blockEdit(function(ls){return ls.map(function(l){return l.replace(/^( {1,2}|\t)/,"")})});return}
+    if(sel&&ed.value.slice(ed.selectionStart,ed.selectionEnd).indexOf("\n")>=0){blockEdit(function(ls){return ls.map(function(l){return "  "+l})});return}
+    if(!sel&&expandAbbr())return;
+    ins("  ");return;
+  }
+  if(e.key==="/"&&(e.ctrlKey||e.metaKey)){
+    e.preventDefault();
+    blockEdit(function(ls){
+      var all=ls.every(function(l){return /^\s*<!-- .* -->\s*$/.test(l)||!l.trim()});
+      return ls.map(function(l){if(!l.trim())return l;
+        return all?l.replace(/^(\s*)<!-- (.*) -->\s*$/,"$1$2"):l.replace(/^(\s*)(.*)$/,"$1<!-- $2 -->")});
+    });
+  }
+});
+
+/* 他のエディタでの変更を検知 */
+setInterval(async function(){
+  if(srcMode!=="folder"||!root||building)return;
+  building=true;
+  try{
+    var changed=false,mainChanged=false;
+    for(var k of Object.keys(handles)){
+      var f=await handles[k].getFile();
+      if(f.lastModified!==stamps[k]){
+        if(dirtySet[k])continue;
+        stamps[k]=f.lastModified;var t=await f.text();
+        if(k.indexOf("embed/")===0)embeds[k.slice(6)]=t;else site[k]=t;
+        if(k===cur){ed.value=t;refreshEd()}
+        if(k==="main.html")mainChanged=true;
+        changed=true;
+      }
+    }
+    if(mainChanged){await loadAssets();updateLabels()}
+    if(changed){status("外部の変更を反映");build()}
+  }catch(e){}
+  building=false;
+},1200);
+
+$("new").onclick=async function(){
+  if(!opened()){alert("先にsiteフォルダか、GitHubを開いてください");return}
+  var n=prompt("新しいファイル名(例: chara.html)\ntemplate_v7.html の中身がコピーされます");
+  if(!n)return;if(!/\.html$/.test(n))n+=".html";
+  if(/[\/\\]/.test(n)||embeds[n]!=null){alert("ファイル名が正しくないか、同じ名前があります");return}
+  var tpl=await findTemplate();
+  if(tpl===null)return;
+  if(srcMode==="gh"){
+    /* GitHub モード: ここでは作らず「未保存の新規ファイル」にする。💾保存で GitHub に追加される */
+    handles["embed/"+n]={gh:true,path:gh.base+"embed/"+n,sha:""};
+    embeds[n]=tpl;dirtySet["embed/"+n]=true;updateSaveBtn();
+    fillSelect("embed/"+n);status("新規作成(まだ GitHub には送っていません。💾保存で追加されます)");
+    return;
+  }
+  var h=await embedDir.getFileHandle(n,{create:true});
+  handles["embed/"+n]=h;embeds[n]=tpl;await writeTo("embed/"+n,tpl);
+  fillSelect("embed/"+n);
+};
+/* テンプレート探し: site直下 と embed の中の template*.html(複数あれば名前が一番新しい版)。
+   なければファイルを選んでもらい、site直下に template_v7.html として保存する */
+async function findTemplate(){
+  if(srcMode==="gh"){
+    var gn2=Object.keys(gh.sha).filter(function(p){
+      if(p.indexOf(gh.base)!==0)return false;
+      return /^(embed\/)?template[^\/]*\.html$/i.test(p.slice(gh.base.length));
+    }).sort(function(a,b){return a.localeCompare(b,undefined,{numeric:true})});
+    if(gn2.length){var gu=gn2[gn2.length-1];status("テンプレート: "+gu);return await ghBlob(gh.sha[gu])}
+    alert("リポジトリに template_v7.html が見つかりません。\nテンプレートのファイルを選んでください。");
+    try{
+      var gp=await showOpenFilePicker({types:[{description:"HTML",accept:{"text/html":[".html"]}}]});
+      return (await readFile(gp[0])).text;
+    }catch(e){
+      return confirm("テンプレートなしの空ファイルで作りますか?")?"":null;
+    }
+  }
+  var c=[];
+  async function look(dir,prefix){
+    for await(var [n,h] of dir.entries()){
+      if(h.kind==="file"&&/^template.*\.html$/i.test(n))c.push({name:prefix+n,h:h});
+    }
+  }
+  await look(root,"");await look(embedDir,"embed/");
+  if(c.length){
+    c.sort(function(a,b){return a.name.localeCompare(b.name,undefined,{numeric:true})});
+    var u=c[c.length-1];status("テンプレート: "+u.name);
+    return (await readFile(u.h)).text;
+  }
+  alert("site フォルダに template_v7.html が見つかりません。\nテンプレートのファイルを選んでください(site フォルダにコピーして、次回から自動で使います)。");
+  try{
+    var hs=await showOpenFilePicker({types:[{description:"HTML",accept:{"text/html":[".html"]}}]});
+    var text=(await readFile(hs[0])).text;
+    var nh=await root.getFileHandle("template_v7.html",{create:true});
+    var w=await nh.createWritable();await w.write(text);await w.close();
+    return text;
+  }catch(e){
+    return confirm("テンプレートなしの空ファイルで作りますか?")?"":null;
+  }
+}
+
+/* ---------- 行番号・現在行ハイライト ---------- */
+var gutBox=$("gut"),gn=$("gn"),gcur=$("gcur"),clEl=$("cl"),bd=$("bd"),bdt=$("bdt");
+var LH=20,PAD=10,lastLines=0,curLine=0;
+function escH(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
+function lineOf(p){var v=ed.value,n=0,i=-1;while((i=v.indexOf("\n",i+1))>=0&&i<p)n++;return n}
+function placeCur(){
+  var y=PAD+curLine*LH;
+  gcur.style.top=y+"px";
+  clEl.style.transform="translateY("+(y-ed.scrollTop)+"px)";
+}
+function updateCur(){curLine=lineOf(ed.selectionStart);placeCur()}
+function syncScroll(){gutBox.scrollTop=ed.scrollTop;bd.scrollTop=ed.scrollTop;bd.scrollLeft=ed.scrollLeft;placeCur()}
+function refreshEd(){
+  var v=ed.value,n=1,i=-1;
+  while((i=v.indexOf("\n",i+1))>=0)n++;
+  if(n!==lastLines){
+    lastLines=n;
+    var a=new Array(n);for(var k=0;k<n;k++)a[k]=k+1;
+    gn.textContent=a.join("\n");
+    gutBox.style.width="calc("+Math.max(2,String(n).length)+"ch + 20px)";
+  }
+  renderFind();updateCur();syncScroll();
+}
+ed.addEventListener("input",refreshEd);
+ed.addEventListener("scroll",syncScroll);
+document.addEventListener("selectionchange",function(){if(document.activeElement===ed)updateCur()});
+
+/* ---------- 検索・置換 ---------- */
+var fbar=$("fbar"),fi=$("fi"),ri=$("ri"),fcnt=$("fcnt"),fCase=false,fReg=false,M=[],mi=-1;
+function buildRe(){
+  var q=fi.value;if(!q){fi.classList.remove("bad");return null}
+  try{
+    var src=fReg?q:q.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+    var re=new RegExp(src,"g"+(fCase?"":"i")+"m");fi.classList.remove("bad");return re;
+  }catch(e){fi.classList.add("bad");return null}
+}
+function findAll(){
+  M=[];var re=buildRe();if(!re)return;
+  var v=ed.value,m;
+  while((m=re.exec(v))){
+    if(m[0]===""){re.lastIndex++;continue}
+    M.push({s:m.index,e:m.index+m[0].length});
+    if(M.length>=5000)break;
+  }
+}
+/* カーソル位置以降で最初の一致を「現在」にする */
+function pickNear(){
+  mi=-1;if(!M.length)return;
+  var p=ed.selectionStart;
+  for(var i=0;i<M.length;i++){if(M[i].s>=p){mi=i;break}}
+  if(mi<0)mi=0;
+}
+function renderMarks(){
+  if(fbar.hidden){bdt.textContent="";fcnt.textContent="";return}
+  var v=ed.value,h="",last=0,lim=Math.min(M.length,3000);
+  for(var i=0;i<lim;i++){
+    h+=escH(v.slice(last,M[i].s))+'<mark'+(i===mi?' class="cur"':'')+'>'+escH(v.slice(M[i].s,M[i].e))+'</mark>';
+    last=M[i].e;
+  }
+  bdt.innerHTML=h+escH(v.slice(last))+"\n";
+  fcnt.textContent=M.length?(mi+1)+" / "+M.length+(M.length>=5000?"+":""):(fi.value?"0件":"");
+  bd.scrollTop=ed.scrollTop;bd.scrollLeft=ed.scrollLeft;
+}
+function renderFind(){if(fbar.hidden)return;findAll();pickNear();renderMarks()}
+var cvs=document.createElement("canvas").getContext("2d");
+function scrollToPos(p){
+  var v=ed.value,line=lineOf(p),y=PAD+line*LH;
+  if(y<ed.scrollTop+LH||y+LH>ed.scrollTop+ed.clientHeight-LH*2)ed.scrollTop=Math.max(0,y-ed.clientHeight/2);
+  var ls=v.lastIndexOf("\n",p-1)+1;
+  cvs.font=getComputedStyle(ed).font;
+  var w=cvs.measureText("0").width,x=PAD+v.slice(ls,p).replace(/\t/g,"  ").length*w;
+  if(x<ed.scrollLeft+20||x>ed.scrollLeft+ed.clientWidth-80)ed.scrollLeft=Math.max(0,x-ed.clientWidth/3);
+}
+function show(k){
+  mi=k;var m=M[k];
+  ed.setSelectionRange(m.s,m.e);
+  scrollToPos(m.s);renderMarks();updateCur();syncScroll();
+}
+function step(dir){
+  if(!M.length)return;
+  var a=ed.selectionStart,b=ed.selectionEnd,k=-1;
+  if(M[mi]&&M[mi].s===a&&M[mi].e===b)k=mi+dir;
+  else if(dir>0){for(var i=0;i<M.length;i++)if(M[i].s>=b){k=i;break}}
+  else{for(var j=M.length-1;j>=0;j--)if(M[j].e<=a){k=j;break}}
+  if(k>=M.length)k=0;
+  if(k<0)k=dir>0?0:M.length-1;
+  show(k);
+}
+function incSearch(){findAll();pickNear();if(M.length)show(mi);else renderMarks()}
+function expandRep(m,s){
+  return s.replace(/\$(\d{1,2}|&|\$)|\\([nt\\])/g,function(x,a,b){
+    if(b)return b==="n"?"\n":b==="t"?"\t":"\\";
+    if(a==="$")return "$";if(a==="&")return m[0];
+    var n=+a;return m[n]!=null?m[n]:x;
+  });
+}
+function replOne(){
+  if(!M.length)return;
+  var a=ed.selectionStart,b=ed.selectionEnd,k=-1;
+  for(var i=0;i<M.length;i++)if(M[i].s===a&&M[i].e===b){k=i;break}
+  if(k<0){step(1);return}
+  var re=buildRe();if(!re)return;
+  re.lastIndex=a;var m=re.exec(ed.value);if(!m||m.index!==a)return;
+  var out=fReg?expandRep(m,ri.value):ri.value,act=document.activeElement;
+  ed.focus();ed.setSelectionRange(a,b);ins(out);   /* 入力扱いなので Ctrl+Z で戻せる */
+  if(M.length)show(mi);
+  if(act&&act!==ed)act.focus();
+}
+function replAll(){
+  var re=buildRe();if(!re||!M.length)return;
+  var v=ed.value,rv=ri.value,res="",last=0,cnt=0,m;
+  while((m=re.exec(v))){
+    if(m[0]===""){re.lastIndex++;continue}
+    res+=v.slice(last,m.index)+(fReg?expandRep(m,rv):rv);last=m.index+m[0].length;cnt++;
+  }
+  res+=v.slice(last);
+  if(res===v)return;
+  var act=document.activeElement,top=ed.scrollTop,left=ed.scrollLeft;
+  ed.focus();ed.select();ins(res);
+  ed.scrollTop=top;ed.scrollLeft=left;syncScroll();
+  if(act&&act!==ed)act.focus();
+  status(cnt+" 件を置換しました(Ctrl+Z で元に戻せます)");
+}
+function openFind(toReplace){
+  fbar.hidden=false;
+  var s=ed.value.slice(ed.selectionStart,ed.selectionEnd);
+  if(s&&s.indexOf("\n")<0)fi.value=s;
+  renderFind();
+  var t=toReplace?ri:fi;t.focus();t.select();
+}
+function closeFind(){fbar.hidden=true;renderMarks();ed.focus()}
+fi.addEventListener("input",incSearch);
+$("fcase").onclick=function(){fCase=!fCase;this.classList.toggle("on",fCase);incSearch()};
+$("freg").onclick=function(){fReg=!fReg;this.classList.toggle("on",fReg);incSearch()};
+$("fnext").onclick=function(){step(1)};
+$("fprev").onclick=function(){step(-1)};
+$("fclose").onclick=closeFind;
+$("rone").onclick=replOne;
+$("rall").onclick=replAll;
+fi.addEventListener("keydown",function(e){
+  if(e.isComposing||e.keyCode===229)return;
+  if(e.key==="Enter"){e.preventDefault();step(e.shiftKey?-1:1)}
+  else if(e.key==="Escape"){e.preventDefault();closeFind()}
+});
+ri.addEventListener("keydown",function(e){
+  if(e.isComposing||e.keyCode===229)return;
+  if(e.key==="Enter"){e.preventDefault();replOne()}
+  else if(e.key==="Escape"){e.preventDefault();closeFind()}
+});
+document.addEventListener("keydown",function(e){
+  var k=e.key.toLowerCase();
+  if((e.ctrlKey||e.metaKey)&&!e.altKey&&(k==="f"||k==="h")){
+    if(!cur)return;e.preventDefault();openFind(k==="h");
+  }else if(e.key==="F3"&&!fbar.hidden){e.preventDefault();step(e.shiftKey?-1:1)}
+  else if(e.key==="Escape"&&!fbar.hidden&&document.activeElement===ed){closeFind()}
+});
+refreshEd();
+
+/* ---------- 表示 ---------- */
+function mode(m){
+  right.className="right"+(m?" "+m+"-mode":"");
+  ["pc","tab","sp"].forEach(function(k){$("w-"+k).classList.toggle("on",(m||"pc")===k)});
+  localStorage.setItem("mode",m);
+}
+$("w-pc").onclick=function(){mode("")};
+$("w-tab").onclick=function(){mode("tab")};
+$("w-sp").onclick=function(){mode("sp")};
+/* 更新: フォルダ内の main.html / css / js / 画像 / embed を読み直して反映 */
+$("reload").onclick=async function(){
+  if(!opened()){build();return}
+  if(anyDirty()&&!confirm((srcMode==="gh"?"未保存の変更があります。破棄してGitHubの最新を読み込みますか?":"未保存の変更があります。破棄してフォルダの最新を読み込みますか?")+"\n(残したい場合は「キャンセル」→「💾保存」)"))return;
+  clearTimeout(timer);dirtySet={};updateSaveBtn();
+  var keep=cur;
+  if(srcMode==="gh"){
+    gh.cache={};status("GitHubから読み込み中…");
+    try{if(await scan())fillSelect(keep)}catch(e){status("読み込めません: "+e.message);return}
+    status("GitHubの最新を読み込みました(画像 "+Object.keys(imgUrls).length+" 件)");return;
+  }
+  if(await scan())fillSelect(keep);
+  status("フォルダの最新を読み込みました(画像 "+Object.keys(imgUrls).length+" 件)");
+};
+mode(localStorage.getItem("mode")||"");
+var dr=$("drag"),left=document.querySelector(".left");
+dr.onmousedown=function(e){
+  e.preventDefault();fr.style.pointerEvents="none";
+  function mv(ev){left.style.width=Math.max(240,ev.clientX)+"px"}
+  function up(){fr.style.pointerEvents="";document.removeEventListener("mousemove",mv);document.removeEventListener("mouseup",up)}
+  document.addEventListener("mousemove",mv);document.addEventListener("mouseup",up);
+};
+/* 前回 GitHub で開いていたら、自動でつなぐ(トークンを記憶している場合は保存もすぐ使える) */
+if(localStorage.getItem("ghAuto")==="1"){
+  var c0=ghLoadCfg();
+  if(c0.repo)ghOpen({repo:c0.repo,branch:c0.branch,dir:c0.dir,token:localStorage.getItem("ghToken")||""},true);
+}
+</script>
+</body></html>

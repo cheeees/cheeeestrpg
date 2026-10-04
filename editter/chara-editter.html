@@ -1,0 +1,1677 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>イメージカラー色相環</title>
+<style>
+:root{--bgop:.1;--bg:#f7f8fa;--fg:#20242c;--card:#fff;--mut:#6f7683;--line:#dde0e6;--main:var(--fg);--on:var(--bg);--soft:rgba(128,128,128,.16);--soft-line:rgba(170,135,80,.28);--hover:var(--bg);--num:#a8782a}
+*{box-sizing:border-box}
+body{margin:0;padding:20px 14px 40px;background:var(--bg);color:var(--fg);font-family:"Hiragino Maru Gothic ProN","Hiragino Sans","Yu Gothic",sans-serif}
+main{max-width:620px;margin:0 auto}
+.stage{position:relative;width:100%;aspect-ratio:1}
+.ring,.face{position:absolute;left:44%;top:50%;transform:translate(-50%,-50%);border-radius:50%}
+.ring{width:30%;aspect-ratio:1;background:conic-gradient(hsl(0 85% 60%),hsl(60 85% 55%),hsl(120 70% 48%),hsl(180 75% 48%),hsl(240 80% 64%),hsl(300 75% 60%),hsl(360 85% 60%));
+ -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 8px),#000 calc(100% - 7px));mask:radial-gradient(farthest-side,transparent calc(100% - 8px),#000 calc(100% - 7px))}
+.face{width:24%;aspect-ratio:1;background:var(--card) center/cover;border:3px solid var(--line);display:grid;place-items:center;font-weight:700;font-size:clamp(28px,10vw,64px);color:#fff;text-shadow:0 1px 3px #0005}
+.face.empty{font-size:clamp(8px,2.6vw,12px);white-space:nowrap;font-weight:400;color:var(--mut);text-shadow:none}
+.stage{container-type:inline-size}
+@supports (width:1cqw){.face.empty{font-size:min(12px,2.8cqw)}}
+.bar{position:absolute;left:92.5%;width:3%;top:10%;height:80%;border-radius:99px;background:linear-gradient(#fff,#000);border:1px solid var(--line)}
+.c{position:absolute;width:10%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;border:3px solid;background:var(--card) center/cover;padding:0;cursor:pointer;display:grid;place-items:center;font:600 13px inherit;color:var(--fg);box-shadow:0 1px 4px #0003}
+.c.on{outline:3px solid var(--fg);outline-offset:2px;z-index:2}
+.c:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
+.info{margin:14px 0;padding:12px 14px;background:var(--card);border:1px solid var(--line);border-radius:10px;min-height:56px;display:flex;align-items:center;gap:12px}
+.info a{color:var(--fg);font-weight:700;font-size:17px}
+.info a::after{content:" ›";display:inline-block;text-decoration:none}
+.sw{width:28px;height:28px;border-radius:50%;flex:none;border:1px solid var(--line)}
+.info small{color:var(--mut);display:block;margin-top:2px}
+.tags{display:flex;flex-wrap:wrap;gap:4px 8px;margin-top:3px;font-size:13px;color:var(--mut)}
+.tags button{white-space:nowrap;background:none;border:0;padding:0;font:inherit;color:var(--mut);cursor:pointer}
+.tags button:hover{color:var(--fg);text-decoration:underline}
+.search{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.search input{flex:1;min-width:0;padding:9px 12px;border:1px solid var(--line);border-radius:99px;background:var(--card);color:var(--fg);font:inherit;font-size:14px}
+#qn{font-size:12px;color:var(--mut);white-space:nowrap}
+.tagbar{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.tagbar:empty{display:none}
+.tagbar button{padding:3px 10px;border:1px solid var(--line);border-radius:99px;background:var(--card);color:var(--mut);font:inherit;font-size:12px;cursor:pointer}
+.c.dim{opacity:.12;pointer-events:none;box-shadow:none}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:flex;align-items:center;gap:6px;padding:4px 10px 4px 6px;border:1px solid var(--line);border-radius:99px;background:var(--card);font:inherit;font-size:13px;color:var(--fg);cursor:pointer}
+.chip i{width:14px;height:14px;border-radius:50%;display:block;border:1px solid var(--line)}
+button.t{margin-top:22px;background:none;border:0;color:var(--mut);font:inherit;font-size:13px;cursor:pointer;text-decoration:underline;padding:4px 0}
+#ed,#ped{display:none;margin-top:10px;padding:14px;background:var(--card);border:1px solid var(--line);border-radius:10px}
+#ed.open,#ped.open{display:block}
+.edp h2{font-size:14px;margin:18px 0 0;padding-top:14px;border-top:1px solid var(--line)}
+.edp h2:first-child,.edp>select+h2{margin-top:0}
+.edp h2:first-child{margin-top:0;padding-top:0;border:0}
+.edp label{display:block;font-size:13px;color:var(--mut);margin:10px 0 4px}
+.edp input[type=text],.edp select,.edp input[type=number]{width:100%;padding:8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg);font:inherit}
+.edp input[type=number]{width:80px;display:inline-block}
+.edp .bds{width:auto;display:inline-block}
+.edp input[type=color]{width:56px;height:36px;border:0;padding:0;background:none;vertical-align:middle}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}
+.b{padding:8px 14px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--fg);font:inherit;cursor:pointer}
+#pv,.pv{width:44px;height:44px;border-radius:50%;object-fit:cover;border:1px solid var(--line);display:none}
+.sws button{width:26px;height:26px;border-radius:50%;border:1px solid var(--line);cursor:pointer;padding:0}
+textarea{width:100%;height:110px;margin-top:10px;font:12px monospace;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:6px}
+p.n{font-size:12px;color:var(--mut);line-height:1.6;margin:8px 0 0}
+.gal.stands img{background:none;border:0;border-radius:0}
+.vital,.keys{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px}
+.vt,.key{display:flex;flex-wrap:wrap;justify-content:center;align-items:baseline;align-content:center;gap:0 6px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;text-align:center;background:var(--bg)}
+.vt span,.key span,.vt b,.key b{display:inline-block;margin:0;font-size:12px;font-weight:400;color:var(--mut)}.scl .dt{display:inline-block;margin-left:8px;font-size:12px;font-weight:400;color:var(--mut)}
+.scl a.lg{font-weight:700;color:var(--fg)}.scl a.lg::after{content:"📜 ログを読む ›";display:inline-block;margin-left:1.6em;font-size:12px;font-weight:400;color:var(--mut)}
+.lctl{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+.lctl input{flex:1;min-width:140px;padding:8px 12px;border:1px solid var(--line);border-radius:99px;background:var(--card);color:var(--fg);font:inherit;font-size:14px}
+.lctl select{padding:7px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--fg);font:inherit;font-size:13px}
+.logi{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-bottom:8px}
+.logi .lt{font-weight:700;font-size:16px;color:var(--fg)}
+a.lt::after{content:" ›"}
+.logi small{display:block;color:var(--mut);font-size:12px;margin:2px 0 6px}
+.lav{display:flex;flex-wrap:wrap;gap:4px}
+.la{width:30px;height:30px;border-radius:50%;border:2px solid #fff;background:#fff center/cover;color:#fff;font:700 12px inherit;padding:0;cursor:pointer;display:grid;place-items:center}
+.la.on{outline:2px solid var(--fg);outline-offset:1px}
+.logi .row{margin-top:6px}.logi .b{padding:3px 10px;font-size:12px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.tabs button{padding:5px 14px;border:1px solid var(--line);border-radius:99px;background:var(--card);color:var(--mut);font:inherit;font-size:13px;cursor:pointer}
+.tabs button.on,.tagbar button.on,.b.p{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.sview{position:relative;overflow:hidden;border-radius:18px;min-height:220px;display:flex;justify-content:center;padding:18px 0 0}
+.sbg{position:fixed;top:0;right:0;width:min(100vw,780px);height:85vh;z-index:-1;background:right top/cover no-repeat;transform:translate3d(0,var(--bgy,0px),0);will-change:transform;opacity:var(--bgop,.1);--fade:linear-gradient(#000 var(--fa,15%),transparent var(--fb,60%));-webkit-mask-image:var(--fade);mask-image:var(--fade);pointer-events:none}
+@media(min-width:700px){.sbg{background-size:contain;height:min(85vh,calc(min(100vw,780px)/var(--ar,.6)))}}
+.sfig{position:relative;z-index:1;margin:0;text-align:center}
+.sfig img{display:block;max-width:100%;max-height:min(80vh,680px);width:auto;height:auto}
+.faces{display:grid;grid-template-columns:repeat(auto-fit,minmax(40px,100px));justify-content:center;gap:10px;margin-top:12px}
+.faces:empty{display:none}
+.faces img{width:100%;aspect-ratio:1;object-fit:cover;display:block;border-radius:10px;border:1px solid var(--line);background:var(--card)}
+@media(min-width:700px){.faces{grid-template-columns:repeat(6,minmax(0,100px))}}
+.sce{margin-top:10px;padding:10px;border:1px solid var(--line);border-radius:8px}
+.dt2{padding:6px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg);font:inherit}
+.sce select{margin-bottom:6px}.sce input{margin-bottom:6px}.sce textarea{display:block;width:100%;height:56px;margin:0 0 6px;padding:8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg);font:inherit;resize:vertical}.sce .row{margin:0}.sce input[type=date]{width:auto;padding:6px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg);font:inherit}
+.sil-p .b{display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 8px;line-height:1}.sil-p svg{height:60px;width:24px;fill:var(--mut)}.sil-p .b.p svg{fill:var(--bg)}.sil-p .b span{font-size:11px}
+[hidden]{display:none!important}
+.back{display:inline-block;margin-bottom:12px;color:var(--mut);font-size:13px;text-decoration:none}
+.back:hover{color:var(--fg)}
+.phead{display:flex;align-items:center;gap:14px;margin:4px 0 20px}
+.pface{width:84px;height:84px;flex:none;border-radius:50%;border:3px solid var(--line);background:var(--card) center/cover;display:grid;place-items:center;font-weight:700;font-size:34px;color:#fff;text-shadow:0 1px 3px #0005}
+.pname{font-size:22px;font-weight:700}
+.phead small{color:var(--mut);display:block;margin-top:3px}
+.sh{font-size:13px;color:var(--mut);letter-spacing:.08em;margin:22px 0 8px}
+.gal{display:grid;gap:10px}
+.gal.stands{grid-template-columns:repeat(auto-fill,minmax(150px,260px))}
+.gal.faces{grid-template-columns:repeat(auto-fill,minmax(80px,110px))}
+.gal figure{margin:0;text-align:center}
+.gal img{width:100%;height:auto;display:block;border-radius:10px;border:1px solid var(--line);background:var(--card)}
+.gal.faces img{aspect-ratio:1;object-fit:cover}
+.gal figcaption{font-size:12px;color:var(--mut);margin-top:4px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:0 14px 14px;margin-top:22px}
+.card>div:not([hidden]):not(:empty){padding-top:14px}
+.card h4{font-size:13px;margin:0 0 8px}
+#i_link a{color:var(--fg);font-weight:700}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:8px}
+.grid div{display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:8px;padding:6px 8px;text-align:center}
+.grid span{display:block;font-size:11px;color:var(--mut)}
+.grid b{font-size:16px}
+.skl{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:2px 18px}
+.skl div{display:flex;justify-content:space-between;gap:8px;padding:4px 0;border-bottom:1px dotted var(--line);font-size:14px}@media(max-width:600px){.skl{grid-template-columns:repeat(3,minmax(0,1fr));gap:2px 10px}.skl div{gap:4px;padding:3px 0;font-size:11px}.skl div span{min-width:0;overflow-wrap:anywhere}.skl div b{flex:none}}
+.scl{margin:0;padding:0;list-style:none}
+.scl li{padding:7px 0;border-bottom:1px dotted var(--line);font-size:14px}
+.scl li span{display:block;font-size:12px;color:var(--mut);margin-top:2px;white-space:pre-wrap}
+#fab{position:fixed;right:10px;bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:25;display:none;flex-direction:column;gap:8px}
+#fab.open{display:flex}
+#fab .b{padding:10px 14px;box-shadow:0 2px 8px #0004}
+#fab .b:not(.p){background:var(--card)}
+.eli{display:flex;gap:8px;align-items:center;margin-top:8px}
+.eli img{width:44px;height:44px;object-fit:cover;border-radius:6px;border:1px solid var(--line);flex:none}
+.eli input{flex:1;min-width:0}
+.eli .b{padding:6px 10px}
+#toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:99px;font-size:13px;z-index:40;max-width:90vw;text-align:center}
+</style>
+</head>
+<body>
+<main>
+<div id="home">
+<div class="search"><input type="search" id="q" placeholder="タグで検索(スペース区切りで絞り込み)" autocomplete="off"><span id="qn"></span></div>
+<div class="tagbar" id="tagbar"></div>
+
+<div class="tabs" id="modetabs"><button type="button" id="m_ring" class="on">色相環</button><button type="button" id="m_cmp">身長比較</button><button type="button" id="m_bd">誕生日</button><button type="button" id="m_age">年齢</button><button type="button" id="m_scn">通過数</button></div>
+<div class="vbar"><button type="button" class="otg" id="m_only">選んだキャラだけ表示 <span id="onum"></span></button><span class="csl">ONにして、一覧の名前を押して選びます</span>
+ <div class="csg" id="csort"><span class="csl">並び替え</span><button type="button" class="cs on" data-s="reg">登録順</button><button type="button" class="cs" data-s="ha">低い順(昇順)</button><button type="button" class="cs" data-s="hd">高い順(降順)</button></div></div>
+<p class="ohint" id="ohint" hidden>キャラが選ばれていません。下の一覧の名前を押して選んでください。</p>
+<div class="stage" id="stage">
+ <div class="ring"></div>
+ <div class="face empty" id="face"></div>
+ <div class="bar"></div>
+</div>
+<div class="cmpw" id="cmpw" hidden></div>
+<div class="bdw" id="bdw" hidden></div>
+<div class="agew" id="agew" hidden></div>
+<div class="scw" id="scw" hidden></div>
+
+<div class="info" id="info"><span style="color:var(--mut)">キャラをタップすると名前が出ます</span></div>
+<div class="chips" id="chips"></div>
+<h3 class="sh">ログ一覧 <span id="lqn"></span></h3>
+<div class="lctl"><input type="search" id="lq" placeholder="参加キャラで検索(スペース区切りでAND)" autocomplete="off">
+<select id="lsort" aria-label="並び替え"><option value="reg">登録順</option><option value="new">日付の新しい順</option><option value="old">日付の古い順</option><option value="title">タイトル順</option><option value="num">参加人数順</option></select></div>
+<div id="loglist"></div>
+
+<!-- ▼▼▼ 【公開用で消す場所 ①】ここから ▼▼▼
+     他の人向け(編集モードを出さない)にするときは、この行から下の「▲▲▲ ①ここまで ▲▲▲」までを丸ごと消してください。
+     (「編集モード」ボタンと、ログ登録・キャラ追加・コード書き出しの編集欄です) -->
+<div id="ed" class="edp">
+ <h2>ココフォリアのログから読み込む</h2>
+ <label>ログ(.html)</label><input type="file" id="lg" accept=".html,text/html">
+ <div id="lbox" style="display:none">
+  <label>名前(発言が多い順)</label><select id="ls"></select>
+  <div class="row sws" id="lc"></div>
+  <div class="row"><button class="b p" id="addl">この人を追加</button></div>
+ </div>
+
+ <h2>ログを登録</h2>
+ <label>登録済みのログから選ぶ(選ぶと下のフォームに内容が入ります。直して「ログを登録」を押すと更新されます)</label><select id="lsel"></select>
+ <label>ログ(.html)を読み込む(任意)</label><input type="file" id="lgf" accept=".html,text/html">
+ <p class="n">ファイルを選ぶと、ログ名・日付・参加者とログの場所(URL)が自動で入ります。ログ本体はこのページに保存しません。リンクは下のURLで開きます。</p>
+ <label>ログの場所(URL)</label><input type="text" id="lu" placeholder="https://... または log1.html">
+ <label>ログ名</label><input type="text" id="lt">
+ <label>シナリオ名(キャラの「通過シナリオ」と同じ名前にするとリンクになります)</label><input type="text" id="lsc">
+ <label>開始日〜終了日(ファイルから読み込むと自動で入ります。直しても大丈夫)</label>
+ <div class="row" style="margin-top:0"><input type="date" id="ld" class="dt2"> 〜 <input type="date" id="lde" class="dt2"></div>
+ <label>参加キャラ(「、」か改行区切り)</label><textarea id="lpl" style="height:60px"></textarea>
+ <label>シナリオメモ(任意・改行できます。このシナリオを通過したキャラの紹介ページにも表示されます)</label><textarea id="lmemo" style="height:80px"></textarea>
+ <p class="n" id="lhint"></p>
+ <div class="row"><button class="b p" id="lreg">ログを登録</button><button class="b" id="lclr">フォームを空にする</button></div>
+
+ <h2>キャラを追加・編集</h2>
+ <label>登録済みのキャラから選ぶ(立ち絵・表情差分・ステータスなどの編集画面が開きます)</label><select id="csel"></select>
+ <p class="n">上の円や一覧でキャラをタップすると、ここに基本情報が入ります。直して「選択中を更新」を押してください。</p>
+ <label>名前</label><input type="text" id="nm" placeholder="キャラ名">
+ <label>イメージカラー</label><input type="color" id="co" value="#ff6688">
+ <label>身長(cm・任意。入れると「身長比較」に並びます)</label><input type="number" id="ht" min="1" max="2000" step="0.1" placeholder="170"> cm
+ <label>誕生日(月と日・任意。入れると「誕生日」に並びます。月と日の両方を選んでください)</label><div class="row" style="margin-top:0"><select id="bd_m" class="bds" aria-label="月"></select> 月 <select id="bd_d" class="bds" aria-label="日"></select> 日</div>
+ <label>年齢(任意。入れると「年齢」に並びます)</label><input type="number" id="ag" min="0" max="99999" step="1" placeholder="17"> 歳
+ <label>体型(身長比較で使うシルエット。頭の大きさは固定で、体は身長に合わせて自動で調整されます)</label><div class="row sil-p" id="silp_home" style="margin-top:0"></div>
+ <label>アイコン画像(任意・大きめの画像ほどきれいに出ます)</label>
+ <div class="row" style="margin-top:0"><input type="file" id="im" accept="image/*"><img id="pv" alt=""><button class="b" id="noim">アイコンを外す</button></div>
+ <label>または画像URLで指定(サイトの容量を節約できます)</label>
+ <div class="row" style="margin-top:0"><input type="text" id="im_url" value="https://cheeees.github.io/cheeeestrpg/pic/.webp" placeholder="https://..." style="flex:1;min-width:200px"><button class="b" id="im_seturl">URLで設定</button></div>
+ <label>タグ(スペース区切り)</label><input type="text" id="tg2" placeholder="#タグ1 #タグ2">
+ <div class="row tp" id="tp_home" style="margin-top:6px"></div>
+ <label>一言メモ(任意)</label><input type="text" id="mm" placeholder="一言メモ">
+ <label>キャラシリンク(いあきゃら・任意)</label><input type="text" id="lk" placeholder="https://...">
+ <div class="row"><button class="b p" id="upd">選択中を更新</button><button class="b" id="add">新規追加</button></div>
+ <div class="row"><button class="b" id="del">選択中を削除</button><button class="b" id="rs">下書きを戻す</button></div>
+
+ <h2>画像をwebpにそろえる</h2>
+ <p class="n">登録済みのキャラ(アイコン・立ち絵・表情差分)の画像のうち、<b>.png のURLは .webp に書き換え</b>、ページに埋め込まれたpng画像はwebpに変換し直します。URLの書き換えは、<b>同じ名前の .webp ファイルがすでにサーバーに置いてある</b>前提です(置いていないと画像が出なくなります)。実行前に確認が出て、元の下書きは端末に退避します。</p>
+ <div class="row"><button class="b" id="towebp" type="button">登録済みのpng画像をwebpにする</button></div>
+
+ <h2>アイコン用の小さい画像にする</h2>
+ <p class="n">円の中のアイコンは、元画像を小さく縮めて表示しています。元画像が大きい(数百px)と、PCでギザギザに見えます。そこで、アイコン専用の256×256の画像(<b>○○_icon.webp</b>)を使います。<br>
+ ① 「アイコンURLの一覧をコピー」→ 付属の <b>make_icons.html</b> を開いて貼り付け、「作成」→「ZIPでダウンロード」<br>
+ ② ZIPを解凍して、中の <b>○○_icon.webp</b> を、元の画像と同じ場所にアップロード<br>
+ ③ 「アイコンのURLを _icon.webp にする」を押す<br>
+ ※ ③は、_icon.webp がサイトに置いてある前提です(置いていないとアイコンが出なくなります)。戻したいときは「_icon を外して元に戻す」。</p>
+ <div class="row"><button class="b" id="icolist" type="button">アイコンURLの一覧をコピー</button><button class="b" id="icoset" type="button">アイコンのURLを _icon.webp にする</button><button class="b" id="icoundo" type="button">_icon を外して元に戻す</button></div>
+
+ <h2>公開用コード</h2>
+ <div class="row" style="margin-top:8px"><button class="b p" id="out">コードを書き出す</button><button class="b" id="out2">バックアップ用データ</button><button class="b" id="outs">サンプルを書き出す(動作確認用)</button></div>
+ <textarea id="ta" readonly style="display:none"></textarea>
+ <p class="n">追加した内容はこの端末の下書きです。「コードを書き出す」で出たコード(&lt;script&gt;なしのHTML)を、「HTMLのみ」ファイルの <b>「ここに貼り付けてね」</b> の印の間に丸ごと貼り替えて公開すると、全員に反映されます。<br>「バックアップ用データ」は、このファイルの <b>「更新データの挿入場所 ①②」</b>(CHARACTERS と LOGS)に貼り替えておくと、次回もこの内容から編集できます。<br>「サンプルを書き出す」は、動作確認用の見本キャラ・見本ログで公開用コードを作ります(いまの下書きや保存データは変わりません)。「HTMLのみ」ファイルのコピーに貼って試すと、本番のデータに触らず見た目や動きを確認できます。</p>
+</div>
+<!-- ▲▲▲ 【公開用で消す場所 ①】ここまで ▲▲▲ -->
+</div>
+<div id="prof" hidden>
+ <div class="sbg" id="sbg" hidden></div>
+ <a class="back" href="#">← 色相環にもどる</a>
+ <div class="phead" id="phead"></div>
+
+<section id="s_stage" hidden>
+  <div class="tabs" id="tabs"></div>
+  <div class="sview" id="sview"><figure class="sfig"><img id="simg" alt=""></figure></div>
+  <div class="faces" id="g_faces"></div>
+ </section>
+
+ <section id="s_info" class="card" hidden>
+  <div id="i_link"></div>
+  <div id="i_basic" hidden><h4>基本情報</h4><div class="skl" id="g_basic"></div></div>
+  <div id="i_stats" hidden><h4>ステータス</h4><div class="vital" id="g_vital"></div><div class="grid" id="g_stats"></div></div>
+  <div id="i_skills" hidden><h4>技能</h4><div class="keys" id="g_keys"></div><div class="skl" id="g_skills"></div></div>
+  <div id="i_art" hidden><h4>アーティファクト</h4><ul class="scl" id="g_art"></ul></div>
+  <div id="i_spells" hidden><h4>呪文</h4><ul class="scl" id="g_spells"></ul></div>
+  <div id="i_seq" hidden><h4>後遺症</h4><ul class="scl" id="g_seq"></ul></div>
+  <div id="i_sc" hidden><h4>通過シナリオ<span class="cnt" id="sc_n"></span></h4><ul class="scl" id="g_sc"></ul></div>
+ </section>
+
+<!-- ▼▼▼ 【公開用で消す場所 ②】ここから ▼▼▼
+     キャラ紹介ページの編集欄です。この行から下の「▲▲▲ ②ここまで ▲▲▲」までを丸ごと消してください。 -->
+ <div id="ped" class="edp">
+ <label>編集するキャラを切り替える(切り替える前に「この内容で保存」を押してください)</label><select id="pcsel"></select>
+ <h2>基本情報</h2>
+ <label>名前</label><input type="text" id="pe_name">
+ <label>イメージカラー</label><input type="color" id="pe_color" value="#ff6688">
+ <label>身長(cm・任意)</label><input type="number" id="pe_ht" min="1" max="2000" step="0.1" placeholder="170"> cm
+ <label>誕生日(月と日・任意。月と日の両方を選んでください)</label><div class="row" style="margin-top:0"><select id="pe_bdm" class="bds" aria-label="月"></select> 月 <select id="pe_bdd" class="bds" aria-label="日"></select> 日</div>
+ <label>年齢(任意)</label><input type="number" id="pe_ag" min="0" max="99999" step="1" placeholder="17"> 歳
+ <label>体型(身長比較で使うシルエット。頭の大きさは固定で、体は身長に合わせて自動で調整されます)</label><div class="row sil-p" id="silp_prof" style="margin-top:0"></div>
+ <label>アイコン画像(任意)</label>
+ <div class="row" style="margin-top:0"><input type="file" id="pe_im" accept="image/*"><img id="pe_pv" class="pv" alt=""><button class="b" id="pe_noim">アイコンを外す</button></div>
+ <label>または画像URLで指定</label>
+ <div class="row" style="margin-top:0"><input type="text" id="pe_im_url" value="https://cheeees.github.io/cheeeestrpg/pic/.webp" placeholder="https://..." style="flex:1;min-width:200px"><button class="b" id="pe_im_seturl">URLで設定</button></div>
+ <label>タグ(スペース区切り)</label><input type="text" id="pe_tags" placeholder="#タグ1 #タグ2">
+ <div class="row tp" id="tp_prof" style="margin-top:6px"></div>
+ <label>一言メモ(任意)</label><input type="text" id="pe_memo">
+
+ <h2>キャラシ・ステータス</h2>
+ <label>キャラシリンク(いあきゃら)</label><input type="text" id="pe_link" placeholder="https://iachara.com/view/...">
+ <p class="n">リンクは紹介ページに表示するだけです(リンク先からの読み込みはしません)。ステータスは、いあきゃらの「ココフォリア駒出力」でコピーした内容(またはチャットパレット)を下に貼り付けるか、直接入力してください。</p>
+ <label>貼り付け欄</label><textarea id="pe_paste" placeholder="ここに貼り付け"></textarea>
+ <div class="row"><button class="b" id="pe_parse">貼り付けた内容から読み込む</button></div>
+ <label>ステータス(1行に「項目 値」。例: STR 13 / HP 12/12)</label><textarea id="pe_stats"></textarea>
+ <label>技能(1行に「技能名 値」。例: 目星 70)</label><textarea id="pe_skills"></textarea>
+
+ <h2>アーティファクト</h2>
+ <div id="pe_artl"></div>
+ <div class="row"><button class="b" id="pe_artadd" type="button">＋ アーティファクトを追加</button></div>
+
+ <h2>呪文</h2>
+ <div id="pe_spl"></div>
+ <div class="row"><button class="b" id="pe_spadd" type="button">＋ 呪文を追加</button></div>
+
+ <h2>後遺症</h2>
+ <div id="pe_sql"></div>
+ <div class="row"><button class="b" id="pe_sqadd" type="button">＋ 後遺症を追加</button></div>
+
+ <h2>通過シナリオ</h2>
+ <p class="n">メモは、ホーム画面の「ログを登録」にある「シナリオメモ」で入力します(ログ名とシナリオ名が同じなら、ここに自動で表示されます)。</p>
+ <div id="pe_scl"></div>
+ <div class="row"><button class="b" id="pe_scadd" type="button">＋ シナリオを追加</button></div>
+
+ <h2>立ち絵</h2>
+ <label>画像ファイルを追加(複数選択OK)</label><input type="file" id="pe_stands_file" accept="image/*" multiple>
+ <label>または画像URLで追加(サイトの容量を節約できます)</label>
+ <div class="row" style="margin-top:0"><input type="text" id="pe_stands_url" value="https://cheeees.github.io/cheeeestrpg/pic/.webp" placeholder="https://..." style="flex:1;min-width:200px"><button class="b" id="pe_stands_addurl">URLで追加</button></div>
+ <label>ラベル(タブに表示される名前・任意)</label><input type="text" id="pe_stands_label" placeholder="通常 / 笑顔 など">
+ <div id="el_stands"></div>
+ <h2 id="pe_fh">表情差分</h2>
+ <label>追加先の立ち絵(ここで選んだ立ち絵に追加・表示されます)</label><select id="pe_fsel"></select>
+ <label>画像ファイルを追加(複数選択OK)</label><input type="file" id="pe_faces_file" accept="image/*" multiple>
+ <label>または画像URLで追加(サイトの容量を節約できます)</label>
+ <div class="row" style="margin-top:0"><input type="text" id="pe_faces_url" value="https://cheeees.github.io/cheeeestrpg/pic/.webp" placeholder="https://..." style="flex:1;min-width:200px"><button class="b" id="pe_faces_addurl">URLで追加</button></div>
+ <label>ラベル(追加する画像に付ける名前・任意)</label><input type="text" id="pe_faces_label" placeholder="通常 / 笑顔 など">
+ <div id="el_faces"></div>
+
+ <h2>保存・公開用コード</h2>
+ <div class="row" style="margin-top:8px"><button class="b p" id="pe_save">この内容で保存</button><button class="b" id="pe_out">コードを書き出す</button><button class="b" id="pe_out2">バックアップ用データ</button><button class="b" id="pe_outs">サンプルを書き出す(動作確認用)</button></div>
+ <textarea id="pe_ta" readonly style="display:none"></textarea>
+ </div>
+<!-- ▲▲▲ 【公開用で消す場所 ②】ここまで ▲▲▲ -->
+</div>
+</main>
+<!-- ▼▼▼ 【公開用で消す場所 ③】ここから ▼▼▼
+     編集モード中だけ画面の端に出る「保存」「編集欄の先頭へ」ボタンです。①②と一緒に、この行から「③ここまで」までを消してください。 -->
+<div id="fab"><button class="b p" id="fab_save" type="button">保存</button><button class="b" id="fab_top" type="button">↑ 編集欄の先頭へ</button></div>
+<!-- ▲▲▲ 【公開用で消す場所 ③】ここまで ▲▲▲ -->
+<div id="toast" hidden></div>
+<script>
+// ╔══════════════════════════════════════════════════════════════
+// ║ 【更新データの挿入場所 ①】キャラデータ(バックアップ用)
+// ║  編集モードの「バックアップ用データ」で出たコードのうち
+// ║  const CHARACTERS = [ ... ]; の部分を、この下の ▼ 〜 ▲ の間に丸ごと貼り替えてください
+// ║  (公開用のコードは「コードを書き出す」ボタン。こちらは次回も続きから編集するための控えです)
+// ╚══════════════════════════════════════════════════════════════
+// ▼ 公開されるキャラデータ(ここを書き換えて更新)
+// height: 身長(cm) / birthday: "MM-DD" / age: 年齢(数値)
+// stats/skills: [項目,値] の並び  artifacts/spells/sequelae(後遺症): {name,memo}  scenarios: {title,date}(メモはログ側 LOGS の memo)  stands: {src,label,faces:[{src,label}]}(src は画像URLまたはdata URL。表情差分は立ち絵ごとに最大6枚)
+const CHARACTERS = [
+  {name:"サンプルA", color:"#ff6688", image:"", tags:["タグ1","タグ2"], memo:"一言メモ", link:"", birthday:"03-14", age:17, stats:[["STR","13"],["CON","12"],["POW","14"],["HP","12/12"],["SAN","70/99"]], skills:[["目星","70"],["聞き耳","60"]], scenarios:[{title:"サンプルシナリオ",date:"2025-01-01"}], stands:[], faces:[]},
+  {name:"サンプルB", color:"#4f8cff", image:"", tags:[], memo:"", link:"", birthday:"03-14", age:24, stats:[], skills:[], scenarios:[], stands:[], faces:[]},
+  {name:"サンプルC", color:"#f2c94c", image:"", tags:[], memo:"", link:"", birthday:"07-02", age:30, stats:[], skills:[], scenarios:[], stands:[], faces:[]},
+  {name:"サンプルD", color:"#808080", image:"", tags:[], memo:"", link:"", stats:[], skills:[], scenarios:[], stands:[], faces:[]}
+];
+// ▲ ここまで(キャラデータの終わり)
+
+// ╔══════════════════════════════════════════════════════════════
+// ║ 【更新データの挿入場所 ②】ログデータ
+// ║  「バックアップ用データ」のうち const LOGS = [ ... ]; の部分を、この下の ▼ 〜 ▲ の間に丸ごと貼り替えてください
+// ║  (ログ本体は z に圧縮して入るので、ログを登録したあとはバックアップ用データも書き出し直してください)
+// ╚══════════════════════════════════════════════════════════════
+// ▼ 公開されるログデータ(title: ログ名 / scenario: 通過シナリオ名と同じにするとリンク化 / date: 開始日 / end: 終了日 / z: 埋め込みログ本体(自動生成) / url: 埋め込まない場合のログhtmlの場所 / players: 参加キャラ名 / memo: シナリオメモ。通過シナリオに表示)
+const LOGS = [
+  {title:"サンプルシナリオ", scenario:"サンプルシナリオ", url:"sample-log.html", date:"", end:"", memo:"生還", players:["サンプルA","サンプルB"]}
+];
+// ▲ ここまで(ログデータの終わり)
+// 書き出しデータは「空の項目」を省いて小さくしているので、読み込み時にここで補います(貼り替えるのは上の ▼〜▲ の間だけ)
+CHARACTERS.forEach((c,i)=>{CHARACTERS[i]=Object.assign({image:"",tags:[],memo:"",link:"",height:"",birthday:"",age:"",sil:"normal",stats:[],skills:[],artifacts:[],spells:[],sequelae:[],scenarios:[],stands:[],faces:[]},c)});
+CHARACTERS.forEach(c=>c.scenarios.forEach(x=>{delete x.memo}));   // 通過シナリオのメモはログ側(LOGS)で持つので、キャラ側に残っている古いメモは捨てる
+LOGS.forEach((l,i)=>{LOGS[i]=Object.assign({title:"",scenario:"",url:"",date:"",end:"",players:[],memo:""},l)});
+
+
+// ================= 身長比較(シルエット) =================
+// シルエット(ピクトグラム)。頭のサイズは固定(直径 SIL_HEAD cm)で、残りの身長から胴・腕・脚のバランスを自動で決めます。
+// 体型を増やすときは SIL に {id,n} を足し、SIL_T に同じ id の寸法(下の説明参照)を足してください。
+//  S=腕を含む全体の幅 a=腕の太さ s=腕と胴のすき間 tb=胴の下側の幅 lw=脚1本の太さ lg=脚のすき間(以上は身長170cmのときのcm)
+//  hip=胴の長さ(体の高さに対する比) arm=腕の長さ(同) top=肩の丸み  belly=1でおなか膨らみ dress=1でワンピース
+const SIL_HEAD=11.5,SIL_R=0.4; // 頭の半径(cm)/ 図の横幅÷高さ
+const SIL=[{id:"normal",n:"普通"},{id:"slim",n:"細身"},{id:"strong",n:"がっしり"},{id:"fem",n:"女性的"},{id:"fat",n:"ふとっちょ"}];
+const SIL_T={
+  normal:{S:46,a:8,s:2,tb:24,lw:11,lg:3,hip:.44,arm:.47,top:5},
+  slim:{S:38,a:6,s:2,tb:20,lw:8,lg:4,hip:.43,arm:.48,top:4},
+  strong:{S:60,a:11,s:2,tb:30,lw:13,lg:3,hip:.44,arm:.50,top:7},
+  fem:{S:40,a:6.5,s:2,tb:36,lw:7,lg:4,hip:.62,arm:.44,top:5,dress:1},
+  fat:{S:62,a:10,s:1.5,tb:36,lw:17,lg:2,hip:.42,arm:.44,top:9,belly:1}
+};
+// 昔のデータ(数字で保存された形)は、いちばん近い体型に読み替える
+const SIL_OLD=["normal","fem","strong","fem","normal","normal"];
+const silKey=k=>{if(typeof k==="string"&&SIL_T[k])return k;const v=+k;return SIL_OLD[v>=0&&v<SIL_OLD.length?v|0:0]||"normal"};
+const silNo=k=>SIL.find(x=>x.id===silKey(k));
+const _n=v=>String(Math.round(v*10)/10),_p=p=>_n(p[0])+" "+_n(p[1]);
+// 角を丸めた多角形(rs=各頂点の丸み)
+function silPoly(P,rs){
+  const n=P.length;let d="";
+  for(let i=0;i<n;i++){
+    const q=P[i],A=P[(i+n-1)%n],B=P[(i+1)%n],r=rs[i]||0;
+    const la=Math.hypot(A[0]-q[0],A[1]-q[1])||1,lb=Math.hypot(B[0]-q[0],B[1]-q[1])||1;
+    const ta=Math.min(r,la/2)/la,tb=Math.min(r,lb/2)/lb;
+    d+=(i?"L":"M")+_p([q[0]+(A[0]-q[0])*ta,q[1]+(A[1]-q[1])*ta])+"Q"+_p(q)+" "+_p([q[0]+(B[0]-q[0])*tb,q[1]+(B[1]-q[1])*tb]);
+  }
+  return d+"Z";
+}
+// 身長 H(cm)のぶんの中身。頭の大きさは固定で、胴・腕・脚だけ身長に合わせて伸び縮みする
+function silInner(k,H){
+  const t=SIL_T[silKey(k)],W=H*SIL_R,cx=W/2;
+  const r=Math.min(SIL_HEAD,H*.19),yb=2*r+r*.3,R=Math.max(H-yb,1),u=R/143.5; // u: 体の大きさ(170cmの人=1)
+  const S=t.S*u,a=t.a*u,s=t.s*u,tb=t.tb*u,lw=t.lw*u,lg=t.lg*u,tt=S-2*(a+s),Th=t.hip*R,top=t.top*u;
+  const X=(x,y)=>[cx+x*u,yb+y];
+  let torso;
+  if(t.dress){
+    const wy=.28*R,hw=18*u,ww=9.5*u;
+    torso=silPoly([[cx-tt/2,yb],[cx+tt/2,yb],[cx+ww,yb+wy],[cx+hw,yb+Th],[cx-hw,yb+Th],[cx-ww,yb+wy]],[top,top,10*u,3*u,3*u,10*u]);
+  }else if(t.belly){
+    const bw=22*u;
+    torso=silPoly([[cx-tt/2,yb],[cx+tt/2,yb],[cx+bw,yb+Th*.5],[cx+tb/2,yb+Th],[cx-tb/2,yb+Th],[cx-bw,yb+Th*.5]],[top,top,16*u,10*u,10*u,16*u]);
+  }else{
+    torso=silPoly([[cx-tt/2,yb],[cx+tt/2,yb],[cx+tb/2,yb+Th],[cx-tb/2,yb+Th]],[top,top,6*u,6*u]);
+  }
+  const al=t.arm*R,y0=yb+Th-lw/2;
+  const rect=(x,y,w,h)=>`<rect x="${_n(x)}" y="${_n(y)}" width="${_n(w)}" height="${_n(h)}" rx="${_n(w/2)}"/>`;
+  return `<circle cx="${_n(cx)}" cy="${_n(r)}" r="${_n(r)}"/>`
+    +`<path d="${torso}"/>`
+    +rect(cx-S/2,yb,a,al)+rect(cx+S/2-a,yb,a,al)
+    +rect(cx-lg/2-lw,y0,lw,H-y0)+rect(cx+lg/2,y0,lw,H-y0);
+}
+// h: 身長(cm)。省略すると170cm(選択ボタンのプレビュー用)
+// 身長 H(cm)のシルエットが実際に描かれる横幅 w(cm)と左端 x0。「腕を含む体の幅」と「頭の直径」の広いほう。体型(S)と身長で一人ひとり違う
+function silBox(k,H){
+  const t=SIL_T[silKey(k)],r=Math.min(SIL_HEAD,H*.19),u=Math.max(H-(2*r+r*.3),1)/143.5;
+  const w=Math.max(t.S*u,2*r);return {w,x0:H*SIL_R/2-w/2};
+}
+// tight=true: 図の横幅を、そのキャラの実際の体の幅ぴったりにする(身長比較用)。省略すると従来どおり身長×0.4の固定幅(体型選択ボタン用)
+const silSvg=(k,attr,h,tight)=>{const H=h>0?h:170,b=tight?silBox(k,H):{w:H*SIL_R,x0:0};return `<svg viewBox="${_n(b.x0)} 0 ${_n(b.w)} ${_n(H)}" preserveAspectRatio="xMidYMax meet" ${attr||""} aria-hidden="true">${silInner(k,H)}</svg>`};
+const hOf=c=>{const v=parseFloat(c&&c.height);return v>0?v:0};
+const fmtH=v=>String(Math.round(v*10)/10)+"cm";
+// 年齢(数値・未登録は -1)/ 誕生日("MM-DD" → {m,d}・未登録は null)
+const aOf=c=>{const v=parseFloat(c&&c.age);return v>=0?v:-1};
+const fmtA=v=>String(Math.round(v*10)/10)+"歳";
+const bdOf=c=>{const m=String(c&&c.birthday||"").match(/(\d{1,2})\D+(\d{1,2})\D*$/);if(!m)return null;const mo=+m[1],d=+m[2];return mo>=1&&mo<=12&&d>=1&&d<=31?{m:mo,d}:null};
+const fmtBd=b=>b.m+"月"+b.d+"日";
+const bdStr=c=>{const b=bdOf(c);return b?String(b.m).padStart(2,"0")+"-"+String(b.d).padStart(2,"0"):""};
+const MON=["January","February","March","April","May","June","July","August","September","October","November","December"];
+// 比較表示用のCSS(p: 先頭に付ける接頭辞。公開用は "#hw-root "、編集画面は "")
+// ================= 身長比較の高さ・間隔の調整(★ここの数字を変えると変わります) =================
+// 一人ひとりの横幅は、体型と身長で決まる「実際の体の幅」ぴったりです(細い人は細く、がっしりした人は太く)。
+// PC表示では「人数が多いほど低く、少ないほど高く」自動で変わり、全員の幅+間隔が横幅いっぱいに収まる高さになります。
+const CMP_GAP=10;       // ★キャラ同士の間隔(px)。体の端から隣の体の端までの距離。広げたい→大きく / 詰めたい→小さく
+const CMP_H_MAX=380;    // ★高さの上限(px)。人数が少ないときはこの高さで止まる。もっと低くしたいなら 320 など
+const CMP_H_MIN=150;    // ★高さの下限(px)。人数が多くてもこれより低くならない
+const CMP_W_MAX=1400;   // ★PCで身長比較を広げる横幅の上限(px)
+const CMP_W_VW=94;      // ★画面幅のうち身長比較が使う割合(%)
+const CMP_NAME_MIN=72;  // ★名前を横書きにする(9人以下)ときの、1人あたりの最小の幅(px)。名前が「…」で切れるなら大きく
+const CMP_GAP_SP=2;     // ★スマホ(幅600px以下)でのキャラ同士の間隔(px)。スマホの高さは下の @media(max-width:600px) の clamp(30px,36vw,70px) で決まります
+function cmpCss(p){
+  return [
+   `.cmpw{margin:6px 0 0}`,
+   `.cmp{overflow:visible}`,
+   `.cmpin{--n:10;--tw:2;--gap:${CMP_GAP}px;--cimin:${CMP_NAME_MIN}px;--ch:clamp(${CMP_H_MIN}px,calc((min(${CMP_W_VW}vw,${CMP_W_MAX}px) - 34px - var(--n)*var(--gap)) / var(--tw)),${CMP_H_MAX}px);position:relative;display:flex;justify-content:center;align-items:flex-start;gap:0;width:100%;padding:12px 4px 8px 30px;isolation:isolate}`,
+   `.rul{position:absolute;left:0;right:0;top:12px;height:calc(var(--ch) + 2px);border-bottom:2px solid var(--mut);pointer-events:none}`,
+   `.rl{position:absolute;left:0;right:0;height:0}`,
+   `.rl::after{content:"";position:absolute;left:28px;right:0;top:0;border-top:1px dashed var(--line)}`,
+   `.rl b{position:absolute;left:0;top:.5px;width:28px;box-sizing:border-box;padding:0 4px 0 3px;transform:translateY(-50%);text-align:right;font-size:10px;line-height:1;font-weight:400;color:var(--mut)}`,
+   `.ci{position:relative;flex:0 1 max(calc(var(--ch)*var(--w) + var(--gap)),var(--cimin));display:flex;flex-direction:column;align-items:center;min-width:0;padding:0 1px 6px;border:0;background:none;border-radius:10px;cursor:pointer;font:inherit;font-size:12px;color:var(--fg)}`,
+   `.ci .fg{display:flex;align-items:flex-end;justify-content:center;width:100%;height:var(--ch)}`,
+   `.ci .sil{display:block;flex:none;height:calc(var(--ch)*var(--k));width:calc(var(--ch)*var(--w));overflow:visible;filter:drop-shadow(0 0 1px #0007)}`,
+   `.ci .nm{display:flex;align-items:center;gap:4px;max-width:100%;margin-top:6px}`,
+   `.cmpin.dn .nm{flex-direction:column;justify-content:flex-start;gap:3px;height:calc(7em + 28px)}.cmpin.dn .nm span{writing-mode:vertical-rl;max-inline-size:7em}.cmpin.dn .hh{writing-mode:vertical-rl;font-size:9px}`,
+   `.ci .nm i{flex:none;width:16px;height:16px;border-radius:50%;border:2px solid;background-color:var(--card);background-position:center;background-size:cover;display:block;font-style:normal;font-size:9px;line-height:12px;text-align:center;color:#fff}`,
+   `.ci .nm span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}`,
+   `.ci .hh{color:var(--mut);font-size:11px}`,
+   `.ci::before{content:"";position:absolute;inset:0;z-index:-1;border-radius:10px;pointer-events:none}.ci.on::before{background:var(--soft)}.ci.on .nm span{font-weight:700}`,
+   `.cds{position:absolute;inset:0;display:block}`,
+   `.ci.dim{opacity:.12;pointer-events:none}`,
+   `.cmpw .mdn{margin:4px 0 0}`,
+   `.vbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:0 0 10px}`,
+   `.vbar .otg,.vbar .cs{padding:5px 14px;border:1px solid var(--line);border-radius:99px;background:var(--card);color:var(--mut);font:inherit;font-size:13px;cursor:pointer;white-space:nowrap}`,
+   `.vbar .otg.on,.vbar .cs.on{background:var(--main);color:var(--on);border-color:var(--main)}`,
+   `.vbar .csg{display:flex;flex-wrap:wrap;align-items:center;gap:6px}`,
+   `.vbar .csl{font-size:12px;color:var(--mut)}`,
+   `.otg::before{content:"☐ "}`,
+   `.otg.on::before{content:"☑ "}`,
+   `.chw{display:flex;align-items:center;border:1px solid var(--line);border-radius:99px;background:var(--card)}`,
+   `.chw .chip{border:0;background:none}`,
+   `.chw.pk{border-color:var(--main);background:var(--soft)}`,
+   `.chw.pk .chip{font-weight:700}`,
+   `.ohint{margin:0 0 10px;font-size:13px;color:var(--mut)}`,
+   `.bdw{margin:6px 0 0}`,
+   `.bdg{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:10px}`,
+   `.bdm{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--card)}`,
+   `.bdh{display:flex;align-items:baseline;gap:2px;margin:0;padding:5px 12px;background:var(--soft-line);color:var(--fg);font-size:12px;font-weight:400;letter-spacing:.04em}`,
+   `.bdh b{font-size:19px;font-weight:700;color:var(--num);line-height:1.2}`,
+   `.bdh i{font-style:normal;color:var(--mut)}`,
+   `.bdl{display:flex;flex-wrap:wrap;gap:4px;padding:8px;min-height:44px}`,
+   `.bde{align-self:center;padding:0 6px;font-size:12px;color:var(--mut)}`,
+   `.pc{border:0;background:none;font:inherit;color:var(--fg);cursor:pointer;border-radius:10px}`,
+   `.pc.on{background:var(--soft)}`,
+   `.pc.on .pn{font-weight:700}`,
+   `.pc.dim{opacity:.12;pointer-events:none}`,
+   `.pi{flex:none;display:block;width:44px;height:44px;border-radius:50%;border:3px solid var(--line);background-color:var(--card);background-position:center;background-size:cover;font-style:normal;font-size:16px;font-weight:700;line-height:38px;text-align:center;color:#fff;text-shadow:0 1px 3px #0005}`,
+   `.pn{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px}`,
+   `.bdc{width:66px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:3px 2px 5px}`,
+   `.bdd{align-self:flex-start;padding-left:3px;font-size:14px;font-weight:700;line-height:1;color:var(--num)}`,
+   `.agew{margin:6px 0 0}`,
+   `.scw{margin:6px 0 0}`,
+   `.card h4 .cnt{margin-left:10px;font-size:12px;font-weight:400;color:var(--mut)}`,
+   `.bdg.bda{grid-template-columns:1fr}`,
+   `.bdd small{margin-left:1px;font-size:10px;font-weight:400;color:var(--mut)}`,
+   // 身長比較の幅: パソコンでは画面の幅いっぱいに広げる / スマホでは高さを抑えて、シルエット1人あたりの幅を小さくする
+   `@media(min-width:700px){.cmpw{width:min(${CMP_W_VW}vw,${CMP_W_MAX}px);margin-left:calc(50% - min(${CMP_W_VW}vw,${CMP_W_MAX}px)/2)}}`,
+   `@media(max-width:600px){.cmpin{--gap:${CMP_GAP_SP}px;--cimin:0px;--ch:clamp(30px,36vw,70px)}}`,
+   // スマホは高さが低く目盛りの数字が重なるので、一番上(rt)と真ん中(rm)以外の数字を隠す(線は残す)
+   `@media(max-width:600px){.rl:not(.rt):not(.rm) b{display:none}}`
+  ].map(r=>{const m=r.match(/^(@media[^{]+)\{([\s\S]+)\}$/);return m?m[1]+"{"+p+m[2]+"}":p+r}).join("\n");
+}
+// 比較表示の中身。o={esc,col(i),ico(i)=>{cls,style,txt},tg(i),sel,dim(i),lab}  lab=true なら <label for="hw-s-i">(公開用)、そうでなければ button(編集画面)
+function cmpHTML(L,o){
+  const esc=o.esc,H=L.map(hOf),has=L.map((c,i)=>i).filter(i=>H[i]>0),miss=L.length-has.length;
+  if(!has.length)return `<p class="n mdn">身長が登録されたキャラがいません。編集欄で「身長」を入れると、ここに並びます。</p>`;
+  const mx=Math.max(...has.map(i=>H[i])),step=mx<=50?5:mx<=120?10:mx<=260?20:50,top=Math.ceil(mx*1.02/step)*step;
+  // 目盛りの線。一番上(rt)と真ん中(rm)の線には印を付ける(スマホでは、この2つの数字だけを出す)
+  const vs=[];for(let v=step;v<=top;v+=step)vs.push(v);
+  const rmid=Math.round(vs.length/2)-1;
+  let rl=vs.map((v,k)=>`<div class="rl${k===vs.length-1?" rt":k===rmid?" rm":""}" style="bottom:${(v/top*100).toFixed(2)}%"><b>${v}</b></div>`).join("");
+  const vis=has.filter(i=>!o.show||o.show(i));
+  if(!vis.length)return "";
+  // 各キャラの体の幅(cm)÷ 目盛りの最大(cm)= 高さ(--ch)に対する横幅の比。--w は一人ずつ、--tw は全員の合計(高さを決めるのに使う)
+  const WF=i=>silBox(L[i].sil,H[i]).w/top,tw=vis.reduce((a,i)=>a+WF(i),0);   // 表示するキャラが誰もいないときは、目盛りの線も出さない(ログ一覧と重なるため)
+  if(o.sort==="hd")vis.sort((x,y)=>H[y]-H[x]||x-y);else if(o.sort==="ha")vis.sort((x,y)=>H[x]-H[y]||x-y);
+  const items=vis.map(i=>{
+    const c=L[i],ic=o.ico(i),on=o.sel===i?" on":"",dim=o.dim&&o.dim(i)?" dim":"";
+    const sv=silSvg(c.sil,`class="sil" style="--k:${+(H[i]/top).toFixed(3)};fill:${o.col(i)}"`,H[i],true),wst=`--w:${+WF(i).toFixed(4)}`;
+    const body=`<span class="fg">${sv}</span><span class="nm"><i class="${ic.cls}"${ic.style?` style="${esc(ic.style)}"`:""}>${esc(ic.txt)}</i><span>${esc(c.name)}</span></span><span class="hh">${fmtH(H[i])}</span>`;
+    const cls=`ci ci-${i}${on}${dim}${o.tg?o.tg(i):""}`;
+    return o.lab?`<label for="hw-s-${i}" class="${cls}" style="${o.sty?o.sty(i)+";":""}${wst}" title="${esc(c.name)} ${fmtH(H[i])}">${body}</label>`
+                :`<button type="button" class="${cls}" style="${wst}" data-i="${i}" title="${esc(c.name)} ${fmtH(H[i])}">${body}</button>`;
+  }).join("");
+  return `<div class="cmp"><div class="cmpin${has.length>=10?" dn":""}" style="--n:${vis.length};--tw:${+tw.toFixed(4)}"><div class="rul">${rl}</div>${o.lab?'<label for="hw-s-none" class="cds" aria-hidden="true"></label>':""}${items}</div></div>${miss?`<p class="n mdn">未登録のキャラ${miss}人は表示されていません。</p>`:""}`;
+}
+
+// 誕生日表示: 1月〜12月の表に、日付の早い順で並べる(o は cmpHTML と同じ)
+function bdHTML(L,o){
+  const esc=o.esc,B=L.map(bdOf),has=L.map((c,i)=>i).filter(i=>B[i]),miss=L.length-has.length;
+  if(!has.length)return `<p class="n mdn">誕生日が登録されたキャラがいません。編集欄で「誕生日」を入れると、ここに並びます。</p>`;
+  const vis=has.filter(i=>!o.show||o.show(i));
+  let h="";
+  for(let m=1;m<=12;m++){
+    const ids=vis.filter(i=>B[i].m===m).sort((x,y)=>B[x].d-B[y].d||x-y);
+    const cells=ids.map(i=>{
+      const c=L[i],ic=o.ico(i),on=o.sel===i?" on":"",dim=o.dim&&o.dim(i)?" dim":"",cls=`pc bdc pc-${i}${on}${dim}${o.tg?o.tg(i):""}`;
+      const body=`<span class="bdd">${String(B[i].d).padStart(2,"0")}</span><i class="pi ${ic.cls}"${ic.style?` style="${esc(ic.style)}"`:""}>${esc(ic.txt)}</i><span class="pn">${esc(c.name)}</span>`,tt=esc(c.name)+" "+fmtBd(B[i]);
+      return o.lab?`<label for="hw-s-${i}" class="${cls}"${o.sty?` style="${o.sty(i)}"`:""} title="${tt}">${body}</label>`:`<button type="button" class="${cls}" data-i="${i}" title="${tt}">${body}</button>`;
+    }).join("");
+    h+=`<section class="bdm"><h4 class="bdh"><b>${m}</b><i>/${MON[m-1]}</i></h4><div class="bdl">${cells||'<span class="bde">–</span>'}</div></section>`;
+  }
+  return `<div class="bdg">${h}</div>${miss?`<p class="n mdn">未登録のキャラ${miss}人は表示されていません。</p>`:""}`;
+}
+// 年齢表示: 10歳ごとのグループ(〜9歳 / 10代 / 20代 … / 100歳〜)に分けて、誕生日と同じ表の形で並べる。各マスの左上に年齢
+const ageGrp=a=>a<10?0:a>=100?10:Math.floor(a/10);
+function ageHTML(L,o){
+  const esc=o.esc,A=L.map(aOf),has=L.map((c,i)=>i).filter(i=>A[i]>=0),miss=L.length-has.length;
+  if(!has.length)return `<p class="n mdn">年齢が登録されたキャラがいません。編集欄で「年齢」を入れると、ここに並びます。</p>`;
+  const vis=has.filter(i=>!o.show||o.show(i));
+  let gs=[...new Set(has.map(i=>ageGrp(A[i])))].sort((x,y)=>x-y).filter(g=>vis.some(i=>ageGrp(A[i])===g));
+  if(o.sort==="hd")gs.reverse();
+  let h="";
+  gs.forEach(g=>{
+    const ids=vis.filter(i=>ageGrp(A[i])===g);
+    if(o.sort==="hd")ids.sort((x,y)=>A[y]-A[x]||x-y);else if(o.sort==="ha")ids.sort((x,y)=>A[x]-A[y]||x-y);
+    const cells=ids.map(i=>{
+      const c=L[i],ic=o.ico(i),on=o.sel===i?" on":"",dim=o.dim&&o.dim(i)?" dim":"",cls=`pc bdc ac-${i} pc-${i}${on}${dim}${o.tg?o.tg(i):""}`;
+      const body=`<span class="bdd">${esc(String(Math.round(A[i]*10)/10))}<small>歳</small></span><i class="pi ${ic.cls}"${ic.style?` style="${esc(ic.style)}"`:""}>${esc(ic.txt)}</i><span class="pn">${esc(c.name)}</span>`,tt=esc(c.name)+" "+fmtA(A[i]);
+      return o.lab?`<label for="hw-s-${i}" class="${cls}"${o.sty?` style="${o.sty(i)}"`:""} title="${tt}">${body}</label>`:`<button type="button" class="${cls}" data-i="${i}" title="${tt}">${body}</button>`;
+    }).join("");
+    const t=g===0?"<b>〜9</b><i>歳</i>":g===10?"<b>100</b><i>歳〜</i>":`<b>${g*10}</b><i>代</i>`;
+    h+=`<section class="bdm agg-${g}"><h4 class="bdh">${t}</h4><div class="bdl">${cells}</div></section>`;
+  });
+  return `<div class="bdg bda">${h}</div>${miss?`<p class="n mdn">未登録のキャラ${miss}人は表示されていません。</p>`:""}`;
+}
+
+// 通過数: 通過シナリオの数(同じ名前は1本と数える)
+const scN=c=>new Set(((c&&c.scenarios)||[]).map(x=>String((x&&x.title)||"").trim()).filter(Boolean)).size;
+// 通過数表示: 通過数ごとのグループ(少ない順)に分けて、年齢と同じ表の形で並べる。各マスの左上に「N本」
+function scnHTML(L,o){
+  const esc=o.esc,N=L.map(scN),vis=L.map((c,i)=>i).filter(i=>!o.show||o.show(i));
+  const gs=[...new Set(vis.map(i=>N[i]))].sort((x,y)=>x-y);
+  if(o.sort==="hd")gs.reverse();
+  let h="";
+  gs.forEach(n=>{
+    const cells=vis.filter(i=>N[i]===n).map(i=>{
+      const c=L[i],ic=o.ico(i),on=o.sel===i?" on":"",dim=o.dim&&o.dim(i)?" dim":"",cls=`pc bdc pc-${i}${on}${dim}${o.tg?o.tg(i):""}`;
+      const body=`<span class="bdd">${n}<small>本</small></span><i class="pi ${ic.cls}"${ic.style?` style="${esc(ic.style)}"`:""}>${esc(ic.txt)}</i><span class="pn">${esc(c.name)}</span>`,tt=esc(c.name)+" "+n+"本";
+      return o.lab?`<label for="hw-s-${i}" class="${cls}"${o.sty?` style="${o.sty(i)}"`:""} title="${tt}">${body}</label>`:`<button type="button" class="${cls}" data-i="${i}" title="${tt}">${body}</button>`;
+    }).join("");
+    h+=`<section class="bdm scg-${n}"><h4 class="bdh"><b>${n}</b><i>本</i></h4><div class="bdl">${cells}</div></section>`;
+  });
+  return `<div class="bdg bda">${h}</div>`;
+}
+
+const KEY="hue-wheel-draft", CX=44, CY=50, MIN=10.6;
+const KEY2="hue-wheel-logs";
+{const st=document.createElement("style");st.textContent=cmpCss("");document.head.appendChild(st)}
+let mode="ring";
+// 選んだキャラだけ表示 / 並び替え(登録順 reg・身長が高い順 hd・身長が低い順 ha)
+let only=false,csort="reg";const picks=new Set();
+const PIC_URL_INIT="https://cheeees.github.io/cheeeestrpg/pic/.webp";
+let edit=false, list=CHARACTERS, logs=LOGS, le=-1, sel=-1, img="", LOG=[], pi=-1, pimg="";
+// ※ 公開用で上の【消す場所 ①②】のHTMLを消しても、下のJavaScriptはそのまま動きます(消す必要はありません)。
+//    (見つからない要素は何もしないダミーとして扱うので、エラーになりません)
+const NOP=new Proxy(function(){},{get:()=>NOP,set:()=>true,apply:()=>NOP});
+const $=id=>document.getElementById(id)||NOP;
+const pk=i=>!!list[i]&&picks.has(list[i].name);
+// 一覧の並び順。身長比較・年齢のタブのときだけ並び替えが効く(色相環・誕生日は登録順)。未登録のキャラは最後
+function sortIdx(a){
+  const V=mode==="scn"?i=>scN(list[i]):mode==="age"?i=>{const v=aOf(list[i]);return v>=0?v:null}:mode==="cmp"?i=>hOf(list[i])||null:null;
+  a=a.slice();
+  if(!V||csort==="reg")return a;
+  const k=csort==="hd"?-1:1;
+  return a.sort((x,y)=>{const p=V(x),q=V(y);if(p==null||q==null)return p==null&&q==null?x-y:p==null?1:-1;return (p-q)*k||x-y});
+}
+
+function hsv(hex){
+  const r=parseInt(hex.slice(1,3),16)/255,g=parseInt(hex.slice(3,5),16)/255,b=parseInt(hex.slice(5,7),16)/255;
+  const mx=Math.max(r,g,b),d=mx-Math.min(r,g,b);
+  let h=0;
+  if(d){h=mx==r?((g-b)/d)%6:mx==g?(b-r)/d+2:(r-g)/d+4;h*=60;if(h<0)h+=360}
+  return {h,s:mx?d/mx:0,v:mx};
+}
+// 色相=角度、彩度=円からの距離(鮮やかなほど近い)、無彩色は右端のグレー軸(上=明るい)
+function place(){
+  const P=list.map((c,i)=>{
+    const {h,s,v}=hsv(c.color);
+    if(s<.08){const ty=10+(1-v)*80;return {g:1,tx:94,ty,x:94-(i%3),y:ty}}
+    const r=21+(1-s)*17,a=h*Math.PI/180,tx=CX+r*Math.sin(a),ty=CY-r*Math.cos(a);
+    return {tx,ty,x:tx,y:ty};
+  });
+  for(let k=0;k<120;k++){
+    for(let a=0;a<P.length;a++)for(let b=a+1;b<P.length;b++){
+      const A=P[a],B=P[b];let dx=B.x-A.x,dy=B.y-A.y,d=Math.hypot(dx,dy);
+      if(d>=MIN)continue;
+      if(d<.01){dx=Math.cos(a+b);dy=Math.sin(a+b);d=1}
+      const m=(MIN-d)/2/d;A.x-=dx*m;A.y-=dy*m;B.x+=dx*m;B.y+=dy*m;
+    }
+    P.forEach(p=>{
+      p.x+=(p.tx-p.x)*.04;p.y+=(p.ty-p.y)*.04;
+      if(p.g)p.x=Math.min(94,Math.max(88.5,p.x));
+      else{const dx=p.x-CX,dy=p.y-CY,d=Math.hypot(dx,dy)||1;if(d<21){p.x=CX+dx/d*21;p.y=CY+dy/d*21}}
+      p.x=Math.min(95,Math.max(5,p.x));p.y=Math.min(95,Math.max(5,p.y));
+    });
+  }
+  return P;
+}
+// ---- タグ検索 ----(スペース区切り=AND、部分一致、#は付けても付けなくてもOK)
+function terms(){return parseTags($("q").value).map(t=>t.toLowerCase())}
+function match(c,T){
+  if(!T.length)return true;
+  const hay=(c.tags||[]).concat(c.name).map(x=>x.toLowerCase());
+  return T.every(t=>hay.some(h=>h.includes(t)));
+}
+function setQuery(arr){$("q").value=arr.join(" ");render()}
+function renderTagbar(T){
+  const bar=$("tagbar");bar.innerHTML="";
+  const cnt=new Map();
+  list.forEach(c=>(c.tags||[]).forEach(t=>cnt.set(t,(cnt.get(t)||0)+1)));
+  [...cnt].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0],"ja")).forEach(([t,n])=>{
+    const k=document.createElement("button"),low=t.toLowerCase();
+    k.textContent="#"+t+" "+n;k.className=T.includes(low)?"on":"";
+    k.onclick=()=>{const cur=terms();setQuery(cur.includes(low)?cur.filter(x=>x!==low):cur.concat(t))};
+    bar.appendChild(k);
+  });
+}
+$("q").oninput=()=>render();
+
+function render(){
+  const st=$("stage"),chips=$("chips"),f=$("face");
+  st.querySelectorAll(".c").forEach(e=>e.remove());chips.innerHTML="";
+  const T=terms(),ok=list.map(c=>match(c,T));
+  renderTagbar(T);renderLogs();refreshCSel();
+  $("qn").textContent=T.length?(ok.some(Boolean)?ok.filter(Boolean).length+"/"+list.length+"件":"該当なし"):"";
+  const P=place(),rk=new Map(sortIdx(list.map((c,i)=>i)).map((v,r)=>[v,r]));
+  list.forEach((c,i)=>{
+    const b=document.createElement("button");
+    b.className="c"+(i===sel?" on":"")+(ok[i]?"":" dim");
+    b.style.left=P[i].x+"%";b.style.top=P[i].y+"%";
+    b.style.borderColor=c.color;b.title=c.name;
+    b.setAttribute("aria-label",c.name);
+    if(c.image)b.style.backgroundImage="url("+c.image+")";else b.textContent=c.name.slice(0,1);
+    b.onclick=()=>pick(i);
+    if(!ok[i])b.tabIndex=-1;
+    if(only&&!pk(i))b.hidden=true;
+    st.appendChild(b);
+    if(!ok[i])return;
+    const w=document.createElement("span");w.className="chw"+(pk(i)?" pk":"");w.style.order=rk.get(i);
+    const k=document.createElement("button");k.className="chip";
+    const d=document.createElement("i");d.style.background=c.color;
+    k.append(d,c.name);
+    // 「選んだキャラだけ表示」がONのときは、名前を押すと選択 / 解除。OFFのときは今まで通りキャラ情報を表示
+    k.setAttribute("aria-pressed",String(pk(i)));
+    k.onclick=()=>{if(only){if(pk(i))picks.delete(c.name);else picks.add(c.name);render()}else pick(i)};
+    w.appendChild(k);chips.appendChild(w);
+  });
+  const np=list.filter((c,i)=>pk(i)).length;
+  $("m_only").className="otg"+(only?" on":"");$("onum").textContent="("+np+"人)";$("ohint").hidden=!(only&&!np);
+  document.querySelectorAll("#csort .cs").forEach(b=>{b.className="cs"+(b.dataset.s===csort?" on":"")});
+  $("stage").hidden=mode!=="ring";$("cmpw").hidden=mode!=="cmp";$("bdw").hidden=mode!=="bd";$("agew").hidden=mode!=="age";$("scw").hidden=mode!=="scn";
+  $("csort").hidden=!(mode==="cmp"||mode==="age"||mode==="scn");   // 並び替えは身長比較・年齢・通過数のときだけ表示
+  [["m_ring","ring"],["m_cmp","cmp"],["m_bd","bd"],["m_age","age"],["m_scn","scn"]].forEach(([id,m])=>{$(id).className=mode===m?"on":""});
+  if(mode==="cmp")drawCmp(ok);else if(mode==="bd")drawBd(ok);else if(mode==="age")drawAge(ok);else if(mode==="scn")drawScn(ok);
+  // 中央の円に選択中のキャラを大きく表示
+  const c=list[sel];f.textContent="";f.style.backgroundImage="";f.style.backgroundColor="";
+  if(!c){f.className="face empty";f.style.borderColor="";f.textContent="タップして選択";return}
+  f.className="face";f.style.borderColor=c.color;
+  if(c.image)f.style.backgroundImage="url("+c.image+")";
+  else{f.style.backgroundColor=c.color;f.textContent=c.name.slice(0,1)}
+}
+const escH=s=>String(s==null?"":s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
+function drawCmp(ok){
+  const w=$("cmpw"),old=w.querySelector&&w.querySelector(".cmp"),sx=old?old.scrollLeft:0;
+  w.innerHTML=cmpHTML(list,{esc:escH,sel,dim:i=>!ok[i],lab:false,show:i=>!only||pk(i),sort:csort,col:i=>list[i].color,
+    ico:i=>{const c=list[i];return c.image?{cls:"",style:"border-color:"+c.color+";background-image:url("+JSON.stringify(c.image)+")",txt:""}
+      :{cls:"",style:"border-color:"+c.color+";background-color:"+c.color,txt:c.name.slice(0,1)}}});
+  w.querySelectorAll(".ci").forEach(b=>{b.onclick=()=>pick(+b.dataset.i)});
+  const n=w.querySelector(".cmp");if(n)n.scrollLeft=sx;
+}
+function iconOf(i){const c=list[i];return c.image?{cls:"",style:"border-color:"+c.color+";background-image:url("+JSON.stringify(c.image)+")",txt:""}
+  :{cls:"",style:"border-color:"+c.color+";background-color:"+c.color,txt:c.name.slice(0,1)}}
+function drawBd(ok){
+  const w=$("bdw");
+  w.innerHTML=bdHTML(list,{esc:escH,sel,dim:i=>!ok[i],lab:false,show:i=>!only||pk(i),ico:iconOf});
+  w.querySelectorAll(".pc").forEach(b=>{b.onclick=()=>pick(+b.dataset.i)});
+}
+function drawAge(ok){
+  const w=$("agew");
+  w.innerHTML=ageHTML(list,{esc:escH,sel,dim:i=>!ok[i],lab:false,show:i=>!only||pk(i),sort:csort,col:i=>list[i].color,ico:iconOf});
+  w.querySelectorAll(".pc").forEach(b=>{b.onclick=()=>pick(+b.dataset.i)});
+}
+function drawScn(ok){
+  const w=$("scw");
+  w.innerHTML=scnHTML(list,{esc:escH,sel,dim:i=>!ok[i],lab:false,show:i=>!only||pk(i),sort:csort,col:i=>list[i].color,ico:iconOf});
+  w.querySelectorAll(".pc").forEach(b=>{b.onclick=()=>pick(+b.dataset.i)});
+}
+$("m_bd").onclick=()=>{mode="bd";render()};
+$("m_age").onclick=()=>{mode="age";render()};
+$("m_scn").onclick=()=>{mode="scn";render()};
+$("m_ring").onclick=()=>{mode="ring";render()};
+$("m_cmp").onclick=()=>{mode="cmp";render()};
+// 身長比較・誕生日・年齢で、キャラ以外をタップしたら選択を外す(編集中は編集対象が外れないようそのまま)
+["cmpw","bdw","agew","scw"].forEach(id=>$(id).addEventListener("click",e=>{
+  if(edit||sel<0||e.target.closest(".ci,.pc"))return;
+  sel=-1;$("info").innerHTML='<span style="color:var(--mut)">キャラをタップすると名前が出ます</span>';render();
+}));
+$("m_only").onclick=()=>{only=!only;render()};
+document.querySelectorAll("#csort .cs").forEach(b=>{b.onclick=()=>{csort=b.dataset.s;render()}});
+function parseTags(v){return v.split(/[\s\u3000]+/).map(t=>t.replace(/^[#＃]+/,"")).filter(Boolean)}
+// タグのプリセット(編集欄でワンタップで付け外しできる)。増やすときはここに足す
+const TAG_PRESETS=["ぺんたろ","ちーたん"];
+const tpDraw=[],tpAll=()=>tpDraw.forEach(f=>f());
+function tagPresets(inp,box){
+  const draw=()=>{
+    const cur=parseTags(inp.value);box.innerHTML="";
+    TAG_PRESETS.forEach(t=>{
+      const b=document.createElement("button");b.type="button";b.className="b"+(cur.includes(t)?" p":"");b.textContent="#"+t;
+      b.onclick=()=>{const c=parseTags(inp.value);inp.value=(c.includes(t)?c.filter(x=>x!==t):c.concat(t)).map(x=>"#"+x).join(" ");draw()};
+      box.appendChild(b);
+    });
+  };
+  inp.addEventListener("input",draw);tpDraw.push(draw);draw();
+}
+tagPresets($("tg2"),$("tp_home"));tagPresets($("pe_tags"),$("tp_prof"));
+// シルエット選択(編集欄)
+let silH="normal",silP="normal";
+function silPick(box,get,set){
+  const draw=()=>{box.innerHTML="";SIL.forEach(x=>{const b=document.createElement("button");b.type="button";b.className="b"+(get()===x.id?" p":"");b.title=x.n;b.innerHTML=silSvg(x.id)+"<span>"+x.n+"</span>";b.onclick=()=>{set(x.id);draw()};box.appendChild(b)})};
+  draw();return draw;
+}
+const silDraw=[silPick($("silp_home"),()=>silH,k=>{silH=k}),silPick($("silp_prof"),()=>silP,k=>{silP=k})];
+// 誕生日(月・日のプルダウン)/ 年齢の入力
+function initBd(mid,did){
+  const opt=n=>'<option value="">--</option>'+Array.from({length:n},(_,k)=>'<option value="'+(k+1)+'">'+(k+1)+'</option>').join("");
+  $(mid).innerHTML=opt(12);$(did).innerHTML=opt(31);
+}
+function getBd(mid,did){const m=+$(mid).value,d=+$(did).value;return m&&d?String(m).padStart(2,"0")+"-"+String(d).padStart(2,"0"):""}
+function setBd(mid,did,v){const b=bdOf({birthday:v});$(mid).value=b?String(b.m):"";$(did).value=b?String(b.d):""}
+const ageIn=v=>{const a=parseFloat(v);return a>=0?a:""};
+initBd("bd_m","bd_d");initBd("pe_bdm","pe_bdd");
+function formData(){return {name:$("nm").value.trim(),color:$("co").value,height:parseFloat($("ht").value)||"",birthday:getBd("bd_m","bd_d"),age:ageIn($("ag").value),sil:silH,image:img,link:$("lk").value.trim(),tags:parseTags($("tg2").value),memo:$("mm").value.trim()}}
+const PH='<span style="color:var(--mut)">キャラをタップすると名前が出ます</span>';
+// 名前 / カラーコード #タグ / 一言メモ の3段。asLink=true なら名前はキャラ紹介ページへのリンク
+function buildInfo(c,asLink){
+  const t=document.createElement("div");
+  let a;
+  if(asLink){a=document.createElement("a");a.href="#"+encodeURIComponent(c.name)}
+  else{a=document.createElement("div");a.className="pname"}
+  a.textContent=c.name;
+  const m=document.createElement("div");m.className="tags";
+  const cs=document.createElement("span");cs.textContent=c.color;m.appendChild(cs);
+  (c.tags||[]).forEach(x=>{
+    const e=document.createElement("button");e.textContent="#"+x;e.title="このタグで検索";
+    e.onclick=()=>{$("q").value=x;if(!$("prof").hidden)location.hash="";else render()};
+    m.appendChild(e);
+  });
+  t.append(a,m);
+  if(c.memo){const sm=document.createElement("small");sm.textContent=c.memo;t.appendChild(sm)}
+  return t;
+}
+function pick(i){
+  sel=i;const c=list[i];
+  const f=$("info");f.innerHTML="";
+  const sw=document.createElement("span");sw.className="sw";sw.style.background=c.color;
+  f.append(sw,buildInfo(c,true));render();
+  if(edit){$("nm").value=c.name;$("co").value=c.color;$("lk").value=c.link||"";$("ht").value=c.height||"";setBd("bd_m","bd_d",c.birthday);$("ag").value=aOf(c)>=0?aOf(c):"";silH=silKey(c.sil);silDraw[0]();
+    $("tg2").value=(c.tags||[]).map(x=>"#"+x).join(" ");$("mm").value=c.memo||"";setImg(c.image||"");tpAll()}
+}
+// 登録済みキャラのプルダウン(編集モード用)。選ぶとそのキャラの編集画面へ
+function fillCSel(el,cur,blank){
+  el.innerHTML="";
+  if(blank){const o=document.createElement("option");o.value="";o.textContent="選んでください…";el.appendChild(o)}
+  list.forEach((c,i)=>{const o=document.createElement("option");o.value=i;o.textContent=c.name;el.appendChild(o)});
+  el.value=cur>=0?String(cur):"";
+}
+function refreshCSel(){fillCSel($("csel"),sel,true);fillCSel($("pcsel"),pi,false)}
+$("csel").onchange=$("pcsel").onchange=ev=>{
+  const c=list[+ev.target.value];if(!c)return;
+  if(ev.target.id==="pcsel")stay=true;   // 紹介ページ内の切り替えは、スクロール位置を保つ
+  else toEd=true;                         // 色相環のページから選んだときは、編集欄の位置へ
+  if(location.hash==="#"+encodeURIComponent(c.name))route();else location.hash="#"+encodeURIComponent(c.name);
+};
+function toast(m,ms=3500){const t=$("toast");t.textContent=m;t.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>{t.hidden=true},ms)}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(list));return true}catch(e){toast("端末への下書き保存に失敗しました(画像が多すぎるかも)。コードを書き出して控えてね",7000);return false}}
+const clone=o=>JSON.parse(JSON.stringify(o));
+function load(){try{const v=JSON.parse(localStorage.getItem(KEY));if(Array.isArray(v)){v.forEach(c=>(c.scenarios||[]).forEach(x=>{delete x.memo}));return v}}catch(e){}return clone(CHARACTERS)}
+function shrink(src,n=320){return new Promise(res=>{
+  const im=new Image();
+  im.onload=()=>{const cv=document.createElement("canvas");cv.width=cv.height=n;const x=cv.getContext("2d");
+    x.fillStyle="#fff";x.fillRect(0,0,n,n);const m=Math.min(im.width,im.height);
+    x.imageSmoothingQuality="high";x.drawImage(im,(im.width-m)/2,(im.height-m)/2,m,m,0,0,n,n);let u=cv.toDataURL("image/webp",.92);if(!u.startsWith("data:image/webp"))u=cv.toDataURL("image/jpeg",.92);res(u)};
+  im.onerror=()=>res("");im.src=src;
+})}
+function setImg(u){img=u;const p=$("pv");p.src=u;p.style.display=u?"block":"none"}
+function addChar(c){
+  const i=list.findIndex(x=>x.name===c.name);
+  if(i>=0)list[i]=Object.assign({},list[i],c);else list.push(Object.assign({link:""},c));
+  save();render();
+}
+
+// ---- ココフォリのログ読み込み ----
+async function readLog(file){
+  const doc=new DOMParser().parseFromString(await file.text(),"text/html");
+  const css=(doc.querySelector("style")||{}).textContent||"",av={};
+  for(const m of css.matchAll(/\.avatar-image-(\d+)\s*\{\s*background-image:\s*url\(["']?([^"')]+)["']?\)/g))av[m[1]]=m[2];
+  const map=new Map(),top=o=>Object.entries(o).sort((a,b)=>b[1]-a[1]);
+  doc.querySelectorAll("article.message:not(.system)").forEach(a=>{
+    const sp=a.querySelector(".speaker");if(!sp)return;
+    const name=sp.textContent.trim();if(!name)return;
+    const col=(sp.getAttribute("style")||"").match(/--speaker-color:\s*(#[0-9a-fA-F]{6})/);
+    const am=((a.querySelector(".avatar")||{}).className||"").match(/avatar-image-(\d+)/);
+    let e=map.get(name);if(!e){e={name,n:0,cols:{},avs:{}};map.set(name,e)}
+    e.n++;
+    if(col){const k=col[1].toLowerCase();e.cols[k]=(e.cols[k]||0)+1}
+    if(am)e.avs[am[1]]=(e.avs[am[1]]||0)+1;
+  });
+  return [...map.values()].sort((a,b)=>b.n-a.n).map(e=>{
+    const ta=top(e.avs)[0];
+    return {name:e.name,n:e.n,cols:top(e.cols),av:ta?av[ta[0]]||"":""};
+  });
+}
+function logColor(e){return e.cols.length?e.cols[0][0]:"#888888"}   // 最も使われた色
+async function fillFrom(e){
+  $("nm").value=e.name;$("co").value=logColor(e);setImg("");
+  const s=$("lc");s.innerHTML="";
+  e.cols.slice(0,6).forEach(([c,n])=>{
+    const b=document.createElement("button");b.style.background=c;b.title=c+"("+n+"回)";
+    b.onclick=()=>{$("co").value=c};s.appendChild(b);
+  });
+  setImg(e.av||"");$("lk").value="";$("tg2").value="";$("mm").value="";$("ht").value="";setBd("bd_m","bd_d","");$("ag").value="";silH="normal";silDraw[0]();tpAll();
+}
+$("lg").onchange=async ev=>{
+  const f=ev.target.files[0];if(!f)return;
+  LOG=await readLog(f);
+  const s=$("ls");s.innerHTML="";
+  LOG.forEach((e,i)=>{const o=document.createElement("option");o.value=i;o.textContent=e.name+"("+e.n+"回)";s.appendChild(o)});
+  $("lbox").style.display=LOG.length?"block":"none";
+  if(LOG.length)fillFrom(LOG[0]);
+};
+$("ls").onchange=()=>fillFrom(LOG[$("ls").value]);
+$("addl").onclick=()=>$("add").click();
+
+// ---- 編集 ----
+async function setEdit(on){
+  edit=on;sel=-1;
+  $("ed").classList.toggle("open",edit);$("ped").classList.toggle("open",edit);
+  $("tg").textContent=$("ptg").textContent=edit?"編集モードを閉じる":"編集モード";
+  $("fab").classList.toggle("open",edit);
+  list=edit?load():CHARACTERS;logs=edit?await loadLogs():LOGS;route(true);
+}
+$("tg").onclick=$("ptg").onclick=()=>setEdit(!edit);
+// 画面の端のボタン: 保存(いま開いているページの保存ボタンを押す)/ 編集欄の先頭へ戻る
+$("fab_top").onclick=()=>($("prof").hidden?$("ed"):$("ped")).scrollIntoView({behavior:"smooth",block:"start"});
+$("fab_save").onclick=()=>{
+  if(!$("prof").hidden)$("pe_save").click();
+  else if(sel>=0&&list[sel])$("upd").click();
+  else toast("キャラを選ぶと保存できます");
+};
+$("im").onchange=e=>{
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();r.onload=async()=>setImg(await shrink(r.result));r.readAsDataURL(f);
+};
+$("add").onclick=()=>{
+  const n=$("nm").value.trim();if(!n)return;
+  addChar(formData());
+  $("nm").value="";$("im").value="";$("lk").value="";$("tg2").value="";$("mm").value="";$("ht").value="";setBd("bd_m","bd_d","");$("ag").value="";silH="normal";silDraw[0]();setImg("");$("im_url").value=PIC_URL_INIT;tpAll();
+};
+$("upd").onclick=()=>{
+  if(sel<0||!list[sel])return;
+  const n=$("nm").value.trim();if(!n)return;
+  list[sel]=Object.assign({},list[sel],formData());
+  $("im").value="";save();pick(sel);toast("更新しました");
+};
+$("noim").onclick=()=>{$("im").value="";setImg("");$("im_url").value=PIC_URL_INIT};
+function iconUrlInit(inp,btn,setter){
+  inp.onfocus=()=>{if(inp.value===PIC_URL_INIT)setTimeout(()=>{const q=PIC_URL_INIT.length-5;inp.setSelectionRange(q,q)},0)};
+  btn.onclick=()=>{
+    const u=inp.value.trim();if(!isUrl(u)){toast("http(s):// から始まる画像URLを入れてね");return}
+    setter(u);const t=new Image();t.onerror=()=>toast("画像を読み込めませんでした。URLを確認してね");t.src=u;
+  };
+}
+iconUrlInit($("im_url"),$("im_seturl"),setImg);
+// ---- 登録済みのpng画像をwebpにそろえる(下書きの中身を書き換える)----
+const isPngUrl=u=>/^(?!data:)[^?#]*\.png(?=$|[?#])/i.test(u||"");
+const toWebpUrl=u=>u.replace(/\.png(?=$|[?#])/i,".webp");
+const dataToWebp=src=>new Promise(res=>{
+  const im=new Image();
+  im.onload=()=>{const cv=document.createElement("canvas");cv.width=im.naturalWidth;cv.height=im.naturalHeight;cv.getContext("2d").drawImage(im,0,0);
+    const u=cv.toDataURL("image/webp",.85);res(u.startsWith("data:image/webp")?u:"")};
+  im.onerror=()=>res("");im.src=src;
+});
+async function pngToWebp(){
+  const refs=[];
+  const add=(o,k)=>{const v=o&&o[k];if(typeof v!=="string")return;if(isPngUrl(v))refs.push([o,k,"u"]);else if(/^data:image\/png/i.test(v))refs.push([o,k,"d"])};
+  list.forEach(c=>{add(c,"image");(c.stands||[]).forEach(s=>{add(s,"src");(s.faces||[]).forEach(f=>add(f,"src"))});(c.faces||[]).forEach(f=>add(f,"src"))});
+  const nu=refs.filter(r=>r[2]==="u").length,nd=refs.length-nu;
+  if(!refs.length){toast("pngの画像は見つかりませんでした");return}
+  if(!confirm("pngのURL "+nu+"件を .webp に書き換え、埋め込みのpng "+nd+"件をwebpに変換します。\n\n※URLは、同じ名前の .webp ファイルがサーバーにある前提です。\n実行しますか?"))return;
+  try{localStorage.setItem(KEY+"-bak-png",JSON.stringify(list))}catch(e){}   // 元の下書きを退避
+  let ng=0;
+  for(const [o,k,t] of refs){
+    if(t==="u")o[k]=toWebpUrl(o[k]);
+    else{const u=await dataToWebp(o[k]);if(u)o[k]=u;else ng++}
+  }
+  save();
+  if(sel>=0&&list[sel])setImg(list[sel].image||"");
+  if(pi>=0&&list[pi])setPImg(list[pi].image||"");
+  render();if(!$("prof").hidden)renderProfile();
+  toast("webpにそろえました(URL "+nu+"件・埋め込み "+(nd-ng)+"件)"+(ng?"。変換できなかった埋め込み画像が"+ng+"件あります":"")+"。公開するには「バックアップ用データ」「コードを書き出す」を出し直してください",9000);
+}
+$("towebp").onclick=pngToWebp;
+// ---- アイコンを専用の小さい画像(_icon.webp)にする ----
+const isIconWebp=u=>/_icon\.webp(?=$|[?#])/i.test(u||"");
+const iconable=u=>typeof u==="string"&&!!u&&!/^data:/i.test(u)&&/\.webp(?=$|[?#])/i.test(u)&&!isIconWebp(u);
+$("icolist").onclick=()=>{
+  const a=[...new Set(list.map(c=>c.image).filter(iconable))],other=list.filter(c=>c.image&&!/^data:/i.test(c.image)&&!iconable(c.image)&&!isIconWebp(c.image)).length;
+  if(!a.length){toast("対象のアイコン(.webpのURL)がありません"+(other?"。.webp以外のURLが"+other+"件あります(先に画像をwebpにしてください)":""),6000);return}
+  showOut($("ta"),a.join("\n"),"アイコンURLの一覧("+a.length+"件)",other?"\n※ .webp以外のURLが"+other+"件あり、一覧には入っていません":"");
+};
+function iconSet(on){
+  const ch=[];
+  list.forEach(c=>{const u=c.image;if(typeof u!=="string"||!u||/^data:/i.test(u))return;
+    if(on&&iconable(u))ch.push([c,u.replace(/\.webp(?=$|[?#])/i,"_icon.webp")]);
+    else if(!on&&isIconWebp(u))ch.push([c,u.replace(/_icon\.webp(?=$|[?#])/i,".webp")])});
+  if(!ch.length){toast(on?"_icon.webp にできるアイコンがありません":"_icon.webp のアイコンがありません");return}
+  const msg=on?ch.length+"件のアイコンのURLを _icon.webp にします。\n\n※ ○○_icon.webp がサイトに置いてある前提です(置いていないとアイコンが出なくなります)。\n実行しますか?":ch.length+"件のアイコンのURLから _icon を外して、元の画像に戻します。実行しますか?";
+  if(!confirm(msg))return;
+  try{localStorage.setItem(KEY+"-bak-icon",JSON.stringify(list))}catch(e){}   // 元の下書きを退避
+  ch.forEach(([c,u])=>{c.image=u});
+  save();
+  if(sel>=0&&list[sel])setImg(list[sel].image||"");
+  if(pi>=0&&list[pi])setPImg(list[pi].image||"");
+  render();if(!$("prof").hidden)renderProfile();
+  toast((on?"アイコンのURLを _icon.webp にしました":"アイコンのURLを元に戻しました")+"("+ch.length+"件)。公開するには「バックアップ用データ」「コードを書き出す」を出し直してください",9000);
+}
+$("icoset").onclick=()=>iconSet(true);
+$("icoundo").onclick=()=>iconSet(false);
+$("del").onclick=()=>{if(sel<0)return;list.splice(sel,1);sel=-1;save();render()};
+$("rs").onclick=()=>{logs=clone(LOGS);saveLogs();list=clone(CHARACTERS);sel=-1;save();render()};
+
+// バックアップ用: 空の項目(\"\" や [])と標準の体型は書かず、キー名の引用符も省いて小さくする(読み込み時に補います)
+const jsl=v=>Array.isArray(v)?"["+v.map(jsl).join(",")+"]":v&&typeof v==="object"?"{"+Object.keys(v).map(k=>(/^[A-Za-z_$][\w$]*$/.test(k)?k:JSON.stringify(k))+":"+jsl(v[k])).join(",")+"}":JSON.stringify(v);
+const emptyV=v=>v===""||v==null||(Array.isArray(v)&&!v.length);
+function code(c){
+  const o={name:c.name,color:c.color,image:c.image||"",tags:c.tags||[],memo:c.memo||"",link:c.link||"",height:c.height||"",birthday:bdStr(c),age:aOf(c)>=0?aOf(c):"",sil:silKey(c.sil),
+    stats:c.stats||[],skills:c.skills||[],artifacts:c.artifacts||[],spells:c.spells||[],sequelae:c.sequelae||[],scenarios:c.scenarios||[],stands:c.stands||[],faces:c.faces||[]};
+  if(o.sil==="normal")delete o.sil;
+  Object.keys(o).forEach(k=>{if(k!=="name"&&k!=="color"&&emptyV(o[k]))delete o[k]});
+  return "  "+jsl(o);
+}
+const logCode=l=>{const o=Object.assign({},l);Object.keys(o).forEach(k=>{if(k!=="title"&&emptyV(o[k]))delete o[k]});return "  "+jsl(o)};
+function showOut(ta,t,name,warn){
+  ta.style.display="block";ta.value=t;ta.select();
+  const done=ok=>toast(name+(ok?"をコピーしました":"を書き出しました(自動でコピーできないときは、枠内をコピーしてください)")+(warn||""),warn?9000:4500);
+  try{navigator.clipboard.writeText(t).then(()=>done(true),()=>done(false))}catch(e){done(false)}
+}
+// 公開用コード: <script>なしのHTML(「HTMLのみ」ファイルの【ここに貼り付けてね】の間に貼る)
+function exportTo(ta){
+  const t=buildStatic(),emb=logs.filter(l=>!String(l.url||"").trim()&&l.z).length;
+  showOut(ta,t,"公開用コード",emb?"\n※ログ"+emb+"件は埋め込み型のため、このコードでは開けません。「ログの場所」にURLを入れると開けます":"");
+}
+// バックアップ用: このファイルの【更新データの挿入場所 ①②】に貼り戻すデータ(次回もこの内容から編集できる)
+function exportData(ta){
+  const t="const CHARACTERS = [\n"+list.map(code).join(",\n")+"\n];\nconst LOGS = [\n"+logs.map(logCode).join(",\n")+"\n];";
+  showOut(ta,t,"バックアップ用データ");
+}
+$("out").onclick=()=>exportTo($("ta"));
+$("pe_out").onclick=()=>exportTo($("pe_ta"));
+$("out2").onclick=()=>exportData($("ta"));
+$("pe_out2").onclick=()=>exportData($("pe_ta"));
+
+// 動作確認用のサンプル(いまの下書きは変えずに、公開用コードだけ作る)
+// 全部の体型・身長・年齢・誕生日・タグ・立ち絵と表情差分・ログを一通り試せる内容です。増やしたいときはここに足してください
+function sampleData(){
+  const im=(t,bg)=>"data:image/svg+xml,"+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="160" height="240" viewBox="0 0 160 240"><rect width="160" height="240" fill="${bg}"/><text x="80" y="135" font-size="52" text-anchor="middle" fill="#fff" font-family="sans-serif">${t}</text></svg>`);
+  const B={stats:[],skills:[],artifacts:[],spells:[],sequelae:[],scenarios:[],stands:[],faces:[]};
+  const mk=(o)=>Object.assign({},B,{link:"",memo:"",image:"",tags:[]},o);
+  const chars=[
+    mk({name:"普通",color:"#ff6688",image:im("普","#ff6688"),tags:["ぺんたろ","チームA"],memo:"一言メモ",height:170,birthday:"01-15",age:24,sil:"normal",
+      stats:[["STR","13"],["CON","12"],["POW","14"],["HP","12/12"],["SAN","70/99"]],skills:[["目星","70"],["聞き耳","65"]],
+      artifacts:[{name:"サンプルの短剣",memo:"1行目\n2行目(メモの改行チェック)"}],spells:[{name:"サンプル呪文",memo:"効果のメモ\n改行あり"}],sequelae:[{name:"サンプルの後遺症",memo:"症状のメモ\n改行あり"}],
+      scenarios:[{title:"サンプルシナリオ1",date:"2026-09-01"},{title:"サンプルシナリオ2",date:"2026-09-20",memo:""}],
+      stands:[{src:im("立1","#ff6688"),label:"通常",faces:[{src:im("笑","#ff8fa8"),label:"笑顔"},{src:im("怒","#d94466"),label:"怒り"}]},{src:im("立2","#c94a68"),label:"私服",faces:[]}]}),
+    mk({name:"細身",color:"#4f8cff",image:im("細","#4f8cff"),tags:["ちーたん","チームA"],memo:"細身タイプ",height:175,birthday:"03-14",age:17,sil:"slim",
+      stats:[["STR","9"],["DEX","16"]],skills:[["回避","60"]],scenarios:[{title:"サンプルシナリオ1",date:"2026-09-01",memo:""}]}),
+    mk({name:"がっしり",color:"#f2c94c",tags:["ぺんたろ"],memo:"がっしりタイプ",height:185,birthday:"05-05",age:41,sil:"strong",
+      stats:[["STR","18"],["CON","16"]],skills:[["こぶし","80"]],scenarios:[{title:"サンプルシナリオ1",date:"2026-09-01",memo:""}]}),
+    mk({name:"女性的",color:"#3cb371",tags:["ちーたん","チームB"],memo:"女性的タイプ",height:158,birthday:"07-07",age:29,sil:"fem",
+      stats:[["APP","16"]],skills:[["医学","50"]],scenarios:[{title:"サンプルシナリオ2",date:"2026-09-20",memo:""}]}),
+    mk({name:"ふとっちょ",color:"#b46bff",tags:["チームB"],memo:"ふとっちょタイプ",height:165,birthday:"07-20",age:35,sil:"fat",stats:[["CON","17"]]}),
+    mk({name:"子ども",color:"#ff9f43",memo:"頭の大きさが固定なので、背が低いと頭が大きく見えます",height:110,birthday:"11-03",age:8,sil:"normal"}),
+    mk({name:"高身長",color:"#17c3b2",tags:["ぺんたろ","チームB"],memo:"身長の目盛り確認用",height:210,birthday:"12-25",age:105,sil:"slim"}),
+    mk({name:"未登録",color:"#808080",memo:"身長・年齢・誕生日が未登録のとき",sil:"normal"})
+  ];
+  const logs=[
+    {title:"サンプルシナリオ1",scenario:"サンプルシナリオ1",url:"https://example.com/sample-log1.html",date:"2026-09-01",end:"2026-09-03",memo:"感想1行目\n感想2行目(ログごとのメモ)",players:["普通","細身","がっしり"]},
+    {title:"サンプルシナリオ2",scenario:"サンプルシナリオ2",url:"https://example.com/sample-log2.html",date:"2026-09-20",end:"",players:["普通","女性的"]},
+    {title:"日付なしのログ",scenario:"",url:"",date:"",end:"",players:["ふとっちょ"]}
+  ];
+  return {chars,logs};
+}
+function exportSample(ta){
+  const d=sampleData(),sl=list,sg=logs;let t;
+  list=d.chars;logs=d.logs;
+  try{t=buildStatic()}finally{list=sl;logs=sg}
+  showOut(ta,t,"サンプルの公開用コード");
+}
+$("outs").onclick=()=>exportSample($("ta"));
+$("pe_outs").onclick=()=>exportSample($("pe_ta"));
+
+// ================= 公開用コード(<script>なし)の書き出し =================
+// 編集内容から、JavaScriptを使わない(CSSだけで動く)HTMLを作ります。
+// 「HTMLのみ」ファイルの【ここに貼り付けてね】の間に、そのまま貼り付けて使います。
+function standsOf(c){
+  const a=(c.stands||[]).map(s=>Object.assign({},s));
+  if(a.length&&(c.faces||[]).length)a[0].faces=(a[0].faces||[]).concat(c.faces).slice(0,6);
+  return a;
+}
+// 書き出し用の圧縮。CSS: 文字列("...")の外だけ、余分な空白・最後の ; ・先頭の 0 を削る。
+// HTML: タグの間の改行を詰め、英数字だけの属性値の引用符を外す(HTML5で有効。SVGの /> の直前は除く)
+const miniCss=s=>s.split(/("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')/).map((p,k)=>k%2?p:p
+  .replace(/\/\*[\s\S]*?\*\//g,"").replace(/\s*([{};,>~])\s*/g,"$1").replace(/:\s+/g,":").replace(/\s+!important/g,"!important")
+  .replace(/;}/g,"}").replace(/\s{2,}/g," ").replace(/(^|[^\d.])0\.(\d)/g,"$1.$2")).join("").trim();
+const miniHtml=s=>s.replace(/>\s*\n\s*</g,"><").replace(/(\s[\w:-]+)="([\w.:;%#,-]+)"(?=[\s>])/g,"$1=$2");
+// ★書き出しの軽量化: サイト内のURL(画像・ログへのリンク)の先頭の「https://cheeees.github.io」を省いて、「/cheeeestrpg/…」の形にします。
+//   どの階層のページに貼り付けても(main.html に直接貼っても、iframe で読み込んでも)同じ場所を指すので安全です。
+//   省略したくないときは、下の SITE_ORIGIN を "" にしてください。ほかのサイトのURL(iachara.com など)はそのままです。
+const SITE_ORIGIN="https://cheeees.github.io";
+const shortUrl=h=>SITE_ORIGIN?h.replace(new RegExp("(href=|src=|url\\()([\"']?)"+SITE_ORIGIN.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"/","g"),"$1$2/"):h;
+function buildStatic(){
+  const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
+  const cssUrl=u=>'url("'+String(u).replace(/[\\"\n\r<]/g,m=>"%"+m.charCodeAt(0).toString(16).toUpperCase().padStart(2,"0"))+'")';
+  const okCol=c=>/^#[0-9a-f]{6}$/i.test(c||"")?String(c).toLowerCase():"#888888";
+  const safeUrl=u=>{u=String(u||"").trim();return /^(javascript|vbscript|data):/i.test(u)?"":u};
+  const safeImg=u=>{u=String(u||"").trim();return /^(javascript|vbscript):/i.test(u)||/^data:(?!image\/)/i.test(u)?"":u};
+  const ini=n=>Array.from(String(n||""))[0]||"";
+  const L=list,G=logs,P=place(),css=[],R=[];
+  const SORTS=[["reg","登録順"],["new","日付の新しい順"],["old","日付の古い順"],["title","タイトル順"],["num","参加人数順"]];
+
+  // --- 下ごしらえ ---
+  const cols=L.map(c=>okCol(c.color)),cimg=L.map(c=>safeImg(c.image)),ctags=L.map(c=>[...new Set(c.tags||[])]);
+  const tc=new Map();ctags.forEach(a=>a.forEach(t=>tc.set(t,(tc.get(t)||0)+1)));
+  const tags=[...tc].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0],"ja")),ti=new Map(tags.map((x,k)=>[x[0],k]));
+  const pn=[];G.forEach(l=>(l.players||[]).forEach(n=>{if(pn.indexOf(n)<0)pn.push(n)}));
+  const byName=new Map();L.forEach((c,i)=>{if(!byName.has(c.name))byName.set(c.name,i)});
+  const SA=L.map(c=>standsOf(c).filter(s=>safeImg(s.src)));
+  const anyStand=SA.some(a=>a.length);
+  const linkOf=l=>safeUrl(l.url);                       // リンクにできるのは「ログの場所」URLのみ
+  const logByTitle=t=>G.find(l=>l.scenario===t||l.title===t);
+
+  // --- アイコン画像(同じ画像を何度も書かないよう、CSSに1回だけ入れて使い回す) ---
+  L.forEach((c,i)=>{if(cimg[i])css.push(`#hw-root .ic-${i}{background-image:${cssUrl(cimg[i])}}`)});
+  // キャラの色(枠 cc-N / 塗り cg-N)も1回だけ書いて、各所ではクラス名で使い回す
+  L.forEach((c,i)=>css.push(`#hw-root .cc-${i}{border-color:${cols[i]}!important}`,`#hw-root .cg-${i}{background-color:${cols[i]}!important}`));
+
+  // --- ラジオ/チェックボックス(JavaScriptの代わりに状態を持つ) ---
+  R.push('<input type="radio" name="hw-mode" id="hw-m-ring" class="hw-r" checked>','<input type="radio" name="hw-mode" id="hw-m-cmp" class="hw-r">','<input type="radio" name="hw-mode" id="hw-m-bd" class="hw-r">','<input type="radio" name="hw-mode" id="hw-m-age" class="hw-r">','<input type="radio" name="hw-mode" id="hw-m-scn" class="hw-r">');
+  R.push('<input type="radio" name="hw-view" id="hw-v-home" class="hw-r hw-v" checked>');
+  L.forEach((c,i)=>R.push(`<input type="radio" name="hw-view" id="hw-v-${i}" class="hw-r hw-v">`));
+  if(L.length>1)L.forEach((c,i)=>R.push(`<input type="checkbox" id="hw-sw-${i}" class="hw-r">`));
+  R.push('<input type="radio" name="hw-sel" id="hw-s-none" class="hw-r hw-s" checked>');
+  L.forEach((c,i)=>R.push(`<input type="radio" name="hw-sel" id="hw-s-${i}" class="hw-r hw-s">`));
+  tags.forEach((t,k)=>R.push(`<input type="checkbox" id="hw-t-${k}" class="hw-r">`));
+  pn.forEach((n,k)=>R.push(`<input type="checkbox" id="hw-p-${k}" class="hw-r">`));
+  [1,2,3,4,5].forEach(z=>R.push(`<input type="radio" name="hw-z" id="hw-z-${z}" class="hw-r"${z===3?" checked":""}>`));
+  SORTS.forEach(([m],k)=>R.push(`<input type="radio" name="hw-sort" id="hw-o-${m}" class="hw-r"${k?"":" checked"}>`));
+  // 選んだキャラだけ表示(hw-only を先に置く)/ 選択チェック / 身長比較・一覧の並び替え
+  R.push('<input type="checkbox" id="hw-only" class="hw-q">');
+  L.forEach((c,i)=>R.push(`<input type="checkbox" id="hw-k-${i}" class="hw-k">`));
+  ["reg","hd","ha"].forEach(m=>R.push(`<input type="radio" name="hw-cs" id="hw-cs-${m}" class="hw-q"${m==="reg"?" checked":""}>`));
+
+  // --- 状態ごとの見た目(CSS) ---
+  // 同じ中身のルールは1つにまとめ、並び順は CSS 変数(--d など)で切り替えて、書き出しを小さくしています
+  const Q="#hw-root ",ids=L.map((c,i)=>i),kk=L.map(c=>pn.indexOf(c.name));
+  const rule=(a,b)=>{if(a.length)css.push(a.join(",")+"{"+b+"}")};
+  const ACT=[],LGH=[],LAO=[];   // ACT=「いま選ばれている」ボタン / LGH=隠すログ / LAO=参加者アイコンの枠
+  const Hh=L.map(hOf),Aa=L.map(aOf),Ss=L.map(scN);
+  const rkOf=o=>{const r=[];o.forEach((i,k)=>{r[i]=k});return r};
+  const ordH={hd:ids.slice().sort((a,b)=>(Hh[b]||-1)-(Hh[a]||-1)||a-b),ha:ids.slice().sort((a,b)=>(Hh[a]||1e9)-(Hh[b]||1e9)||a-b)};
+  const ordA={hd:ids.slice().sort((a,b)=>Aa[b]-Aa[a]||a-b),ha:ids.slice().sort((a,b)=>(Aa[a]<0?1e9:Aa[a])-(Aa[b]<0?1e9:Aa[b])||a-b)};
+  const ordS={hd:ids.slice().sort((a,b)=>Ss[b]-Ss[a]||a-b),ha:ids.slice().sort((a,b)=>Ss[a]-Ss[b]||a-b)};
+  const rHd=rkOf(ordH.hd),rHa=rkOf(ordH.ha),rAd=rkOf(ordA.hd),rAa=rkOf(ordA.ha),rSd=rkOf(ordS.hd),rSa=rkOf(ordS.ha);
+  rule(ids.map(i=>`${Q}#hw-v-${i}:checked ~ main .prof-${i}`),"display:block");
+  rule(ids.map(i=>`${Q}#hw-s-${i}:checked ~ main .face-${i}`),"display:grid");
+  rule(ids.map(i=>`${Q}#hw-s-${i}:checked ~ main .info-${i}`),"display:flex");
+  rule(ids.map(i=>`${Q}#hw-s-${i}:checked ~ main .c-${i}`),"outline:3px solid var(--main);outline-offset:2px;z-index:2");
+  // キャラを選んだら、そのキャラが参加したログだけを表示(参加ログが無いキャラは全部非表示)
+  ids.forEach(i=>{LGH.push(kk[i]>=0?`${Q}#hw-s-${i}:checked ~ main .logi:not(.pl-${kk[i]})`:`${Q}#hw-s-${i}:checked ~ main .logi`);if(kk[i]>=0)LAO.push(`${Q}#hw-s-${i}:checked ~ main .la-${kk[i]}`)});
+  pn.forEach((n,k)=>{LGH.push(`${Q}#hw-p-${k}:checked ~ main .logi:not(.pl-${k})`);LAO.push(`${Q}#hw-p-${k}:checked ~ main .la-${k}`)});
+  rule(LGH,"display:none");
+  rule(LAO,"outline:2px solid var(--accent);outline-offset:1px");
+  // アイコンサイズ / 中央の文字を一行に / キャラ切り替えプルダウン
+  css.push('#hw-root .stage{container-type:inline-size}');
+  css.push('#hw-root .face.empty{white-space:nowrap;font-size:clamp(8px,2.6vw,12px)}');
+  css.push('@supports (width:1cqw){#hw-root .face.empty{font-size:min(12px,2.8cqw)}}');
+  css.push('#hw-root .pnav{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap;margin-bottom:12px}');
+  css.push('#hw-root .pnav .back{margin-bottom:0}');
+  css.push('#hw-root .psw{position:relative}');
+  // 「キャラを切り替え」は全員で1つだけ置く(今のキャラの分のボタンだけを出す)。開閉はキャラごとのチェック hw-sw-N
+  css.push('#hw-root .psw .swb{display:none;cursor:pointer;padding:5px 14px;border:1px solid var(--line);border-radius:99px;background:var(--card);color:var(--fg);font-size:13px;white-space:nowrap}');
+  css.push('#hw-root .psw .swb::after{content:" ▾"}');
+  css.push('#hw-root #hw-v-home:checked ~ main .pnav{display:none}');
+  rule(ids.map(i=>`${Q}#hw-v-${i}:checked ~ main .sb-${i}`),"display:block");
+  rule(ids.map(i=>`${Q}#hw-sw-${i}:checked ~ main .sb-${i}::after`),'content:" ▴"');
+  rule(ids.map(i=>`${Q}#hw-v-${i}:checked ~ #hw-sw-${i}:checked ~ main .pswl`),"display:block");
+  rule(ids.map(i=>`${Q}#hw-v-${i}:checked ~ main .psi-${i}`),"font-weight:700;color:var(--main)");
+  css.push('#hw-root .pswl{display:none;position:absolute;right:0;top:calc(100% + 4px);z-index:5;min-width:180px;max-width:80vw;max-height:min(60vh,360px);overflow-y:auto;padding:4px;background:var(--card);border:1px solid var(--line);border-radius:10px;box-shadow:0 4px 14px #0003}');
+  css.push('#hw-root .psi{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;font-size:14px;color:var(--fg);cursor:pointer}');
+  css.push('#hw-root .psi:hover{background:var(--hover)}');
+  css.push('#hw-root .psi i{width:14px;height:14px;border-radius:50%;flex:none;border:1px solid var(--line)}');
+  // アイコンサイズ(5段階・CSSだけで動くスライダー風。3が標準=10%)
+  css.push('#hw-root #hw-z-1:checked ~ main .c{width:7%}');
+  css.push('#hw-root #hw-z-2:checked ~ main .c{width:8.5%}');
+  css.push('#hw-root #hw-z-4:checked ~ main .c{width:11.5%}');
+  css.push('#hw-root #hw-z-5:checked ~ main .c{width:13%}');
+  css.push('#hw-root .zsel{display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:12px;color:var(--mut)}');
+  css.push('#hw-root .zsel span{white-space:nowrap}');
+  css.push('#hw-root .zt{position:relative;display:flex;align-items:center}');
+  css.push('#hw-root .zt::before{content:"";position:absolute;left:14px;right:14px;top:50%;height:2px;margin-top:-1px;background:var(--line)}');
+  css.push('#hw-root .zt label{position:relative;width:28px;height:24px;display:grid;place-items:center;cursor:pointer}');
+  css.push('#hw-root .zt label::before{content:"";width:10px;height:10px;border-radius:50%;background:var(--card);border:2px solid var(--mut)}');
+  // 選んだ段階までの丸を塗り、選んだ丸だけ大きくする
+  rule([1,2,3,4,5].flatMap(N=>[1,2,3,4,5].filter(j=>j<=N).map(j=>`${Q}#hw-z-${N}:checked ~ main .zd-${j}::before`)),"background:var(--main);border-color:var(--main)");
+  rule([1,2,3,4,5].map(N=>`${Q}#hw-z-${N}:checked ~ main .zd-${N}::before`),"transform:scale(1.5)");
+  // 身長比較(色相環 / 身長比較 の切り替え)
+  css.push(cmpCss(Q).replace(/[^{}]*\.(?:on|dim|pk)\b[^{}]*\{[^{}]*\}/g,""));
+  css.push('#hw-root{counter-reset:pkc}');
+  // 状態保持用のチェック/ラジオは画面に固定して隠す(固定しないと、ラベルを押したときにブラウザが入力欄の位置=ページ上部へスクロールしてしまう)
+  css.push('#hw-root .hw-r,#hw-root .hw-q,#hw-root .hw-k{position:fixed;top:0;left:0;opacity:0;width:1px;height:1px;margin:0;pointer-events:none;visibility:hidden}');   // visibility:hidden=フォーカスされない=ラベルを押してもスクロールしない(display:noneだと人数カウントが数えられなくなるので使わない)
+  css.push('#hw-root .hw-k:checked{counter-increment:pkc}');
+  css.push('#hw-root .onum::after{content:"(" counter(pkc) "人)"}');
+  ACT.push(`${Q}#hw-only:checked ~ main .otg`);
+  css.push('#hw-root #hw-only:checked ~ main .otg::before{content:"☑ "}');
+  // 名前を押したときの動き: ONのときは選択 / 解除(hw-k)、OFFのときはキャラ情報を表示(hw-s)
+  css.push('#hw-root .cl-k{display:none}');
+  css.push('#hw-root #hw-only:checked ~ main .cl-k{display:flex}');
+  css.push('#hw-root #hw-only:checked ~ main .cl-s{display:none}');
+  css.push('#hw-root .ohint{display:none}');
+  css.push('#hw-root:has(#hw-only:checked):not(:has(.hw-k:checked)) .ohint{display:block}');
+  rule(ids.map(i=>`${Q}#hw-k-${i}:checked ~ main .chw-${i}`),"border-color:var(--main);background:var(--soft)");
+  rule(ids.map(i=>`${Q}#hw-k-${i}:checked ~ main .chw-${i} .chip`),"font-weight:700");
+  rule(ids.flatMap(i=>["c","ci","pc"].map(x=>`${Q}#hw-only:checked ~ #hw-k-${i}:not(:checked) ~ main .${x}-${i}`)),"display:none");
+  {
+    const idx=ids;
+    // 年齢: 高い順のときは、グループの順番も逆にする。「選んだキャラだけ」で空になったグループは隠す
+    {const ag=new Set(L.map((c,i)=>Aa[i]>=0?ageGrp(Aa[i]):-1));for(let g=0;g<=10;g++)if(ag.has(g))css.push(`#hw-root #hw-m-age:checked ~ #hw-cs-hd:checked ~ main .agg-${g}{order:${10-g}}`)}
+    // 身長比較: 「選んだキャラだけ」で、身長のあるキャラが1人も選ばれていないときは、目盛りの線ごと隠す
+    {const hs=idx.filter(i=>Hh[i]>0);if(hs.length)css.push(`#hw-root #hw-only:checked ${hs.map(i=>`~ #hw-k-${i}:not(:checked)`).join(" ")} ~ main .cmpin{display:none}`)}
+    for(let g=0;g<=10;g++){const ms=idx.filter(i=>Aa[i]>=0&&ageGrp(Aa[i])===g);if(ms.length)css.push(`#hw-root #hw-only:checked ${ms.map(i=>`~ #hw-k-${i}:not(:checked)`).join(" ")} ~ main .agg-${g}{display:none}`)}
+    // 通過数: 高い順のときはグループの順番を逆にする。「選んだキャラだけ」で空になったグループは隠す
+    {const mx=Math.max(0,...Ss);new Set(Ss).forEach(n=>css.push(`#hw-root #hw-m-scn:checked ~ #hw-cs-hd:checked ~ main .scg-${n}{order:${mx-n}}`))}
+    new Set(Ss).forEach(n=>{const ms=idx.filter(i=>Ss[i]===n);css.push(`#hw-root #hw-only:checked ${ms.map(i=>`~ #hw-k-${i}:not(:checked)`).join(" ")} ~ main .scg-${n}{display:none}`)});
+    // 並び替えは身長比較・年齢・通過数のときだけ効く(色相環・誕生日では登録順のまま)。順位は各要素の --d(高い順)/--a(低い順)など
+    [["hd","--d","--e","--g"],["ha","--a","--f","--h"]].forEach(([m,v,w,x])=>{
+      rule([`${Q}#hw-m-cmp:checked ~ #hw-cs-${m}:checked ~ main .ci`,`${Q}#hw-m-cmp:checked ~ #hw-cs-${m}:checked ~ main .chw`],`order:var(${v})`);
+      css.push(`${Q}#hw-m-age:checked ~ #hw-cs-${m}:checked ~ main .agew .bdc{order:var(${v})}`);
+      css.push(`${Q}#hw-m-age:checked ~ #hw-cs-${m}:checked ~ main .chw{order:var(${w})}`);
+      css.push(`${Q}#hw-m-scn:checked ~ #hw-cs-${m}:checked ~ main .chw{order:var(${x})}`);
+    });
+    ["reg","hd","ha"].forEach(m=>ACT.push(`${Q}#hw-cs-${m}:checked ~ main .cs-${m}`));
+  }
+  css.push('#hw-root .cmpw,#hw-root .bdw,#hw-root .agew,#hw-root .scw{display:none}');
+  css.push('#hw-root #hw-m-cmp:checked ~ main .cmpw,#hw-root #hw-m-bd:checked ~ main .bdw,#hw-root #hw-m-age:checked ~ main .agew,#hw-root #hw-m-scn:checked ~ main .scw{display:block}');
+  rule(["cmp","bd","age","scn"].flatMap(m=>[`${Q}#hw-m-${m}:checked ~ main .stage`,`${Q}#hw-m-${m}:checked ~ main .zsel`]),"display:none");
+  css.push('#hw-root .vbar .csg{display:none}');   // 並び替えボタンは身長比較・年齢のときだけ出す
+  rule(["cmp","age","scn"].map(m=>`${Q}#hw-m-${m}:checked ~ main .vbar .csg`),"display:flex");
+  css.push('#hw-root .mdt{padding:5px 14px;border:1px solid var(--line);border-radius:99px;background:var(--card);color:var(--mut);font-size:13px;cursor:pointer}');
+  ["ring","cmp","bd","age","scn"].forEach(m=>ACT.push(`${Q}#hw-m-${m}:checked ~ main .mdt-${m}`));
+  rule(ids.map(i=>`${Q}#hw-s-${i}:checked ~ main .ci-${i}::before`).concat(ids.map(i=>`${Q}#hw-s-${i}:checked ~ main .pc-${i}`)),"background:var(--soft)");
+  rule(ids.map(i=>`${Q}#hw-s-${i}:checked ~ main .ci-${i} .nm span`).concat(ids.map(i=>`${Q}#hw-s-${i}:checked ~ main .pc-${i} .pn`)),"font-weight:700");
+  // キャラ以外をクリックで選択解除(見えない label を背面に敷く)
+  css.push('#hw-root #home{position:relative}');
+  css.push('#hw-root #home>*{position:relative;z-index:1}');
+  css.push('#hw-root #home>.desel{position:absolute;inset:0;z-index:0;cursor:default;display:block}');
+  css.push('#hw-root .stage{pointer-events:none}');
+  css.push('#hw-root .c{pointer-events:auto}');
+  css.push('#hw-root .cmpw,#hw-root .bdw,#hw-root .agew,#hw-root .scw{pointer-events:none}');
+  // 身長比較: キャラの余白部分(シルエットの上の空き)は押しても選択されず、選択解除になる
+  css.push('#hw-root .pc,#hw-root .ci .sil,#hw-root .ci .nm,#hw-root .ci .hh{pointer-events:auto}');
+  const TK=tags.map((t,k)=>k);
+  rule(TK.map(k=>`${Q}#hw-t-${k}:checked ~ main .c:not(.tg-${k})`),"opacity:.12;pointer-events:none;box-shadow:none");
+  rule(TK.map(k=>`${Q}#hw-t-${k}:checked ~ main .chw:not(.tg-${k})`),"display:none");
+  rule(TK.flatMap(k=>[`${Q}#hw-t-${k}:checked ~ main .ci:not(.tg-${k})`,`${Q}#hw-t-${k}:checked ~ main .pc:not(.tg-${k})`]),"opacity:.12;pointer-events:none");
+  rule(TK.map(k=>`${Q}#hw-t-${k}:checked ~ main .ci:not(.tg-${k}) *`),"pointer-events:none");
+  TK.forEach(k=>ACT.push(`${Q}#hw-t-${k}:checked ~ main .tgb-${k}`));
+  css.push('#hw-root #loglist{display:flex;flex-direction:column}');
+  const ix=G.map((l,i)=>i),pl=i=>(G[i].players||[]).length;
+  const cmp={reg:null,
+    new:(a,b)=>(G[b].date||"").localeCompare(G[a].date||""),
+    old:(a,b)=>(G[a].date||"9").localeCompare(G[b].date||"9"),
+    title:(a,b)=>String(G[a].title).localeCompare(String(G[b].title),"ja"),
+    num:(a,b)=>pl(b)-pl(a)};
+  // ログの並び替え: 登録順はそのまま。ほかは各ログの --n(新しい順)・--o(古い順)・--t(タイトル順)・--u(人数順)の順位で並べる
+  const LV={new:"n",old:"o",title:"t",num:"u"},lrk={};
+  SORTS.forEach(([m])=>{
+    if(cmp[m]){const o=ix.slice().sort(cmp[m]);lrk[m]=rkOf(o);css.push(`${Q}#hw-o-${m}:checked ~ main .logi{order:var(--${LV[m]})}`)}
+    ACT.push(`${Q}#hw-o-${m}:checked ~ main .srt-${m}`);
+  });
+  css.push('#hw-root .lk a{color:var(--main);font-weight:700}');
+  if(anyStand){
+    css.push('#hw-root .prof .sf,#hw-root .prof .fs{display:none}');
+    const sij=[];SA.forEach((a,i)=>a.forEach((s,j)=>sij.push([i,j])));
+    rule(sij.map(([i,j])=>`${Q}#hw-st-${i}-${j}:checked ~ .stg .sf-${i}-${j}`),"display:block");
+    rule(sij.map(([i,j])=>`${Q}#hw-st-${i}-${j}:checked ~ .stg .fs-${i}-${j}`),"display:grid");
+    sij.forEach(([i,j])=>ACT.push(`${Q}#hw-st-${i}-${j}:checked ~ .stg .stt-${i}-${j}`));
+  }
+  rule(ACT,"background:var(--main);color:var(--on);border-color:var(--main)");
+
+  // --- ホーム画面 ---
+  const ini1=(i)=>cimg[i]?"":esc(ini(L[i].name));
+  const tagbar=tags.map(([t,n],k)=>`<label for="hw-t-${k}" class="tgb tgb-${k}">#${esc(t)} ${n}</label>`).join("");
+  const faces=L.map((c,i)=>`<div class="face face-${i}${cimg[i]?" ic-"+i:" cg-"+i} cc-${i}">${ini1(i)}</div>`).join("");
+  const dots=L.map((c,i)=>`<label for="hw-s-${i}" class="c c-${i}${cimg[i]?" ic-"+i:""}${ctags[i].map(t=>" tg-"+ti.get(t)).join("")} cc-${i}" style="left:${P[i].x.toFixed(2)}%;top:${P[i].y.toFixed(2)}%" title="${esc(c.name)}">${ini1(i)}</label>`).join("");
+  const tagLabels=i=>ctags[i].map(t=>`<label for="hw-t-${ti.get(t)}" title="このタグで絞り込み">#${esc(t)}</label>`).join("");
+  const infos='<div class="info info-none"><span style="color:var(--mut)">キャラをタップすると名前が出ます</span></div>'+L.map((c,i)=>
+    `<div class="info info-${i}"><span class="sw cg-${i}"></span><div><label for="hw-v-${i}" class="pl">${esc(c.name)}</label><div class="tags"><span>${cols[i]}</span>${tagLabels(i)}</div>${c.memo?`<small>${esc(c.memo)}</small>`:""}</div></div>`).join("");
+  const chips=L.map((c,i)=>`<span class="chw chw-${i}${ctags[i].map(t=>" tg-"+ti.get(t)).join("")}" style="--d:${rHd[i]};--a:${rHa[i]};--e:${rAd[i]};--f:${rAa[i]};--g:${rSd[i]};--h:${rSa[i]}"><label for="hw-s-${i}" class="chip cl-s"><i class="cg-${i}"></i>${esc(c.name)}</label><label for="hw-k-${i}" class="chip cl-k" title="選ぶ / 外す"><i class="cg-${i}"></i>${esc(c.name)}</label></span>`).join("");
+  const avatar=n=>{
+    const i=byName.get(n),k=pn.indexOf(n);
+    let cls=`la la-${k}`,st="",tx=esc(ini(n));
+    if(i!=null){cls+=" cc-"+i+(cimg[i]?"":" cg-"+i);if(cimg[i]){cls+=" ic-"+i;tx=""}}
+    return `<label for="hw-p-${k}" class="${cls}"${st} title="${esc(n)}で絞り込み">${tx}</label>`;
+  };
+  const logs_=G.map((l,gi)=>{
+    const ps=l.players||[],href=linkOf(l);
+    const t=href?`<a class="lt" href="${esc(href)}" target="_blank" rel="noopener">${esc(l.title)}</a>`:`<span class="lt">${esc(l.title)}</span>`;
+    const sm=[fmtRange(l.date,l.end),ps.length+"人"].filter(Boolean).join(" ・ ");
+    return `<div class="logi${ps.map(n=>" pl-"+pn.indexOf(n)).join("")}" style="--n:${lrk.new[gi]};--o:${lrk.old[gi]};--t:${lrk.title[gi]};--u:${lrk.num[gi]}">${t}<small>${esc(sm)}</small><div class="lav">${ps.map(avatar).join("")}</div></div>`;
+  }).join("");
+  const PO={esc,lab:true,col:i=>cols[i],tg:i=>ctags[i].map(t=>" tg-"+ti.get(t)).join(""),
+    ico:i=>cimg[i]?{cls:"ic-"+i+" cc-"+i,style:"",txt:""}:{cls:"cc-"+i+" cg-"+i,style:"",txt:ini(L[i].name)}};
+  const home=`<div id="home">
+<label for="hw-s-none" class="desel" aria-label="選択を解除"></label>
+<div class="tagbar" id="tagbar">${tagbar}</div>
+<div class="tabs mode"><label for="hw-m-ring" class="mdt mdt-ring">色相環</label><label for="hw-m-cmp" class="mdt mdt-cmp">身長比較</label><label for="hw-m-bd" class="mdt mdt-bd">誕生日</label><label for="hw-m-age" class="mdt mdt-age">年齢</label><label for="hw-m-scn" class="mdt mdt-scn">通過数</label></div>
+<div class="vbar"><label for="hw-only" class="otg">選んだキャラだけ表示 <span class="onum"></span></label><span class="csl">ONにして、一覧の名前を押して選びます</span><div class="csg"><span class="csl">並び替え</span><label for="hw-cs-reg" class="cs cs-reg">登録順</label><label for="hw-cs-ha" class="cs cs-ha">低い順(昇順)</label><label for="hw-cs-hd" class="cs cs-hd">高い順(降順)</label></div></div>
+<p class="ohint">キャラが選ばれていません。下の一覧の名前を押して選んでください。</p>
+<div class="zsel"><span>アイコンサイズ 小</span><div class="zt"><label for="hw-z-1" class="zd-1" title="サイズ1"></label><label for="hw-z-2" class="zd-2" title="サイズ2"></label><label for="hw-z-3" class="zd-3" title="サイズ3"></label><label for="hw-z-4" class="zd-4" title="サイズ4"></label><label for="hw-z-5" class="zd-5" title="サイズ5"></label></div><span>大</span></div>
+<div class="stage" id="stage">
+ <div class="ring"></div>
+ <div class="face empty face-none">タップして選択</div>${faces}
+ <div class="bar"></div>
+ ${dots}
+</div>
+<div class="cmpw">${cmpHTML(L,{esc,lab:true,sty:i=>`--d:${rHd[i]};--a:${rHa[i]}`,col:i=>cols[i],tg:i=>ctags[i].map(t=>" tg-"+ti.get(t)).join(""),
+  ico:i=>cimg[i]?{cls:"ic-"+i+" cc-"+i,style:"",txt:""}:{cls:"cc-"+i+" cg-"+i,style:"",txt:ini(L[i].name)}})}</div>
+<div class="bdw">${bdHTML(L,PO)}</div>
+<div class="agew">${ageHTML(L,Object.assign({},PO,{sty:i=>`--d:${rAd[i]};--a:${rAa[i]}`}))}</div>
+<div class="scw">${scnHTML(L,PO)}</div>
+<div class="infos">${infos}</div>
+<div class="chips" id="chips">${chips}</div>
+<h3 class="sh">ログ一覧 <span>${G.length?G.length+"件":""}</span></h3>
+${G.length?`<div class="tabs lsort">${SORTS.map(([m,n])=>`<label for="hw-o-${m}" class="srt srt-${m}">${n}</label>`).join("")}</div>
+<div id="loglist">${logs_}</div>`:'<div id="loglist"><p class="n">登録されたログはまだありません</p></div>'}
+</div>`;
+
+  // --- キャラ紹介ページ ---
+  const pic=(g,lazy)=>`<img src="${esc(safeImg(g.src))}" alt="${esc(g.label||"")}"${lazy?' loading="lazy"':""}>`;
+  const item=(cls,k,v)=>`<div${cls?` class="${cls}"`:""}><span>${esc(k)}</span><b>${esc(v)}</b></div>`;
+  const pnav=`<div class="pnav"><label for="hw-v-home" class="back">← 色相環にもどる</label>${L.length<2?"":`<div class="psw">${L.map((c,i)=>`<label for="hw-sw-${i}" class="swb sb-${i}">キャラを切り替え</label>`).join("")}<div class="pswl">${L.map((c,j)=>`<label for="hw-v-${j}" class="psi psi-${j}"><i class="cg-${j}"></i>${esc(c.name)}</label>`).join("")}</div></div>`}</div>`;
+  const profs=L.map((c,i)=>{
+    const a=SA[i],st=c.stats||[],sk=c.skills||[],sc=c.scenarios||[],ar=c.artifacts||[],sp=c.spells||[],sq=c.sequelae||[];
+    const nlist=(h,a)=>a.length?`<div><h4>${h}</h4><ul class="scl">${a.map(x=>`<li><b>${esc(x.name)}</b>${x.memo?`<span>${esc(x.memo)}</span>`:""}</li>`).join("")}</ul></div>`:"";
+    const head=`<div class="phead"><div class="pface${cimg[i]?" ic-"+i:" cg-"+i} cc-${i}">${ini1(i)}</div><div><div class="pname">${esc(c.name)}</div><div class="tags"><span>${cols[i]}</span>${ctags[i].map(t=>`<span>#${esc(t)}</span>`).join("")}</div>${c.memo?`<small>${esc(c.memo)}</small>`:""}</div></div>`;
+    // 立ち絵・表情差分
+    let stg="",radios="";
+    if(a.length){
+      radios=a.map((s,j)=>`<input type="radio" name="hw-st-${i}" id="hw-st-${i}-${j}" class="hw-r"${j?"":" checked"}>`).join("");
+      stg='<section class="stg">'
+        +(a.length>1?`<div class="tabs">${a.map((s,j)=>`<label for="hw-st-${i}-${j}" class="stt-${i}-${j}">${esc(s.label||String(j+1))}</label>`).join("")}</div>`:"")
+        +`<div class="sview">${a.map((s,j)=>`<figure class="sfig sf sf-${i}-${j}">${pic(s,false)}</figure>`).join("")}</div>`
+        +a.map((s,j)=>{const f=(s.faces||[]).filter(g=>safeImg(g.src)).slice(0,6);return f.length?`<div class="faces fs fs-${i}-${j}">${f.map(g=>pic(g,true)).join("")}</div>`:""}).join("")
+        +'</section>';
+    }
+    // ステータス・技能・アーティファクト・呪文・通過シナリオ
+    const vit=st.filter(x=>VITAL.test(x[0])),kk=[],seen=new Set();
+    st.concat(sk).forEach(x=>{if(KEYSK.test(x[0])&&!seen.has(x[0])){seen.add(x[0]);kk.push(x)}});
+    const rs=st.filter(x=>!VITAL.test(x[0])&&!KEYSK.test(x[0])),rk=sk.filter(x=>!KEYSK.test(x[0]));
+    const parts=[];
+    if(isUrl(c.link))parts.push(`<div class="lk"><a href="${esc(c.link)}" target="_blank" rel="noopener">キャラクターシート(いあきゃら) ↗</a></div>`);
+    const basic=[];if(hOf(c))basic.push(["身長",fmtH(hOf(c))]);if(bdOf(c))basic.push(["誕生日",fmtBd(bdOf(c))]);if(aOf(c)>=0)basic.push(["年齢",fmtA(aOf(c))]);
+    if(basic.length)parts.push(`<div><h4>基本情報</h4><div class="skl">${basic.map(x=>item("",x[0],x[1])).join("")}</div></div>`);
+    if(vit.length||rs.length)parts.push(`<div><h4>ステータス</h4>${vit.length?`<div class="vital">${vit.map(x=>item("vt",x[0],x[1])).join("")}</div>`:""}${rs.length?`<div class="grid">${rs.map(x=>item("",x[0],x[1])).join("")}</div>`:""}</div>`);
+    if(kk.length||rk.length)parts.push(`<div><h4>技能</h4>${kk.length?`<div class="keys">${kk.map(x=>item("key",x[0],x[1])).join("")}</div>`:""}${rk.length?`<div class="skl">${rk.map(x=>item("",x[0],x[1])).join("")}</div>`:""}</div>`);
+    if(ar.length)parts.push(nlist("アーティファクト",ar));
+    if(sp.length)parts.push(nlist("呪文",sp));
+    if(sq.length)parts.push(nlist("後遺症",sq));
+    if(sc.length)parts.push(`<div><h4>通過シナリオ<span class="cnt">通過数 ${scN(c)}本</span></h4><ul class="scl">${sc.map(x=>{
+      const lg=G.find(l=>linkOf(l)&&(l.scenario===x.title||l.title===x.title)),la=logByTitle(x.title);
+      const t=lg?`<a class="lg" href="${esc(linkOf(lg))}" target="_blank" rel="noopener">${esc(x.title)}</a>`:`<b>${esc(x.title)}</b>`;
+      const dtx=(la?fmtRange(la.date,la.end):"")||fmtRange(x.date,x.end);
+      const mm=la&&la.memo;return `<li>${t}${dtx?`<span class="dt">${esc(dtx)}</span>`:""}${mm?`<span>${esc(mm)}</span>`:""}</li>`;
+    }).join("")}</ul></div>`);
+    return `<div class="prof prof-${i}">${radios}${head}${stg}${parts.length?`<section class="card">${parts.join("")}</section>`:""}</div>`;
+  }).join("");
+
+  return shortUrl('<style>'+miniCss(css.join("\n"))+'</style>\n<div id="hw-root">'+miniHtml(R.join("")+'<main>'+pnav+home+profs+'</main>')+'</div>');
+}
+
+
+// ================= キャラ紹介ページ =================
+const isUrl=u=>/^https?:\/\//i.test(u||"");
+const ST={stands:{max:900},faces:{max:320}};
+const cur=()=>list[pi];
+const LOG_BASE="https://cheeees.github.io/cheeeestrpg/";   // ログの置き場所(ここ+ファイル名が自動入力されます)
+let si=0,fi=0,stay=false,toEd=false;
+function upd(patch){list[pi]=Object.assign({},list[pi],patch);return save()}
+function showHome(){
+  $("prof").hidden=true;$("home").hidden=false;
+  if(sel<0)$("info").innerHTML=PH;
+  render();
+}
+function showProfile(i,keep){
+  pi=i;$("home").hidden=true;$("prof").hidden=false;
+  if(!keep){si=0;fi=0}
+  renderProfile();
+  if(edit){fillPE();refreshCSel()}
+  if(!keep&&!stay){if(toEd&&edit)$("ped").scrollIntoView({block:"start"});else window.scrollTo(0,0)}   // 編集中のキャラ切り替えでは位置を保つ
+}
+function route(keep){
+  let h="";try{h=decodeURIComponent(location.hash.slice(1))}catch(e){}
+  const i=h?list.findIndex(c=>c.name===h):-1;
+  if(i>=0)showProfile(i,keep);else{pi=-1;showHome()}
+  stay=false;toEd=false;
+}
+window.addEventListener("hashchange",()=>route());
+
+function renderProfile(){
+  const c0=cur();
+  if((c0.faces||[]).length&&(c0.stands||[]).length){const st=c0.stands.slice();st[0]=Object.assign({},st[0],{faces:(st[0].faces||[]).concat(c0.faces).slice(0,6)});upd({stands:st,faces:[]})}
+  const c=cur(),h=$("phead");h.innerHTML="";
+  const ic=document.createElement("div");ic.className="pface";ic.style.borderColor=c.color;
+  if(c.image)ic.style.backgroundImage="url("+JSON.stringify(c.image)+")";
+  else{ic.style.backgroundColor=c.color;ic.textContent=c.name.slice(0,1)}
+  h.append(ic,buildInfo(c,false));
+  renderGal();renderSheet();
+}
+function editList(el,a,set){
+  el.innerHTML="";
+  a.forEach((g,j)=>{
+    const r=document.createElement("div");r.className="eli";
+    const th=document.createElement("img");th.src=g.src;th.alt="";
+    const lb=document.createElement("input");lb.type="text";lb.value=g.label||"";lb.placeholder="ラベル";
+    lb.onchange=()=>{const x=a.slice();x[j]=Object.assign({},g,{label:lb.value.trim()});set(x)};
+    const up=document.createElement("button");up.className="b";up.textContent="↑";up.title="前に移動";up.disabled=j===0;
+    up.onclick=()=>{const x=a.slice();[x[j-1],x[j]]=[x[j],x[j-1]];set(x)};
+    const d=document.createElement("button");d.className="b";d.textContent="削除";
+    d.onclick=()=>{const x=a.slice();x.splice(j,1);set(x)};
+    r.append(th,lb,up,d);el.appendChild(r);
+  });
+}
+function renderGal(){
+  const c=cur(),a=c.stands||[];
+  if(si>=a.length)si=Math.max(0,a.length-1);
+  $("s_stage").hidden=!a.length;
+  const tb=$("tabs");tb.innerHTML="";
+  if(a.length>1)a.forEach((s,j)=>{
+    const b=document.createElement("button");b.textContent=s.label||String(j+1);b.className=j===si?"on":"";
+    b.onclick=()=>{si=j;renderGal()};tb.appendChild(b);
+  });
+  const s=a[si],fb=$("g_faces");fb.innerHTML="";$("sbg").hidden=!s;
+  if(s){
+    $("simg").src=s.src;
+    $("sbg").style.backgroundImage="url("+JSON.stringify(s.src)+")";$("sbg").hidden=false;
+    const pi=new Image();pi.onload=()=>{if(pi.naturalHeight)$("sbg").style.setProperty("--ar",pi.naturalWidth/pi.naturalHeight)};pi.src=s.src;
+    (s.faces||[]).slice(0,6).forEach(g=>{const im=document.createElement("img");im.src=g.src;im.alt=g.label||"";im.loading="lazy";fb.appendChild(im)});
+  }
+  editList($("el_stands"),a,x=>{upd({stands:x});renderProfile()});
+  // 表情差分の追加先は、表示中の立ち絵ではなくプルダウンで選んだ立ち絵
+  if(fi>=a.length)fi=Math.max(0,a.length-1);
+  const fs=a[fi],sl=$("pe_fsel");sl.innerHTML="";
+  a.forEach((g,j)=>{const o=document.createElement("option");o.value=j;o.textContent=(j+1)+". "+(g.label||"(ラベルなし)");sl.appendChild(o)});
+  sl.value=String(fi);sl.onchange=()=>{fi=+sl.value;renderGal()};
+  $("pe_fh").textContent=fs?"表情差分(最大6枚)":"表情差分(先に立ち絵を追加してください)";
+  editList($("el_faces"),fs?(fs.faces||[]):[],x=>{const st=a.slice();st[fi]=Object.assign({},fs,{faces:x});upd({stands:st});renderProfile()});
+}
+function renderSheet(){
+  const c=cur(),st=c.stats||[],sk=c.skills||[],sc=c.scenarios||[],ar=c.artifacts||[],sp=c.spells||[],sq=c.sequelae||[];
+  const lk=$("i_link");lk.innerHTML="";
+  if(isUrl(c.link)){const a=document.createElement("a");a.href=c.link;a.target="_blank";a.rel="noopener";a.textContent="キャラクターシート(いあきゃら) ↗";lk.appendChild(a)}
+  const vit=st.filter(x=>VITAL.test(x[0])),kk=[],seen=new Set();
+  st.concat(sk).forEach(x=>{if(KEYSK.test(x[0])&&!seen.has(x[0])){seen.add(x[0]);kk.push(x)}});
+  const rs=st.filter(x=>!VITAL.test(x[0])&&!KEYSK.test(x[0])),rk=sk.filter(x=>!KEYSK.test(x[0]));
+  const basic=[];if(hOf(c))basic.push(["身長",fmtH(hOf(c))]);if(bdOf(c))basic.push(["誕生日",fmtBd(bdOf(c))]);if(aOf(c)>=0)basic.push(["年齢",fmtA(aOf(c))]);
+  $("i_basic").hidden=!basic.length;
+  $("i_stats").hidden=!(vit.length||rs.length);$("i_skills").hidden=!(kk.length||rk.length);$("i_sc").hidden=!sc.length;$("sc_n").textContent="通過数 "+scN(c)+"本";
+  $("i_art").hidden=!ar.length;$("i_spells").hidden=!sp.length;$("i_seq").hidden=!sq.length;
+  $("s_info").hidden=!(lk.firstChild||basic.length||st.length||sk.length||sc.length||ar.length||sp.length||sq.length);
+  const nl=(id,a)=>{const g=$(id);g.innerHTML="";a.forEach(x=>{const li=document.createElement("li"),b=document.createElement("b");b.textContent=x.name;li.appendChild(b);if(x.memo){const m=document.createElement("span");m.textContent=x.memo;li.appendChild(m)}g.appendChild(li)})};
+  nl("g_art",ar);nl("g_spells",sp);nl("g_seq",sq);
+  const fill=(id,a,f)=>{const g=$(id);g.innerHTML="";a.forEach(x=>g.appendChild(f(x[0],x[1])))};
+  fill("g_vital",vit,vital);fill("g_stats",rs,(k,v)=>card("",k,v));
+  fill("g_basic",basic,(k,v)=>card("",k,v));fill("g_keys",kk,(k,v)=>card("key",k,v));fill("g_skills",rk,(k,v)=>card("",k,v));
+  const l=$("g_sc");l.innerHTML="";
+  sc.forEach(x=>{const li=document.createElement("li"),lg=logFor(x.title),la=logAny(x.title);let t;if(lg){t=document.createElement("a");linkLog(t,lg);t.className="lg"}else t=document.createElement("b");t.textContent=x.title;li.appendChild(t);const dtx=(la?fmtRange(la.date,la.end):"")||fmtRange(x.date,x.end);if(dtx){const dt=document.createElement("span");dt.className="dt";dt.textContent=dtx;t.after(dt)}
+    const mm=la&&la.memo;if(mm){const m=document.createElement("span");m.textContent=mm;li.appendChild(m)}l.appendChild(li)});
+}
+
+// ---- 紹介ページの編集 ----
+// アーティファクト・呪文: 通過シナリオと同じく、1件ずつ行を追加して入力
+function nmRow(box,x,ph){
+  const d=document.createElement("div");d.className="sce";
+  d.innerHTML='<input type="text" class="xt" placeholder="'+ph+'"><textarea class="xm" placeholder="メモ(任意・改行できます)"></textarea><div class="row"><button type="button" class="b">削除</button></div>';
+  d.querySelector(".xt").value=x.name||"";d.querySelector(".xm").value=x.memo||"";
+  d.querySelector("button").onclick=()=>d.remove();box.appendChild(d);
+}
+const readNm=box=>[...box.children].map(d=>({name:d.querySelector(".xt").value.trim(),memo:d.querySelector(".xm").value.trim()})).filter(x=>x.name);
+// 新規追加のたびに、メモ欄へ先行入力する文字(既存データの読み込み時は入れない)
+const NM=[["pe_artl","pe_artadd","アーティファクト名","入手シナリオ："],["pe_spl","pe_spadd","呪文名","コスト：\n入手シナリオ："],["pe_sql","pe_sqadd","後遺症名","発生シナリオ："]];
+NM.forEach(([b,a,ph,memo])=>{$(a).onclick=()=>{nmRow($(b),{memo},ph);$(b).lastChild.querySelector(".xt").focus()}});
+const pairs=a=>(a||[]).map(p=>p[0]+" "+p[1]).join("\n");
+function toPairs(t){return t.split(/\n/).map(l=>l.trim()).filter(Boolean).map(l=>{const m=l.match(/^(.+?)[\s:：=＝]+(\S+)$/);return m?[m[1].trim(),m[2]]:[l,""]})}
+const DRE=/^\d{4}[-\/.年]\d{1,2}([-\/.月]\d{1,2}日?)?$/;
+function toSc(t){return t.split(/\n/).map(l=>l.trim()).filter(Boolean).map(l=>{
+  const p=l.split(/\s*[|｜]\s*/),o={title:p.shift(),date:"",memo:[]};
+  p.forEach(s=>{if(!o.date&&DRE.test(s))o.date=s;else if(s)o.memo.push(s)});o.memo=o.memo.join(" | ");return o})}
+function setPImg(u){pimg=u;const p=$("pe_pv");if(u)p.src=u;else p.removeAttribute("src");p.style.display=u?"block":"none"}
+const logIdx=t=>logs.findIndex(l=>t&&(l.scenario===t||l.title===t));
+function scOpts(sel,cur){
+  sel.innerHTML="";
+  const o0=document.createElement("option");o0.value="";o0.textContent=logs.length?"登録済みのログから選ぶ…":"(登録済みのログはまだありません)";sel.appendChild(o0);
+  logs.forEach((l,i)=>{const o=document.createElement("option"),r=fmtRange(l.date,l.end);o.value=i;o.textContent=l.title+(r?"（"+r+"）":"");sel.appendChild(o)});
+  sel.value=cur>=0?String(cur):"";
+}
+function refreshScSel(){[...$("pe_scl").querySelectorAll(".sce")].forEach(d=>scOpts(d.querySelector(".xs"),logIdx(d.querySelector(".xt").value.trim())))}
+function scRow(x){
+  const d=document.createElement("div");d.className="sce";
+  d.innerHTML='<select class="xs" title="登録済みのログから選ぶと、シナリオ名と日付が自動で入ります"></select><input type="text" class="xt" placeholder="シナリオ名"><div class="row"><input type="date" class="xd" title="開始日"> 〜 <input type="date" class="xe" title="終了日"><button type="button" class="b">削除</button></div>';
+  const xt=d.querySelector(".xt"),xs=d.querySelector(".xs");
+  xt.value=x.title||"";
+  d.querySelector(".xd").value=toIso(x.date);d.querySelector(".xe").value=toIso(x.end);
+  scOpts(xs,logIdx(x.title));
+  xs.onchange=()=>{const l=logs[xs.value];if(!l)return;
+    xt.value=l.scenario||l.title;d.querySelector(".xd").value=toIso(l.date);d.querySelector(".xe").value=toIso(l.end)};
+  xt.oninput=()=>{xs.value=logIdx(xt.value.trim())<0?"":String(logIdx(xt.value.trim()))};
+  d.querySelector("button").onclick=()=>d.remove();$("pe_scl").appendChild(d);
+}
+function readSc(){return [...$("pe_scl").children].map(d=>{const o={title:d.querySelector(".xt").value.trim(),date:d.querySelector(".xd").value};const e=d.querySelector(".xe").value;if(e)o.end=e;return o}).filter(x=>x.title)}
+$("pe_scadd").onclick=()=>{scRow({});$("pe_scl").lastChild.querySelector(".xt").focus()};
+function fillPE(){
+  const c=cur();
+  $("pe_name").value=c.name;$("pe_color").value=c.color;$("pe_ht").value=c.height||"";setBd("pe_bdm","pe_bdd",c.birthday);$("pe_ag").value=aOf(c)>=0?aOf(c):"";silP=silKey(c.sil);silDraw[1]();setPImg(c.image||"");$("pe_im").value="";$("pe_im_url").value=PIC_URL_INIT;
+  $("pe_tags").value=(c.tags||[]).map(x=>"#"+x).join(" ");$("pe_memo").value=c.memo||"";tpAll();
+  $("pe_link").value=c.link||"";$("pe_stats").value=pairs(c.stats);$("pe_skills").value=pairs(c.skills);
+  $("pe_artl").innerHTML="";(c.artifacts||[]).forEach(x=>nmRow($("pe_artl"),x,"アーティファクト名"));
+  $("pe_spl").innerHTML="";(c.spells||[]).forEach(x=>nmRow($("pe_spl"),x,"呪文名"));
+  $("pe_sql").innerHTML="";(c.sequelae||[]).forEach(x=>nmRow($("pe_sql"),x,"後遺症名"));
+  $("pe_scl").innerHTML="";(c.scenarios||[]).forEach(scRow);
+  $("pe_paste").value="";$("pe_ta").style.display="none";
+}
+$("pe_im").onchange=e=>{
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();r.onload=async()=>setPImg(await shrink(r.result));r.readAsDataURL(f);
+};
+$("pe_noim").onclick=()=>{$("pe_im").value="";setPImg("");$("pe_im_url").value=PIC_URL_INIT};
+iconUrlInit($("pe_im_url"),$("pe_im_seturl"),setPImg);
+$("pe_save").onclick=()=>{
+  const n=$("pe_name").value.trim();if(!n){toast("名前を入れてね");return}
+  if(list.some((x,j)=>j!==pi&&x.name===n)){toast("同じ名前のキャラがいます");return}
+  const old=cur().name;
+  const ok=upd({name:n,color:$("pe_color").value,height:parseFloat($("pe_ht").value)||"",birthday:getBd("pe_bdm","pe_bdd"),age:ageIn($("pe_ag").value),sil:silP,image:pimg,tags:parseTags($("pe_tags").value),memo:$("pe_memo").value.trim(),
+    link:$("pe_link").value.trim(),stats:toPairs($("pe_stats").value),skills:toPairs($("pe_skills").value),artifacts:readNm($("pe_artl")),spells:readNm($("pe_spl")),sequelae:readNm($("pe_sql")),scenarios:readSc()});
+  if(ok)toast("保存しました");
+  if(n!==old){stay=true;location.hash="#"+encodeURIComponent(n)}else renderProfile();
+};
+
+// 画像(立ち絵 / 表情差分)。縦横比と透過を保ったまま縮小して保存
+function fit(src,max){return new Promise(res=>{
+  const im=new Image();
+  im.onload=()=>{
+    const k=Math.min(1,max/Math.max(im.width,im.height)),w=Math.max(1,Math.round(im.width*k)),h=Math.max(1,Math.round(im.height*k));
+    const cv=document.createElement("canvas");cv.width=w;cv.height=h;const g=cv.getContext("2d");g.imageSmoothingQuality="high";g.drawImage(im,0,0,w,h);
+    let u=cv.toDataURL("image/webp",.85);
+    if(!u.startsWith("data:image/webp"))u=cv.toDataURL("image/png");
+    res(u);
+  };
+  im.onerror=()=>res("");im.src=src;
+})}
+function pushImg(k,item){
+  const st=(cur().stands||[]).slice();
+  if(k==="stands"){st.push(Object.assign({faces:[]},item));upd({stands:st});si=fi=st.length-1;return true}
+  const s=st[fi];if(!s){toast("先に立ち絵を追加してね");return false}
+  const f=(s.faces||[]).slice();if(f.length>=6){toast("表情差分は1枚の立ち絵につき6枚までです");return false}
+  f.push(item);st[fi]=Object.assign({},s,{faces:f});upd({stands:st});return true;
+}
+async function addImgs(k,files){
+  const lab=files.length===1?$("pe_"+k+"_label").value.trim():"";
+  for(const f of files){
+    const src=await new Promise(r=>{const fr=new FileReader();fr.onload=()=>r(fr.result);fr.readAsDataURL(f)});
+    const u=await fit(src,ST[k].max);if(u&&!pushImg(k,{src:u,label:lab}))break;
+  }
+  renderProfile();$("pe_"+k+"_label").value="";
+}
+["stands","faces"].forEach(k=>{
+  $("pe_"+k+"_file").onchange=async e=>{const fs=[...e.target.files];e.target.value="";if(fs.length)await addImgs(k,fs)};
+  const ue=$("pe_"+k+"_url");
+  ue.onfocus=()=>{if(ue.value===PIC_URL_INIT)setTimeout(()=>{const p=PIC_URL_INIT.length-5;ue.setSelectionRange(p,p)},0)};
+  $("pe_"+k+"_addurl").onclick=()=>{
+    const u=$("pe_"+k+"_url").value.trim();if(!isUrl(u)){toast("http(s):// から始まる画像URLを入れてね");return}
+    if(pushImg(k,{src:u,label:$("pe_"+k+"_label").value.trim()})){renderProfile()}   // URLとラベルは追加後も残す(連番URLなどを続けて追加しやすくするため)
+  };
+});
+
+// ---- 貼り付けたキャラシ内容からステータス読み込み(リンク先の自動読み込みはしない) ----
+// 対応: ココフォリア駒のJSON(能力値・ステータス・チャパレの技能値)/ チャパレのテキスト / ページ本文(能力値のみ推定)
+function parseSheet(t){
+  const out={stats:[],skills:[],url:""};
+  let j=null;try{j=JSON.parse(t.trim())}catch(e){}
+  if(j&&typeof j==="object"){
+    const d=j.data||j;out.url=isUrl(d.externalUrl)?d.externalUrl:"";
+    (d.status||[]).forEach(x=>{if(x&&x.label)out.stats.push([String(x.label),x.max!=null&&x.max!==""?x.value+"/"+x.max:String(x.value)])});
+    (d.params||[]).forEach(x=>{if(x&&x.label)out.stats.push([String(x.label),String(x.value)])});
+    t=String(d.commands||"");
+  }else if(/<[a-z!][\s\S]*>/i.test(t)){
+    t=new DOMParser().parseFromString(t,"text/html").body.textContent||"";
+  }
+  if(!out.stats.length){
+    ["STR","CON","POW","DEX","APP","SIZ","INT","EDU","HP","MP","SAN","幸運","LUK","DB","ビルド","MOV"].forEach(k=>{
+      const m=t.match(new RegExp("(?:^|[^A-Za-z0-9])"+k+"\\s*[:：]?\\s*(\\d+(?:\\s*/\\s*\\d+)?)"));
+      if(m)out.stats.push([k,m[1].replace(/\s/g,"")]);
+    });
+  }
+  const seen=new Set();
+  for(const m of t.matchAll(/<=\s*(\d+)\s*【([^】]+)】/g)){if(!seen.has(m[2])){seen.add(m[2]);out.skills.push([m[2],m[1]])}}
+  return out;
+}
+function applySheet(p){
+  if(!p.stats.length&&!p.skills.length)return false;
+  const c=cur();
+  upd({stats:p.stats.length?p.stats:(c.stats||[]),skills:p.skills.length?p.skills:(c.skills||[]),link:$("pe_link").value.trim()||p.url||c.link||""});
+  $("pe_stats").value=pairs(cur().stats);$("pe_skills").value=pairs(cur().skills);$("pe_link").value=cur().link||"";
+  renderProfile();return true;
+}
+$("pe_parse").onclick=()=>{
+  if(applySheet(parseSheet($("pe_paste").value)))toast("ステータスを読み込みました");
+  else toast("読み取れる数値が見つかりませんでした",5000);
+};
+
+// ================= ステータス表示 / ログ一覧 =================
+const VITAL=/^(HP|MP|SAN)(値)?$/i, KEYSK=/^(アイデア|アイディア|幸運|知識|IDEA|LUK|LUCK|KNOW)$/i;
+function card(cls,k,v){const d=document.createElement("div");if(cls)d.className=cls;const l=document.createElement("span"),b=document.createElement("b");l.textContent=k;b.textContent=v;d.append(l,b);return d}
+const vital=(k,v)=>card("vt",k,v);
+const logFor=t=>logs.find(l=>(l.url||l.z)&&(l.scenario===t||l.title===t));
+const logAny=t=>logs.find(l=>l.scenario===t||l.title===t);
+// ログの下書きは容量の大きいIndexedDBに保存
+const idb=()=>new Promise((res,rej)=>{const r=indexedDB.open("hue-wheel",1);r.onupgradeneeded=()=>r.result.createObjectStore("k");r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
+async function idbGet(k){try{const d=await idb();return await new Promise(res=>{const q=d.transaction("k").objectStore("k").get(k);q.onsuccess=()=>res(q.result);q.onerror=()=>res(null)})}catch(e){return null}}
+async function idbSet(k,v){try{const d=await idb();return await new Promise(res=>{const t=d.transaction("k","readwrite");t.objectStore("k").put(v,k);t.oncomplete=()=>res(true);t.onerror=()=>res(false)})}catch(e){return false}}
+async function saveLogs(){if(!await idbSet("logs",logs))toast("ログの下書き保存に失敗しました。コードを書き出して控えてね",6000)}
+async function loadLogs(){const v=await idbGet("logs");return Array.isArray(v)?v:clone(LOGS)}
+async function openLog(l){
+  const w=window.open("","_blank");
+  try{
+    const b=Uint8Array.from(atob(l.z),c=>c.charCodeAt(0));
+    const t=await new Response(new Blob([b]).stream().pipeThrough(new DecompressionStream("gzip"))).text();
+    const u=URL.createObjectURL(new Blob([t],{type:"text/html;charset=utf-8"}));
+    if(w)w.location.href=u;else location.href=u;
+  }catch(e){if(w)w.close();toast("ログを開けませんでした")}
+}
+function linkLog(a,l){   // URLがあれば必ずURLを使う。埋め込みは、URLのない旧データの救済のみ
+  if(l.url){a.href=l.url;a.target="_blank";a.rel="noopener"}
+  else if(l.z){a.href="#";a.onclick=e=>{e.preventDefault();openLog(l)}}
+}
+function logAvatar(n){
+  const c=list.find(x=>x.name===n),d=document.createElement("button"),T=parseTags($("lq").value).map(t=>t.toLowerCase());
+  d.className="la"+(T.includes(n.toLowerCase())?" on":"");d.title=n+"で絞り込み";
+  if(c)d.style.borderColor=c.color;
+  if(c&&c.image)d.style.backgroundImage="url("+JSON.stringify(c.image)+")";else{if(c)d.style.background=c.color;d.textContent=n.slice(0,1)}
+  d.onclick=()=>{const k=n.toLowerCase();$("lq").value=(T.includes(k)?T.filter(x=>x!==k):T.concat(n)).join(" ");renderLogs()};
+  return d;
+}
+// 登録済みのログのプルダウン(編集欄「ログを登録」用)。選ぶとそのログがフォームに入り、「ログを登録」で上書き更新になる
+function refreshLSel(){
+  const s=$("lsel");s.innerHTML="";
+  const o0=document.createElement("option");o0.value="";o0.textContent=logs.length?"選んでください…":"(登録済みのログはまだありません)";s.appendChild(o0);
+  logs.forEach((l,i)=>{const o=document.createElement("option"),r=fmtRange(l.date,l.end);o.value=i;o.textContent=l.title+(r?"（"+r+"）":"");s.appendChild(o)});
+  s.value=le>=0&&logs[le]?String(le):"";
+}
+$("lsel").onchange=()=>{const v=$("lsel").value;if(v===""||!logs[v])return;le=+v;fillLog(logs[v]);$("lgf").value=""};
+function renderLogs(){
+  refreshLSel();
+  const box=$("loglist");box.innerHTML="";
+  const T=parseTags($("lq").value).map(t=>t.toLowerCase());
+  const a=logs.map((l,i)=>({l,i})).filter(({l})=>T.every(t=>(l.players||[]).some(p=>p.toLowerCase().includes(t))));
+  const cmp={new:(x,y)=>(y.l.date||"").localeCompare(x.l.date||""),old:(x,y)=>(x.l.date||"9").localeCompare(y.l.date||"9"),
+    title:(x,y)=>x.l.title.localeCompare(y.l.title,"ja"),num:(x,y)=>y.l.players.length-x.l.players.length}[$("lsort").value];
+  if(cmp)a.sort(cmp);
+  $("lqn").textContent=logs.length?(T.length?a.length+"/":"")+logs.length+"件":"";
+  if(!a.length){box.innerHTML='<p class="n">'+(logs.length?"該当するログがありません":"登録されたログはまだありません")+'</p>';return}
+  a.forEach(({l,i})=>{
+    const d=document.createElement("div");d.className="logi";
+    const t=document.createElement((l.url||l.z)?"a":"span");t.className="lt";t.textContent=l.title;
+    if(l.url||l.z)linkLog(t,l)
+    const s=document.createElement("small");s.textContent=[fmtRange(l.date,l.end),l.players.length+"人"].filter(Boolean).join(" ・ ");
+    const v=document.createElement("div");v.className="lav";l.players.forEach(n=>v.appendChild(logAvatar(n)));
+    d.append(t,s,v);
+    if(edit){
+      const r=document.createElement("div");r.className="row";
+      const e=document.createElement("button");e.className="b";e.textContent="編集";e.onclick=()=>{le=i;fillLog(l);refreshLSel();$("lt").scrollIntoView({behavior:"smooth",block:"center"})};
+      const x=document.createElement("button");x.className="b";x.textContent="削除";x.onclick=()=>{logs.splice(i,1);saveLogs();renderLogs();refreshScSel()};
+      r.append(e,x);d.appendChild(r);
+    }
+    box.appendChild(d);
+  });
+}
+$("lq").oninput=$("lsort").onchange=renderLogs;
+// ---- 日付ヘルパー ----
+const toIso=v=>{const m=String(v||"").match(/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})$/);return m?m[1]+"-"+m[2].padStart(2,"0")+"-"+m[3].padStart(2,"0"):""};
+const fmtD=v=>{const i=toIso(v);return i?i.replace(/-/g,"/"):String(v||"")};
+function fmtRange(a,b){a=fmtD(a);b=fmtD(b);return a&&b&&a!==b?a+"〜"+b:(a||b)}
+// ログ内の発言時刻(time.timestamp)から最初と最後の日付を取る
+function logDates(doc){
+  const ds=[];
+  doc.querySelectorAll("time.timestamp").forEach(t=>{
+    let i=toIso(((t.textContent||"").match(/\d{4}[\/-]\d{1,2}[\/-]\d{1,2}/)||[""])[0]);
+    if(!i){const d=new Date(t.getAttribute("datetime")||"");if(!isNaN(d))i=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+    if(i)ds.push(i);
+  });
+  ds.sort();return ds.length?[ds[0],ds[ds.length-1]]:["",""];
+}
+function fillLog(l){$("lhint").textContent=l.z&&!l.url?"旧データ: ログ本体が埋め込まれています。ログの場所(URL)を入れて登録すると、URLに置き換わります":"";$("lt").value=l.title||"";$("lsc").value=l.scenario||"";$("lu").value=l.url||"";$("ld").value=l.date||"";$("lde").value=l.end||"";$("lpl").value=(l.players||[]).join("、");$("lmemo").value=l.memo||""}
+$("lclr").onclick=()=>{le=-1;fillLog({});$("lgf").value="";refreshLSel()};
+$("lgf").onchange=async ev=>{
+  const f=ev.target.files[0];if(!f)return;
+  const txt=await f.text(),doc=new DOMParser().parseFromString(txt,"text/html"),cnt={};
+  const t=((doc.querySelector(".generated-title")||doc.querySelector("title")||{}).textContent||f.name).replace(/\s*-\s*整形版\s*$/,"").replace(/[\[［][^\]］]*[\]］]/g,"").replace(/\s{2,}/g," ").trim()||f.name;   // [ ]で囲まれた部分は除く
+  doc.querySelectorAll("article.message:not(.system) .speaker").forEach(s=>{const n=s.textContent.trim();if(n)cnt[n]=(cnt[n]||0)+1});
+  const ns=Object.entries(cnt).sort((a,b)=>b[1]-a[1]);
+  const [d1,d2]=logDates(doc);
+  // ログの場所は「LOG_BASE+ファイル名」を自動入力。ただし、自分で別のURLを入れていたら消さない
+  const cu=$("lu").value.trim(),auto=!cu||cu.startsWith(LOG_BASE);
+  const url=auto?LOG_BASE+f.name.replace(/[%#? ]/g,c=>encodeURIComponent(c)):cu;
+  le=-1;refreshLSel();fillLog({title:t,scenario:t,url,date:d1,end:d2,memo:((logs.find(x=>x.title===t)||{}).memo||""),players:ns.filter(x=>x[1]>=3).map(x=>x[0])});
+  toast("ログ名・日付・参加者を読み込みました(ログ本体は保存しません)");
+  $("lhint").textContent=(auto?"ログの場所を「"+url+"」に自動入力しました(違うときは直してください)。":"")+(d1?"日付: "+fmtRange(d1,d2)+"(自動検出)。":"日付は見つかりませんでした。")+"検出した発言者: "+ns.map(([n,c])=>n+"("+c+")").join("、")+"(KPなど不要な名前は消してください)";
+};
+$("lreg").onclick=()=>{
+  const title=$("lt").value.trim();if(!title){toast("ログ名を入れてね");return}
+  const o={title,scenario:$("lsc").value.trim()||title,url:$("lu").value.trim(),date:$("ld").value,end:$("lde").value,
+    memo:$("lmemo").value.trim(),players:$("lpl").value.split(/[\n,、，]+/).map(s=>s.trim()).filter(Boolean)};
+  const i=le>=0?le:logs.findIndex(x=>x.title===title);
+  if(!o.url&&i>=0&&logs[i].z)o.z=logs[i].z;   // URLがない旧データだけ、埋め込みを残す
+  if(i>=0)logs[i]=o;else logs.push(o);
+  saveLogs();le=-1;fillLog({});$("lgf").value="";renderLogs();refreshScSel();
+  toast(o.url||o.z?"ログを登録しました":"ログを登録しました(ログの場所のURLが空なので、リンクは付きません)",o.url||o.z?3500:6000);
+};
+
+setEdit(true);   // このファイルは常に編集モード(ON/OFFの切り替えなし)
+// 背面の立ち絵をゆっくりスクロールさせる(視差)
+(()=>{const bg=document.getElementById("sbg"),K=.15,calm=matchMedia("(prefers-reduced-motion: reduce)");let t=0;
+  const upd=()=>{t=0;bg.style.setProperty("--bgy",calm.matches?"0px":(-window.scrollY*K).toFixed(1)+"px")};
+  addEventListener("scroll",()=>{if(!t)t=requestAnimationFrame(upd)},{passive:true});
+  upd();
+})();
+</script>
+</body>
+<script src="editter.js"></script>
+</html>
