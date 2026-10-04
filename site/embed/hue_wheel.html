@@ -275,6 +275,8 @@
 #hw-root .cmpw{margin:6px 0 0}
 #hw-root .cmp{overflow:visible}
 #hw-root .cmpin{--ch:clamp(230px,66vw,380px);position:relative;display:flex;align-items:flex-start;gap:0;width:100%;padding:12px 4px 8px 30px;isolation:isolate}
+@media(min-width:700px){#hw-root .cmpw{width:min(94vw,1400px);margin-left:calc(50% - min(94vw,1400px)/2)}}
+@media(max-width:600px){#hw-root .cmpin{--ch:clamp(170px,46vw,230px)}}
 #hw-root .rul{position:absolute;left:0;right:0;top:12px;height:var(--ch);border-bottom:2px solid var(--mut);pointer-events:none}
 #hw-root .rl{position:absolute;left:0;right:0;height:0;border-top:1px dashed var(--line)}
 #hw-root .rl b{position:sticky;left:3px;display:inline-block;transform:translateY(-50%);font-size:10px;font-weight:400;color:var(--mut);background:var(--bg);padding:0 3px;border-radius:3px}
