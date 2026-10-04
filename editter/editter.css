@@ -5,18 +5,19 @@
    ・ほかの部分と名前がぶつからないよう、すべて et- で始めています
    ================================================================ */
 :root {
-  --et-bg: #3a322b;      /* メニューの背景(茶) */
-  --et-line: #8e632b;    /* 下の縁・区切り */
-  --et-accent: #ffd60a;  /* 今のページの下線・ホバー */
-  --et-text: #f3ead9;    /* 文字 */
+  --et-bg: #fff;         /* メニューの背景(サイトと同じ白) */
+  --et-line: #8e632b;    /* 下線(茶)・区切り */
+  --et-accent: #ffd60a;  /* 今のページの下線(黄)・ホバー */
+  --et-text: #222;       /* 文字 */
+  --et-deep: #5b2e0a;    /* 今のページの文字(濃い茶) */
 }
 
 .et-nav {
   flex: none; width: 100%;   /* ページ側が flex や 100% 高さでも崩れないように */
   display: flex; align-items: stretch; justify-content: space-between; gap: 8px;
   margin: 0; padding: 0 10px;
-  background: var(--et-bg); border-bottom: 2px solid var(--et-accent);
-  font: 13px/1.2 system-ui, "Noto Sans JP", sans-serif; letter-spacing: .04em;
+  background: var(--et-bg); border-bottom: 4px solid var(--et-accent);
+  font: 13px/1.2 "Noto Sans JP", "Hiragino Maru Gothic ProN", system-ui, sans-serif; letter-spacing: .06em;
   box-sizing: border-box; overflow-x: auto; white-space: nowrap;
 }
 .et-nav * { box-sizing: border-box; }
@@ -32,10 +33,11 @@
 .et-nav ul a::after { left: 50%; right: 50%; background: var(--et-accent); transition-delay: .15s; }
 .et-nav ul a:hover::before, .et-nav ul a[aria-current="page"]::before { left: 50%; right: 50%; }
 .et-nav ul a:hover::after, .et-nav ul a[aria-current="page"]::after { left: 0; right: 0; }
-.et-nav ul a[aria-current="page"] { color: var(--et-accent); font-weight: 700; }
+.et-nav ul a[aria-current="page"] { color: var(--et-deep); font-weight: 700; }
 .et-nav a:focus-visible { outline: 2px solid var(--et-accent); outline-offset: -2px; }
 
 .et-nav .et-site { align-self: center; flex: none; padding: 5px 10px; border: 1px solid var(--et-line); border-radius: 6px; font-size: 12px; }
+.et-nav .et-site { color: var(--et-line); }
 .et-nav .et-site:hover { background: var(--et-accent); border-color: var(--et-accent); color: #222; }
 
 @media (max-width: 600px) {

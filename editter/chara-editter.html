@@ -4,11 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>イメージカラー色相環</title>
+<meta name="color-scheme" content="light">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto+Sans+JP&display=swap">
 <style>
-:root{--bgop:.1;--bg:#f7f8fa;--fg:#20242c;--card:#fff;--mut:#6f7683;--line:#dde0e6;--main:var(--fg);--on:var(--bg);--soft:rgba(128,128,128,.16);--soft-line:rgba(170,135,80,.28);--hover:var(--bg);--num:#a8782a}
+:root{--bgop:.1;--bg:#fff;--fg:#222;--card:#fff;--mut:#7a6f62;--line:#e6dccb;--main:#8e632b;--on:#fff;--soft:rgba(142,99,43,.12);--soft-line:rgba(255,214,10,.35);--hover:#fff8d6;--num:#8e632b}
 *{box-sizing:border-box}
-body{margin:0;padding:20px 14px 40px;background:var(--bg);color:var(--fg);font-family:"Hiragino Maru Gothic ProN","Hiragino Sans","Yu Gothic",sans-serif}
-main{max-width:620px;margin:0 auto}
+body{margin:0;padding:0 0 40px;background:var(--bg);color:var(--fg);font-family:"Noto Sans JP","Hiragino Maru Gothic ProN","Hiragino Sans","Yu Gothic",sans-serif}
+main{max-width:648px;margin:0 auto;padding:20px 14px 0}
 .stage{position:relative;width:100%;aspect-ratio:1}
 .ring,.face{position:absolute;left:44%;top:50%;transform:translate(-50%,-50%);border-radius:50%}
 .ring{width:30%;aspect-ratio:1;background:conic-gradient(hsl(0 85% 60%),hsl(60 85% 55%),hsl(120 70% 48%),hsl(180 75% 48%),hsl(240 80% 64%),hsl(300 75% 60%),hsl(360 85% 60%));
