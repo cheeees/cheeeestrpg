@@ -52,7 +52,7 @@ progress{width:200px;height:12px;accent-color:var(--acc)}
 <div id="warn">このブラウザは webp の書き出しに対応していません。Chrome / Edge / Firefox で開いてください。</div>
 
 <div class="bar">
-  <button id="bGh" title="GitHubのリポジトリ内の pic フォルダを読み込み、作った _icon.webp をそのままコミットします">🐙 GitHubから開く</button>
+  <span id="ghBar" title="GitHubのリポジトリ内の pic フォルダを読み込み、作った _icon.webp をそのままコミットします"></span>
   <button id="bAll">全選択</button>
   <button id="bNone">全解除</button>
   <input type="text" id="flt" placeholder="名前で絞り込み(例: hajime)" style="width:200px" spellcheck="false">
@@ -78,7 +78,7 @@ progress{width:200px;height:12px;accent-color:var(--acc)}
   <button class="pri" id="bRun" disabled>アイコンを作ってGitHubに保存</button>
   <button id="bStop" disabled>中止</button>
   <progress id="prog" value="0" max="1" style="display:none"></progress>
-  <span id="info">「GitHubから開く」で、pic フォルダ(または、その中のフォルダ)を選んでください</span>
+  <span id="info">上のプルダウンで、pic フォルダ(または、その中のフォルダ)を選んでください</span>
 </div>
 </div>
 
@@ -160,15 +160,11 @@ async function loadDir(h){
   }
   render();
 }
-$('bGh').onclick=async()=>{
-  if(running)return;
-  if(!window.GhFS){alert('ghfs.js が読み込まれていません。icon.html と同じフォルダに ghfs.js を置いてください');return;}
-  const h=await GhFS.pick({purpose:'icon',title:'GitHubの pic フォルダを開く(アイコン作成)',deep:true,prefer:'site/pic',
+window.addEventListener('load',()=>{
+  if(!window.GhFS){$('ghBar').textContent='ghfs.js が読み込まれていません(icon.html と同じフォルダに置いてください)';return;}
+  GhFS.bar($('ghBar'),{purpose:'icon',deep:true,prefer:'site/pic',canChange:()=>!running,onOpen:loadDir,
     describe:i=>{const n=i.names.filter(x=>IMG.test(x)&&!ICON.test(x)).length;return n?`画像 ${n} 件`:null;}});
-  if(h){
-    try{await loadDir(h);}catch(e){alert('フォルダを読み込めませんでした: '+e.message);}
-  }
-};
+});
 $('bAll').onclick=()=>{shown().forEach(i=>i.checked=true);render();};
 $('bNone').onclick=()=>{shown().forEach(i=>i.checked=false);render();};
 $('chkAll').onclick=e=>{shown().forEach(i=>i.checked=e.target.checked);render();};
@@ -208,7 +204,7 @@ async function convertOne(it,o){
 $('bRun').onclick=async()=>{
   const list=items.filter(i=>i.checked);
   if(!list.length||!dirHandle)return;
-  if(!dirHandle.repo.token){alert('GitHubに保存するには、アクセストークンが必要です。\n「GitHubから開く」でトークンを入れて開き直してください。');return;}
+  if(!dirHandle.repo.token){alert('GitHubに保存するには、アクセストークンが必要です。\n上の「🐙 GitHubに接続」でトークンを入れ直してください。');return;}
   const over=list.filter(i=>i.exists).length;
   if(over&&!confirm(`作成済みの _icon.webp ${over} 件を上書きします。\n(Gitの履歴には残るので、後から戻すことはできます)よろしいですか?`))return;
   const o={size:Math.max(32,Math.min(1024,parseInt($('size').value)||256)),q:Math.max(50,Math.min(100,parseInt($('q').value)||90))/100};

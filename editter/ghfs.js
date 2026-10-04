@@ -1,6 +1,6 @@
 /* ================================================================
    GitHub を「フォルダ」のように読み書きする共通部品  ─  editter/ghfs.js
-   ・webp.html / rename.html / icon.html / formatter.html が使います。各ページの </body> の直前に、この1行を足す:
+   ・webp.html / rename.html / icon.html(プルダウン: GhFS.bar)/ formatter.html(保存先ダイアログ: GhFS.pick)が使います。各ページの </body> の直前に、この1行を足す:
         <script src="ghfs.js"></script>
    ・GitHub の API(Git Data API)だけで動きます。インストール・サーバー不要
    ・読み込み: リポジトリのファイル一覧を取り、選んだフォルダのファイルを「フォルダの中身」として見せる
@@ -216,7 +216,11 @@
       ".ghfs-list .dim .ct{color:var(--sub,#7a6f62);font-weight:400;opacity:.7}" +
       ".ghfs-list .empty{padding:10px;font-size:12px;color:var(--sub,#7a6f62)}" +
       ".ghfs-cur{font-size:12px;color:var(--text,#222);margin-top:4px;word-break:break-all}" +
-      ".ghfs-note{font-size:11px;line-height:1.6;color:var(--sub,#7a6f62);margin:0}";
+      ".ghfs-note{font-size:11px;line-height:1.6;color:var(--sub,#7a6f62);margin:0}" +
+      ".ghfs-bar{display:inline-flex;flex-wrap:wrap;align-items:center;gap:6px}" +
+      ".ghfs-bar select{font:inherit;max-width:min(360px,70vw);padding:4px 7px;border:1px solid var(--line,#e6dccb);border-radius:5px;background:var(--panel,#fff);color:var(--text,#222)}" +
+      ".ghfs-bar select:disabled{opacity:.55}" +
+      ".ghfs-barst{font-size:12px;color:var(--sub,#7a6f62)}.ghfs-barst.err{color:var(--err,#dc2626)}";
     document.head.appendChild(s);
   }
   function loadCfg() { try { return JSON.parse(localStorage.getItem(LS_CFG) || "{}"); } catch (e) { return {}; } }
@@ -342,6 +346,137 @@
       if (c.repo && tok) $("gf-conn").click(); else $("gf-token").focus();
     });
   }
+
+  /* ---------- ページの上のバーに置く「フォルダのプルダウン」 ----------
+     GhFS.bar(置き場の要素, { purpose, describe, deep, prefer, onOpen(GhDir), canChange(), auto })
+       ・[🐙 接続] ボタン … リポジトリ・ブランチ・トークンを入れる小さなダイアログ(フォルダ選びは出ない)
+       ・プルダウン … 接続すると、対象のあるフォルダが一覧に出る。選ぶとすぐ onOpen(GhDir) が呼ばれる
+       ・[↻] … GitHub の最新を読み直す
+       ・前回の設定+トークンが残っていれば、ページを開いたとき自動で接続し、前回のフォルダも開く(auto:false で無効)
+     戻り値: { reset() プルダウンを未選択に戻す, reload() 読み直す, repo() 今のリポジトリ } */
+  function connectDialog(prev) {
+    addCss();
+    return new Promise(function (resolve) {
+      var c = loadCfg(), tok = localStorage.getItem(LS_TOKEN) || (prev && prev.token) || "";
+      var bg = document.createElement("div"); bg.className = "ghfs-bg";
+      bg.innerHTML =
+        '<div class="ghfs-box" role="dialog" aria-modal="true"><h3>🐙 GitHubに接続</h3>' +
+        '<label>リポジトリ(ユーザー名/リポジトリ名)<input type="text" id="gc-repo" spellcheck="false"></label>' +
+        '<label>ブランチ<input type="text" id="gc-branch" spellcheck="false"></label>' +
+        '<label>アクセストークン(保存・削除に必要。読むだけなら空欄でも可)<input type="password" id="gc-token" autocomplete="off" spellcheck="false" placeholder="github_pat_..."></label>' +
+        '<label class="chk"><input type="checkbox" id="gc-rem"> このブラウザにトークンを記憶する</label>' +
+        '<div class="ghfs-st" id="gc-st"></div>' +
+        '<p class="ghfs-note">トークンは Fine-grained token で、このリポジトリだけを選び「Contents: Read and write」にしたものを使います(editter/main.html と共通)。</p>' +
+        '<div class="row"><button id="gc-cancel">キャンセル</button><button id="gc-ok" class="pri">接続する</button></div></div>';
+      document.body.appendChild(bg);
+      var $ = function (id) { return bg.querySelector("#" + id); };
+      $("gc-repo").value = (prev && prev.repo) || c.repo || "cheeees/cheeeestrpg";
+      $("gc-branch").value = (prev && prev.branch) || c.branch || "main";
+      $("gc-token").value = tok;
+      $("gc-rem").checked = c.remember !== false;
+      function st(t, err) { var e = $("gc-st"); e.textContent = t; e.className = "ghfs-st" + (err ? " err" : ""); }
+      function close(v) { document.removeEventListener("keydown", onKey, true); bg.remove(); resolve(v); }
+      function onKey(e) { if (e.key === "Escape") { e.stopPropagation(); close(null); } }
+      document.addEventListener("keydown", onKey, true);
+      bg.addEventListener("mousedown", function (e) { if (e.target === bg) close(null); });
+      $("gc-cancel").onclick = function () { close(null); };
+      $("gc-ok").onclick = async function () {
+        var rp = $("gc-repo").value.trim().replace(/^https?:\/\/github\.com\//i, "").replace(/\.git$/, "").replace(/\/+$/, "");
+        if (!/^[\w.-]+\/[\w.-]+$/.test(rp)) { st("リポジトリは「ユーザー名/リポジトリ名」の形で入れてください", true); return; }
+        $("gc-ok").disabled = true; st("GitHubに接続中…");
+        var r = new Repo({ repo: rp, branch: $("gc-branch").value.trim() || "main", token: $("gc-token").value.trim() });
+        try { await r.connect(); }
+        catch (e) { st("接続できません: " + e.message, true); $("gc-ok").disabled = false; return; }
+        var rem = $("gc-rem").checked;
+        localStorage.setItem(LS_CFG, JSON.stringify(Object.assign({}, loadCfg(), { repo: r.repo, branch: r.branch, remember: rem })));
+        if (rem && r.token) localStorage.setItem(LS_TOKEN, r.token); else localStorage.removeItem(LS_TOKEN);
+        close(r);
+      };
+      if ($("gc-token").value) $("gc-ok").focus(); else $("gc-token").focus();
+    });
+  }
+
+  function bar(host, opts) {
+    addCss(); opts = opts || {};
+    var PH = "__none__", repo = null, cur = null, deep = null, direct = null, loading = false;
+    host.classList.add("ghfs-bar");
+    function mk(tag, text) { var e = document.createElement(tag); if (text) e.textContent = text; return e; }
+    var bc = mk("button", "🐙 GitHubに接続"), sel = mk("select"), rl = mk("button", "↻"), msg = mk("span");
+    bc.type = rl.type = "button"; msg.className = "ghfs-barst";
+    rl.title = "GitHubの最新を読み直す"; sel.title = "開くフォルダ(GitHub)";
+    sel.disabled = rl.disabled = true;
+    host.appendChild(bc); host.appendChild(sel); host.appendChild(rl); host.appendChild(msg);
+    function say(t, err) { msg.textContent = t || ""; msg.className = "ghfs-barst" + (err ? " err" : ""); }
+    function descr(path) {
+      var names = (opts.deep ? deep : direct).get(path) || [];
+      return opts.describe ? opts.describe({ path: path, names: names }) : (names.length ? names.length + "件" : null);
+    }
+    /* プルダウンの中身を作る(対象のあるフォルダだけ) */
+    function fill(want) {
+      direct = repo.dirInfos(); deep = repo.deepInfos();
+      var paths = Array.from(deep.keys()).filter(function (p) { return descr(p) != null; })
+        .sort(function (a, b) { return a.localeCompare(b, "ja", { numeric: true }); });
+      sel.innerHTML = "";
+      var o0 = mk("option", paths.length ? "フォルダを選ぶ…" : "対象のあるフォルダがありません"); o0.value = PH; sel.appendChild(o0);
+      paths.forEach(function (p) { var o = mk("option", (p || "(リポジトリ直下)") + "  —  " + descr(p)); o.value = p; sel.appendChild(o); });
+      sel.value = want != null && paths.indexOf(want) >= 0 ? want : PH;
+      return paths;
+    }
+    function setBusy(b) { loading = b; sel.disabled = rl.disabled = b || !repo; bc.disabled = b; }
+    /* path のフォルダを開く。fresh=false のときは先に GitHub の最新を読み直す */
+    async function open(path, fresh) {
+      if (opts.canChange && !opts.canChange()) { sel.value = cur == null ? PH : cur; return; }
+      setBusy(true); say("読み込み中…");
+      try {
+        if (!fresh) await repo.connect();
+        fill(path);
+        var d = new GhDir(repo, path); d.label = repo.repo + "@" + repo.branch + " : " + (path || "/");
+        localStorage.setItem("ghDir:" + (opts.purpose || ""), path);
+        cur = path;
+        say(repo.repo + "@" + repo.branch + (repo.token ? "" : "  ※トークンなし=保存不可"));
+        setBusy(false);
+        await opts.onOpen(d);
+      } catch (e) { say("読み込めません: " + e.message, true); setBusy(false); }
+    }
+    function attach(r, auto) {
+      repo = r; cur = null;
+      bc.textContent = "🐙 " + r.repo + "@" + r.branch;
+      bc.title = "押すと接続先(リポジトリ・ブランチ・トークン)を変えられます";
+      var last = localStorage.getItem("ghDir:" + (opts.purpose || ""));
+      var want = [last, opts.prefer].filter(function (v) { return v != null; });
+      var paths = fill(null), start = want.filter(function (v) { return paths.indexOf(v) >= 0; })[0];
+      setBusy(false);
+      say(r.repo + "@" + r.branch + (r.token ? "" : "  ※トークンなし=保存不可"));
+      if (start != null && auto !== false) { sel.value = start; open(start, true); }
+    }
+    bc.onclick = async function () {
+      if (loading) return;
+      var r = await connectDialog(repo);
+      if (r) attach(r, true);
+    };
+    sel.onchange = function () { if (sel.value !== PH) open(sel.value, false); else cur = null; };
+    rl.onclick = function () {
+      if (cur != null) { open(cur, false); return; }
+      if (!repo) return;
+      setBusy(true);
+      repo.connect().then(function () { fill(null); setBusy(false); }, function (e) { say("読み込めません: " + e.message, true); setBusy(false); });
+    };
+    var o = mk("option", "(先にGitHubに接続)"); o.value = PH; sel.appendChild(o);
+    /* 前回の設定+トークンが残っていれば自動で接続する */
+    var c = loadCfg(), tok = localStorage.getItem(LS_TOKEN) || "";
+    if (c.repo && tok) {
+      setBusy(true); say("GitHubに接続中…");
+      var r0 = new Repo({ repo: c.repo, branch: c.branch || "main", token: tok });
+      r0.connect().then(function () { attach(r0, opts.auto); },
+        function (e) { setBusy(false); say("自動接続できません: " + e.message + "(左のボタンから接続し直してください)", true); });
+    }
+    return {
+      reset: function () { cur = null; if (repo) sel.value = PH; },
+      reload: function () { if (cur != null) return open(cur, false); },
+      repo: function () { return repo; }
+    };
+  }
+
   /* 保存に失敗したときなど: 同じフォルダを GitHub の最新で読み直す */
   async function reopen(dir) {
     var r = new Repo({ repo: dir.repo.repo, branch: dir.repo.branch, token: dir.repo.token });
@@ -349,5 +484,5 @@
     var d = new GhDir(r, dir.path); d.label = dir.label; return d;
   }
 
-  window.GhFS = { pick: pick, reopen: reopen, Repo: Repo, GhDir: GhDir, GhFile: GhFile };
+  window.GhFS = { pick: pick, bar: bar, reopen: reopen, Repo: Repo, GhDir: GhDir, GhFile: GhFile };
 })();
