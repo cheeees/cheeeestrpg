@@ -84,7 +84,7 @@ a { color: var(--main); }
 .hero::after { bottom: 0; border-bottom-width: 7px; border-image: var(--edge) 7 / 1 round; }
 
 /* ■ 本文・見出し(白文字+茶色の縁取り、下に黄色の斜線の帯) */
-main { min-height: 50vh; }
+body > main { min-height: 50vh; }   /* 埋め込みパーツの中の <main> には効かせない */
 .sec { margin: 25px 0; }
 .hn { padding: 10px; border-bottom: 10px solid var(--accent); border-image: var(--stripe) 10 / 0 0 1 / 0 round; }
 .hn h2 { margin: 0; font: 700 1.5em/1.4 "WDXL Lubrifont JP N", "Noto Sans JP", sans-serif; color: var(--deep);

@@ -10,7 +10,7 @@ var SITE_NAME = "TRPGいろいろ";   /* ブラウザのタブに出る名前(�
 /* 埋め込みパーツの読み込み
    main.html に <div data-include="embed/ファイル名.html"></div> と書くと、そのファイルの中身が入ります。
    ・そのページを開いたときに初めて読み込みます(使わないページの分は読み込まない)
-   ・読み込む HTML の中の <script> は動きません(<style> と HTML はそのまま動きます)
+   ・読み込む HTML の中の <script> も動きます(読み込み時に作り直して実行)
    ・GitHub Pages では動きます。パソコンでファイルを直接開いたときは読み込めません */
 function loadIncludes(scope) {
   [].slice.call(scope.querySelectorAll("[data-include]")).forEach(function (el) {
@@ -18,7 +18,16 @@ function loadIncludes(scope) {
     el.removeAttribute("data-include");
     fetch(url)
       .then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
-      .then(function (html) { el.innerHTML = html; el.classList.add("loaded"); })
+      .then(function (html) {
+        el.innerHTML = html; el.classList.add("loaded");
+        /* innerHTML で入れた <script> はそのままでは動かないので、作り直して動くようにする */
+        [].slice.call(el.querySelectorAll("script")).forEach(function (old) {
+          var s = document.createElement("script");
+          [].slice.call(old.attributes).forEach(function (a) { s.setAttribute(a.name, a.value); });
+          s.text = old.textContent;
+          old.parentNode.replaceChild(s, old);
+        });
+      })
       .catch(function () { el.textContent = "読み込めませんでした: " + url + "(ファイルの場所と名前を確認してください)"; });
   });
 }
