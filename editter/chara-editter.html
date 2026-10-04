@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto+Sans+JP&display=swap">
 <style>
-:root{--bgop:.1;--bg:#fff;--fg:#222;--card:#fff;--mut:#7a6f62;--line:#e6dccb;--main:#8e632b;--on:#fff;--soft:rgba(142,99,43,.12);--soft-line:rgba(255,214,10,.35);--hover:#fff8d6;--num:#8e632b}
+:root{--bgop:.1;--bg:#ffffff;--fg:#333333;--card:#ffffff;--mut:#7a6f62;--line:#e6dccb;--main:#8e632b;--main-deep:#5c3c0f;--accent:#ffd60a;--on:#ffffff;--soft:#fff8d6;--soft-line:#f1e3a0;--hover:#fff1b0;--zebra:#fffdf3;--img-bg:#faf6ee;--num:#8e632b}
 *{box-sizing:border-box}
 body{margin:0;padding:0 0 40px;background:var(--bg);color:var(--fg);font-family:"Noto Sans JP","Hiragino Maru Gothic ProN","Hiragino Sans","Yu Gothic",sans-serif}
 main{max-width:648px;margin:0 auto;padding:20px 14px 0}
@@ -22,8 +22,8 @@ main{max-width:648px;margin:0 auto;padding:20px 14px 0}
 @supports (width:1cqw){.face.empty{font-size:min(12px,2.8cqw)}}
 .bar{position:absolute;left:92.5%;width:3%;top:10%;height:80%;border-radius:99px;background:linear-gradient(#fff,#000);border:1px solid var(--line)}
 .c{position:absolute;width:10%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;border:3px solid;background:var(--card) center/cover;padding:0;cursor:pointer;display:grid;place-items:center;font:600 13px inherit;color:var(--fg);box-shadow:0 1px 4px #0003}
-.c.on{outline:3px solid var(--fg);outline-offset:2px;z-index:2}
-.c:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
+.c.on{outline:3px solid var(--main);outline-offset:2px;z-index:2}
+.c:focus-visible{outline:3px solid var(--main);outline-offset:2px}
 .info{margin:14px 0;padding:12px 14px;background:var(--card);border:1px solid var(--line);border-radius:10px;min-height:56px;display:flex;align-items:center;gap:12px}
 .info a{color:var(--fg);font-weight:700;font-size:17px}
 .info a::after{content:" ›";display:inline-block;text-decoration:none}
@@ -73,11 +73,11 @@ a.lt::after{content:" ›"}
 .logi small{display:block;color:var(--mut);font-size:12px;margin:2px 0 6px}
 .lav{display:flex;flex-wrap:wrap;gap:4px}
 .la{width:30px;height:30px;border-radius:50%;border:2px solid #fff;background:#fff center/cover;color:#fff;font:700 12px inherit;padding:0;cursor:pointer;display:grid;place-items:center}
-.la.on{outline:2px solid var(--fg);outline-offset:1px}
+.la.on{outline:2px solid var(--main);outline-offset:1px}
 .logi .row{margin-top:6px}.logi .b{padding:3px 10px;font-size:12px}
 .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
 .tabs button{padding:5px 14px;border:1px solid var(--line);border-radius:99px;background:var(--card);color:var(--mut);font:inherit;font-size:13px;cursor:pointer}
-.tabs button.on,.tagbar button.on,.b.p{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.tabs button.on,.tagbar button.on,.b.p{background:var(--main);color:var(--on);border-color:var(--main)}
 .sview{position:relative;overflow:hidden;border-radius:18px;min-height:220px;display:flex;justify-content:center;padding:18px 0 0}
 .sbg{position:fixed;top:0;right:0;width:min(100vw,780px);height:85vh;z-index:-1;background:right top/cover no-repeat;transform:translate3d(0,var(--bgy,0px),0);will-change:transform;opacity:var(--bgop,.1);--fade:linear-gradient(#000 var(--fa,15%),transparent var(--fb,60%));-webkit-mask-image:var(--fade);mask-image:var(--fade);pointer-events:none}
 @media(min-width:700px){.sbg{background-size:contain;height:min(85vh,calc(min(100vw,780px)/var(--ar,.6)))}}
@@ -128,6 +128,13 @@ a.lt::after{content:" ›"}
 .eli input{flex:1;min-width:0}
 .eli .b{padding:6px 10px}
 #toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:99px;font-size:13px;z-index:40;max-width:90vw;text-align:center}
+
+/* サイトカラー調整(公開ページと同じ:見出し・リンク・画像の背景) */
+.card h4{color:var(--main);font-size:14px;border-left:4px solid var(--accent);padding-left:8px}
+.sh{color:var(--main)}
+.pname{color:var(--main-deep)}
+.info a,a.lt,.logi .lt,.scl a.lg,#i_link a{color:var(--main)}
+.gal img,.faces img,.gal.faces img{background:var(--img-bg)}
 </style>
 </head>
 <body>
@@ -471,12 +478,12 @@ const MON=["January","February","March","April","May","June","July","August","Se
 // ================= 身長比較の高さ・間隔の調整(★ここの数字を変えると変わります) =================
 // 一人ひとりの横幅は、体型と身長で決まる「実際の体の幅」ぴったりです(細い人は細く、がっしりした人は太く)。
 // PC表示では「人数が多いほど低く、少ないほど高く」自動で変わり、全員の幅+間隔が横幅いっぱいに収まる高さになります。
-const CMP_GAP=10;       // ★キャラ同士の間隔(px)。体の端から隣の体の端までの距離。広げたい→大きく / 詰めたい→小さく
+const CMP_GAP=2;        // ★キャラ同士の間隔(px)。体の端から隣の体の端までの距離。広げたい→大きく / 詰めたい→小さく
 const CMP_H_MAX=380;    // ★高さの上限(px)。人数が少ないときはこの高さで止まる。もっと低くしたいなら 320 など
 const CMP_H_MIN=150;    // ★高さの下限(px)。人数が多くてもこれより低くならない
 const CMP_W_MAX=1400;   // ★PCで身長比較を広げる横幅の上限(px)
 const CMP_W_VW=94;      // ★画面幅のうち身長比較が使う割合(%)
-const CMP_NAME_MIN=72;  // ★名前を横書きにする(9人以下)ときの、1人あたりの最小の幅(px)。名前が「…」で切れるなら大きく
+const CMP_NAME_MIN=0;   // ★名前を横書きにする(9人以下)ときの、1人あたりの最小の幅(px)。名前が「…」で切れるなら大きく
 const CMP_GAP_SP=2;     // ★スマホ(幅600px以下)でのキャラ同士の間隔(px)。スマホの高さは下の @media(max-width:600px) の clamp(30px,36vw,70px) で決まります
 const CMP_SP_H_MAX=320; // ★スマホで「選んだキャラだけ」にして人数が少ないときの高さの上限(px)。人数が少ないほど大きく、多いほど低く自動で変わります(2人なら この高さ)。もっと低くしたいなら 260 など
 function cmpCss(p){
@@ -1220,11 +1227,14 @@ function buildStatic(){
     {const ag=new Set(L.map((c,i)=>Aa[i]>=0?ageGrp(Aa[i]):-1));for(let g=0;g<=10;g++)if(ag.has(g))css.push(`#hw-root #hw-m-age:checked ~ #hw-cs-hd:checked ~ main .agg-${g}{order:${10-g}}`)}
     // 身長比較: 「選んだキャラだけ」で、身長のあるキャラが1人も選ばれていないときは、目盛りの線ごと隠す
     {const hs=idx.filter(i=>Hh[i]>0);if(hs.length)css.push(`#hw-root #hw-only:checked ${hs.map(i=>`~ #hw-k-${i}:not(:checked)`).join(" ")} ~ main .cmpin{display:none}`)}
-    // 身長比較(スマホ): 「選んだキャラだけ」で人数が少ないとき、人数に合わせて高さを大きくする(全員が横幅に収まる高さ。上限は CMP_SP_H_MAX)。
+    // 身長比較(スマホ・PC共通): 「選んだキャラだけ」で人数が少ないとき、人数に合わせて高さを大きくする(全員が横幅に収まる高さ。上限はスマホ CMP_SP_H_MAX / PC CMP_H_MAX)。
     // 選ばれた人数 k は「.hw-k:checked が k個以上」で判定。k が増えるほど selector の強さも増すので、いちばん大きい k のルールが勝つ。幅の合計は「幅の広い順に k 人ぶん」で見積もる(誰が選ばれても収まる)。
     // 横幅は 100cqw(身長比較の入れ物の幅)で測るので、埋め込み先に余白があっても収まる。cqw が使えない古いブラウザでは何もせず、従来の高さのまま。
-    {const wf=cmpWf(L).sort((a,b)=>b-a);if(wf.length){let s=0;const rs=[];for(let k=1;k<=wf.length;k++){s+=wf[k-1];rs.push(`#hw-root:has(#hw-only:checked):has(${Array(k).fill(".hw-k:checked").join("~")}) .cmpin{--ch:clamp(30px,calc((100cqw - 38px - ${k}*var(--gap)) / ${+s.toFixed(4)}),${CMP_SP_H_MAX}px)}`)}
-      css.push(`@media(max-width:600px){@supports (width:1cqw){#hw-root .cmp{container-type:inline-size}${rs.join("")}}}`)}}
+    {const wf=cmpWf(L).sort((a,b)=>b-a);if(wf.length){
+      // mn=高さの下限 mxh=高さの上限 pad=左右の余白ぶん(px)。スマホ・PCで同じ仕組みを使う
+      const mk=(mn,mxh,pad)=>{let s=0;const rs=[];for(let k=1;k<=wf.length;k++){s+=wf[k-1];rs.push(`#hw-root:has(#hw-only:checked):has(${Array(k).fill(".hw-k:checked").join("~")}) .cmpin{--ch:clamp(${mn}px,calc((100cqw - ${pad}px - ${k}*var(--gap)) / ${+s.toFixed(4)}),${mxh}px)}`)}return rs.join("")};
+      css.push(`@media(max-width:600px){@supports (width:1cqw){#hw-root .cmp{container-type:inline-size}${mk(30,CMP_SP_H_MAX,38)}}}`);
+      css.push(`@media(min-width:601px){@supports (width:1cqw){#hw-root .cmp{container-type:inline-size}${mk(CMP_H_MIN,CMP_H_MAX,34)}}}`)}}
     for(let g=0;g<=10;g++){const ms=idx.filter(i=>Aa[i]>=0&&ageGrp(Aa[i])===g);if(ms.length)css.push(`#hw-root #hw-only:checked ${ms.map(i=>`~ #hw-k-${i}:not(:checked)`).join(" ")} ~ main .agg-${g}{display:none}`)}
     // 通過数: 高い順のときはグループの順番を逆にする。「選んだキャラだけ」で空になったグループは隠す
     {const mx=Math.max(0,...Ss);new Set(Ss).forEach(n=>css.push(`#hw-root #hw-m-scn:checked ~ #hw-cs-hd:checked ~ main .scg-${n}{order:${mx-n}}`))}
