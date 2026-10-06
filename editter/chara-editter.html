@@ -1616,9 +1616,23 @@ function parseSheet(t){
       if(m)out.stats.push([k,m[1].replace(/\s/g,"")]);
     });
   }
-  const seen=new Set();
-  for(const m of t.matchAll(/<=\s*(\d+)\s*【([^】]+)】/g)){if(!seen.has(m[2])){seen.add(m[2]);out.skills.push([m[2],m[1]])}}
+    const seen=new Set(),num=k=>{const x=out.stats.find(s=>s[0].toUpperCase()===k);return x?parseInt(x[1],10):NaN};
+  for(const m of t.matchAll(/<=\s*(\d+)\s*【([^】]+)】/g)){
+    if(seen.has(m[2]))continue;seen.add(m[2]);
+    if(!KEYSK.test(m[2])&&isDefaultSkill(m[2],+m[1],num))continue;   // 初期値のままの技能は載せない(アイデア・幸運・知識は常に載せる)
+    out.skills.push([m[2],m[1]]);
+  }
   return out;
+}
+// ---- 技能の初期値(CoC第6版)。値がこれと同じ技能は、ステータスの読み込みで省く ----
+const SK_DEF={"回避":"DEX","母国語":"EDU",
+  "言いくるめ":5,"医学":5,"運転":20,"応急手当":30,"オカルト":5,"化学":1,"鍵開け":1,"隠す":15,"隠れる":10,"聞き耳":25,"機械修理":20,"クトゥルフ神話":0,"芸術":5,"経理":10,"考古学":1,"コンピューター":1,"忍び歩き":10,"写真術":10,"重機械操作":1,"乗馬":5,"信用":15,"心理学":5,"人類学":1,"水泳":25,"精神分析":1,"生物学":1,"説得":15,"製作":5,"操縦":20,"地質学":1,"跳躍":25,"追跡":10,"電気修理":10,"電子工学":1,"天文学":1,"投擲":25,"登攀":40,"図書館":25,"ナビゲート":10,"値切り":5,"博物学":10,"物理学":1,"変装":1,"法律":5,"薬学":1,"目星":25,"歴史":20,
+  "こぶし":50,"キック":25,"組み付き":25,"頭突き":10,"拳銃":20,"マシンガン":15,"サブマシンガン":15,"ショットガン":30,"ライフル":25};
+function isDefaultSkill(name,val,num){
+  const base=name.replace(/[（(][^）)]*[）)]/g,"").trim(),d=SK_DEF[base];
+  if(d==null)return false;
+  if(d==="DEX"||d==="EDU"){const s=num(d);return !isNaN(s)&&val===s*(d==="DEX"?2:5)}
+  return val===d;
 }
 function applySheet(p){
   if(!p.stats.length&&!p.skills.length)return false;
