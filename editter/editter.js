@@ -12,6 +12,7 @@
     { href: "main.html",         label: "エディタ", sub: "editter" },
     { href: "chara-editter.html", label: "キャラ編集",    sub: "chara" },
     { href: "formatter.html",    label: "ログ整形",      sub: "formatter" },
+    { href: "txt.html",          label: "シナリオリーダー",    sub: "txt" },
     { href: "webp.html",         label: "WebP変換",      sub: "webp" },
     { href: "rename.html",       label: "リネーム",      sub: "rename" },
     { href: "icon.html",         label: "アイコン変換",  sub: "icon" }
