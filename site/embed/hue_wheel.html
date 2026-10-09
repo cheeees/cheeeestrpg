@@ -217,9 +217,9 @@
 #hw-root .cs-b[data-v="11"] i:nth-child(11){background:var(--main);border-color:var(--main)}
 
 /* ===== 複数シート(プルダウン切替・シート追加) ===== */
-#hw-root .csw{margin-top:22px}
-#hw-root .csw .cs{margin-top:0}
-#hw-root .csw-bar{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:13px;color:var(--mut)}
+#hw-root .csw{margin-top:22px;padding:14px;background:var(--card);border:1px solid var(--line);border-radius:10px}
+#hw-root .csw .cs{margin:0;padding:0;border:0;border-radius:0;background:none}
+#hw-root .csw-bar{display:flex;align-items:center;gap:8px;margin:6px 0 8px;font-size:13px;color:var(--mut)}
 #hw-root .csw-sel{max-width:100%;min-width:0;padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--fg);font:inherit;font-size:13px}
 #hw-root .cs-ctl{flex-wrap:wrap;justify-content:flex-end}
 #hw-root .cs-ctl .cs-del{color:#c0392b;border-color:#c0392b}
@@ -264,13 +264,22 @@
   #hw-root .cs-line{grid-template-columns:var(--wl,4em) 1fr var(--wr,4em)}
   #hw-root .cs-tbl th{font-size:12px;padding:6px 4px;width:min(calc(var(--thw,6) * 1em + 1em + 8px),30%)}
   #hw-root .cs .cs-tx{padding:8px}
-  #hw-root .cs.ed .cs-ctl{flex:1 1 100%;flex-wrap:nowrap;justify-content:space-between;gap:4px}
-  #hw-root .cs.ed .cs-ctl button{flex:0 0 auto;min-height:30px;padding:4px 6px;font-size:11.5px}
-  #hw-root .cs.ed .cs-ctl .cs-key{padding:4px 8px}
+  #hw-root .csw.ed .cs-ctl{flex:1 1 100%;flex-wrap:nowrap;justify-content:space-between;gap:4px}
+  #hw-root .csw.ed .cs-ctl button{flex:0 0 auto;min-height:30px;padding:4px 6px;font-size:11.5px}
+  #hw-root .csw.ed .cs-ctl .cs-key{padding:4px 8px}
 }
 @media(max-width:360px){
-  #hw-root .cs.ed .cs-ctl button{padding:4px 4px;font-size:10.5px}
+  #hw-root .csw.ed .cs-ctl button{padding:4px 4px;font-size:10.5px}
 }
+
+/* ===== 見出し「チェックシート」を枠の外へ / プルダウンは枠内の見出し位置へ ===== */
+#hw-root .csw-title{margin-top:22px;font-size:14px;font-weight:700;color:var(--main);border-left:4px solid var(--accent);padding-left:8px}
+#hw-root .csw-title + .csw{margin-top:8px}
+#hw-root .csw-bar{flex:1 1 auto;min-width:0;margin:0}
+#hw-root .csw-bar[hidden]{display:none}
+#hw-root .csw-bar .csw-sel{max-width:100%}
+#hw-root .csw .cs-h{margin-bottom:6px}
+#hw-root .csw .cs-ctl{margin-left:auto}
 </style>
 <!-- ▼▼▼ 【ここに貼り付けてね】ここから ▼▼▼
      編集モードの「コードを書き出す」で出たコードを、この行と「ここまで」の行の間に丸ごと貼り付けてください。
@@ -464,7 +473,6 @@ function setToken(t){
   function lb(v){ return esc(v).replace(/\n/g,'<br class="sp">'); }          // \n はスマホだけ改行
   function buildSheet(c,id,preset){
     var no=preset.no, n=preset.scale, boxes=new Array(n+1).join('<i></i>'), h='', ml=3, mr=3, mt=0, mld=3, mrd=3, mtd=0;
-    h+='<div class="cs-h"><b>'+esc(preset.name)+'</b><span class="cs-ctl"><button type="button" class="cs-edit">✎ 編集</button><button type="button" class="cs-save" hidden>保存</button><button type="button" class="cs-cancel" hidden>キャンセル</button></span></div><div class="cs-msg"></div>';
     if(preset.type==='table'){
       h+='<table class="cs-tbl"><tbody>';
       (preset.rows||[]).forEach(function(r){
@@ -498,20 +506,31 @@ function setToken(t){
     return el;
   }
 
-  /* ---------- 編集モード ---------- */
-  function setMode(sheet,on){
-    sheet.classList.toggle('ed',on);
-    q(sheet,'.cs-tx').forEach(function(t){ t.readOnly=!on; });
-    sheet.querySelector('.cs-edit').hidden=on;
-    sheet.querySelector('.cs-save').hidden=!on;
-    sheet.querySelector('.cs-cancel').hidden=!on;
-    ['.cs-addsheet','.cs-del'].forEach(function(s){ var b=sheet.querySelector(s); if(b) b.hidden=!on; });
-    if(sheet.classList.contains('cs-empty')) sheet.querySelector('.cs-save').hidden=true;
-    if(!on){ var pk=sheet.querySelector('.cs-picker'); if(pk) pk.hidden=true; }
+  /* ---------- 編集モード(キャラごとに1つ。どのタブを見ていても共通) ---------- */
+  function hint(wrap){
+    var v=panels(wrap).filter(function(p){ return !p.hidden; })[0];
+    if(!v) return '「＋ シート追加」からシートを追加できます';
+    return v.querySelector('.cs-tx')?'各項目に自由に入力できます':'マスをクリックで塗りつぶし（もう一度押すと解除）';
   }
-  function enterEdit(sheet){
-    snapshots.set(sheet,values(sheet)); setMode(sheet,true);
-    msg(sheet,sheet.classList.contains('cs-empty')?'「＋ シート追加」からシートを追加できます':sheet.querySelector('.cs-tx')?'各項目に自由に入力できます':'マスをクリックで塗りつぶし（もう一度押すと解除）');
+  function setMode(wrap,on){
+    wrap.classList.toggle('ed',on);
+    var ps=panels(wrap), has=ps.length>0;
+    ps.forEach(function(p){
+      p.classList.toggle('ed',on);
+      q(p,'.cs-tx').forEach(function(t){ t.readOnly=!on; });
+      if(on&&!snapshots.has(p)) snapshots.set(p,values(p));
+    });
+    wrap.querySelector('.cs-edit').hidden=on;
+    wrap.querySelector('.cs-cancel').hidden=!on;
+    wrap.querySelector('.cs-save').hidden=!on||!has;
+    wrap.querySelector('.cs-addsheet').hidden=!on;
+    wrap.querySelector('.cs-del').hidden=!on||!has;
+    if(!on) wrap.querySelector('.cs-picker').hidden=true;
+  }
+  function enterEdit(wrap){
+    panels(wrap).forEach(function(p){ snapshots.set(p,values(p)); });
+    setMode(wrap,true);
+    msg(wrap,hint(wrap));
   }
   function refreshKeys(){
     q(root,'.cs-key').forEach(function(k){
@@ -521,41 +540,19 @@ function setToken(t){
       k.title=has?'トークン入力済み(押すと変更・削除)':'トークンを入力';
     });
   }
-  function prepPanel(sheet){
-    var ctl=sheet.querySelector('.cs-ctl'), save=sheet.querySelector('.cs-save'); if(!ctl) return;
-    function mk(cls,text){
-      if(sheet.querySelector('.'+cls)) return;
-      var b=document.createElement('button'); b.type='button'; b.className=cls; b.hidden=true;
-      if(text) b.textContent=text;
-      ctl.insertBefore(b,save);
-    }
-    if(!sheet.querySelector('.cs-key')){
-      var kb=document.createElement('button'); kb.type='button'; kb.className='cs-key';
-      ctl.insertBefore(kb,ctl.querySelector('.cs-edit')||ctl.firstChild);
-    }
-    mk('cs-addsheet','＋ シート追加');
-    if(!sheet.classList.contains('cs-empty')) mk('cs-del','シート削除');
-    if(!sheet.querySelector('.cs-picker')){
-      var pk=document.createElement('div'); pk.className='cs-picker'; pk.hidden=true;
-      pk.innerHTML='<select class="cs-psel"></select><button type="button" class="cs-padd">追加</button><button type="button" class="cs-pcancel">閉じる</button>';
-      var m=sheet.querySelector('.cs-msg'); m.parentNode.insertBefore(pk,m.nextSibling);
-    }
-    refreshKeys();
-  }
-  function askToken(sheet){
+  function askToken(wrap){
     var cur=getToken();
     var v=window.prompt('GitHubのトークンを入力してください(Contents: Read and write)。\nこの端末のブラウザ内にだけ保存されます。\n空欄でOKを押すと、保存済みのトークンを削除します。',cur);
     if(v===null) return;
     v=v.trim(); setToken(v); refreshKeys();
-    msg(sheet,v?'トークンを設定しました':'トークンを削除しました');
+    msg(wrap,v?'トークンを設定しました':'トークンを削除しました');
   }
 
   /* ---------- シートのまとまり(キャラごと)・並び順・プルダウン ---------- */
   function panels(wrap){ return Array.prototype.filter.call(wrap.children,function(el){ return el.classList.contains('cs'); }); }
   // 通し番号の昇順に固定して並べ、プルダウンを作り直す
   function refreshWrap(wrap, selNo){
-    var em=wrap.querySelector('.cs-empty');
-    var ps=panels(wrap).filter(function(p){ return p!==em; }).sort(function(a,b){ return Number(a.dataset.no)-Number(b.dataset.no); });
+    var ps=panels(wrap).sort(function(a,b){ return Number(a.dataset.no)-Number(b.dataset.no); });
     ps.forEach(function(p){ wrap.appendChild(p); });
     var sel=wrap.querySelector('.csw-sel');
     if(selNo==null) selNo=sel.value||'';
@@ -563,8 +560,8 @@ function setToken(t){
     sel.innerHTML=ps.map(function(p){ return '<option value="'+esc(p.dataset.no)+'">'+esc(p.dataset.no+'. '+(p.dataset.name||''))+'</option>'; }).join('');
     if(selNo) sel.value=selNo;
     ps.forEach(function(p){ p.hidden=(p.dataset.no!==selNo); });
-    if(em) em.hidden=ps.length>0;
-    wrap.querySelector('.csw-bar').hidden=ps.length<2;
+    wrap.querySelector('.csw-bar').hidden=!ps.length;
+    setMode(wrap,wrap.classList.contains('ed'));
   }
   function makePanel(wrap,no,preset,vals){
     var el;
@@ -579,108 +576,118 @@ function setToken(t){
     }
     el.hidden=true;
     wrap.appendChild(el);
-    if(preset){ prepPanel(el); el.querySelector('.cs-edit').hidden=false; }
     return el;
   }
 
   /* ---------- シートの追加・削除 ---------- */
-  async function openPicker(sheet){
-    var pk=sheet.querySelector('.cs-picker'), sel=pk.querySelector('.cs-psel');
+  async function openPicker(wrap){
+    var pk=wrap.querySelector('.cs-picker'), sel=pk.querySelector('.cs-psel');
     if(!pk.hidden){ pk.hidden=true; return; }
-    msg(sheet,'プリセットを読み込み中…');
+    msg(wrap,'プリセットを読み込み中…');
     var list;
-    try{ list=await listPresets(true); }catch(err){ msg(sheet,String(err.message||err),true); return; }
-    var have=panels(sheet.closest('.csw')).map(function(p){ return p.dataset.no; });
+    try{ list=await listPresets(true); }catch(err){ msg(wrap,String(err.message||err),true); return; }
+    var have=panels(wrap).map(function(p){ return p.dataset.no; });
     var avail=list.filter(function(p){ return have.indexOf(String(p.no))<0; });
-    if(!avail.length){ pk.hidden=true; msg(sheet,list.length?'すべてのプリセットが追加済みです':'プリセットが見つかりません(data/preset に preset-01.json のような名前で置いてください)'); return; }
+    if(!avail.length){ pk.hidden=true; msg(wrap,list.length?'すべてのプリセットが追加済みです':'プリセットが見つかりません(data/preset に preset-01.json のような名前で置いてください)'); return; }
     sel.innerHTML=avail.map(function(p){ return '<option value="'+p.no+'">'+esc(p.no+'. '+p.name)+'</option>'; }).join('');
-    pk.hidden=false; msg(sheet,'追加するシートを選んでください');
+    pk.hidden=false; msg(wrap,'追加するシートを選んでください');
   }
-  async function addSheet(sheet){
-    var pk=sheet.querySelector('.cs-picker'), no=Number(pk.querySelector('.cs-psel').value);
+  async function addSheet(wrap){
+    var pk=wrap.querySelector('.cs-picker'), no=Number(pk.querySelector('.cs-psel').value);
     if(!no) return;
-    if(!getToken()){ msg(sheet,'🔒 ボタンからトークンを入力してください',true); return; }
-    msg(sheet,'追加中…');
+    if(!getToken()){ msg(wrap,'🔒 ボタンからトークンを入力してください',true); return; }
+    msg(wrap,'追加中…');
     try{
       var preset=await getPreset(no);
       if(!preset) throw new Error('プリセット No.'+no+' が見つかりません');
-      var wrap=sheet.closest('.csw');
-      await updateDoc(wrap.dataset.id,function(d){ if(!d.sheets[no]) d.sheets[no]={values:{}}; },sheet);
+      await updateDoc(wrap.dataset.id,function(d){ if(!d.sheets[no]) d.sheets[no]={values:{}}; },wrap);
       var old=panels(wrap).filter(function(p){ return p.dataset.no===String(no); })[0];
       if(old) wrap.removeChild(old);
-      var panel=makePanel(wrap,no,preset,{});
+      makePanel(wrap,no,preset,{});
       pk.hidden=true;
-      if(sheet.classList.contains('cs-empty')) setMode(sheet,false);
       refreshWrap(wrap,String(no));
-      enterEdit(panel);
-      msg(sheet,'');
-      msg(panel,'「'+preset.name+'」を追加しました。マスをクリックして入力し、保存してください');
-    }catch(err){ msg(sheet,String(err.message||err),true); }
+      msg(wrap,'「'+preset.name+'」を追加しました。入力して保存してください');
+    }catch(err){ msg(wrap,String(err.message||err),true); }
   }
-  async function delSheet(sheet){
-    var no=sheet.dataset.no;
-    if(!getToken()){ msg(sheet,'🔒 ボタンからトークンを入力してください',true); return; }
-    if(!window.confirm('このシート(No.'+no+' '+(sheet.dataset.name||'')+')を削除します。入力した内容も消えます。よろしいですか?')) return;
-    msg(sheet,'削除中…');
+  async function delSheet(wrap){
+    var cur=panels(wrap).filter(function(p){ return !p.hidden; })[0]; if(!cur) return;
+    var no=cur.dataset.no;
+    if(!getToken()){ msg(wrap,'🔒 ボタンからトークンを入力してください',true); return; }
+    if(!window.confirm('このシート(No.'+no+' '+(cur.dataset.name||'')+')を削除します。入力した内容も消えます。よろしいですか?')) return;
+    msg(wrap,'削除中…');
     try{
-      var wrap=sheet.closest('.csw');
-      await updateDoc(wrap.dataset.id,function(d){ delete d.sheets[no]; },sheet);
-      wrap.removeChild(sheet);
+      await updateDoc(wrap.dataset.id,function(d){ delete d.sheets[no]; },wrap);
+      wrap.removeChild(cur);
       refreshWrap(wrap);
-    }catch(err){ msg(sheet,String(err.message||err),true); }
+      msg(wrap,'');
+    }catch(err){ msg(wrap,String(err.message||err),true); }
   }
 
-  /* ---------- 値の保存 ---------- */
-  async function save(sheet){
-    if(!GH_OWNER||!GH_REPO){ msg(sheet,'GH_OWNER / GH_REPO を設定してください',true); return; }
-    if(!getToken()){ msg(sheet,'🔒 ボタンからトークンを入力してください',true); return; }
-    var id=sheet.dataset.id, no=sheet.dataset.no, base=snapshots.get(sheet)||{}, local=values(sheet);
-    var changed={};
-    Object.keys(local).forEach(function(k){ if(base[k]===undefined?(local[k]!=='0'&&local[k]!==''):local[k]!==String(base[k])) changed[k]=local[k]; });
-    if(!Object.keys(changed).length){ setMode(sheet,false); msg(sheet,''); return; }
-    msg(sheet,'保存中…');
+  /* ---------- 値の保存(編集中のシートを全部まとめて) ---------- */
+  async function save(wrap){
+    if(!GH_OWNER||!GH_REPO){ msg(wrap,'GH_OWNER / GH_REPO を設定してください',true); return; }
+    if(!getToken()){ msg(wrap,'🔒 ボタンからトークンを入力してください',true); return; }
+    var id=wrap.dataset.id, changes={}, any=false;
+    panels(wrap).forEach(function(p){
+      if(!p.querySelector('.cs-b,.cs-tx')) return;
+      var base=snapshots.get(p)||{}, local=values(p), ch={};
+      Object.keys(local).forEach(function(k){ if(base[k]===undefined?(local[k]!=='0'&&local[k]!==''):local[k]!==String(base[k])) ch[k]=local[k]; });
+      if(Object.keys(ch).length){ changes[p.dataset.no]=ch; any=true; }
+    });
+    if(!any){ setMode(wrap,false); msg(wrap,''); return; }
+    msg(wrap,'保存中…');
     try{
       var doc=await updateDoc(id,function(d){
-        var s=d.sheets[no]=d.sheets[no]||{values:{}}, tgt=s.values=s.values||{};
         // 変更したマスだけを反映し、他のマスの最新値は残す。
-        Object.keys(changed).forEach(function(k){ tgt[k]=changed[k]; });
-      },sheet);
-      apply(sheet,doc.sheets[no].values);
-      snapshots.set(sheet,values(sheet)); setMode(sheet,false); msg(sheet,'');
-    }catch(err){ msg(sheet,String(err.message||err),true); }
+        Object.keys(changes).forEach(function(no){
+          var s=d.sheets[no]=d.sheets[no]||{values:{}}, tgt=s.values=s.values||{};
+          Object.keys(changes[no]).forEach(function(k){ tgt[k]=changes[no][k]; });
+        });
+      },wrap);
+      panels(wrap).forEach(function(p){
+        var s=doc.sheets[p.dataset.no]; if(s) apply(p,s.values||{});
+        snapshots.set(p,values(p));
+      });
+      setMode(wrap,false); msg(wrap,'');
+    }catch(err){ msg(wrap,String(err.message||err),true); }
   }
 
   /* ---------- イベント ---------- */
   root.addEventListener('click',function(e){
-    var t=e.target, sheet=t.closest&&t.closest('.cs'); if(!sheet) return;
+    var t=e.target, wrap=t.closest&&t.closest('.csw'); if(!wrap) return;
     var cl=t.classList;
-    if(cl.contains('cs-key')){ askToken(sheet); return; }
-    if(cl.contains('cs-edit')){ enterEdit(sheet); return; }
-    if(cl.contains('cs-cancel')){ apply(sheet,snapshots.get(sheet)||{}); setMode(sheet,false); msg(sheet,''); return; }
-    if(cl.contains('cs-save')){ save(sheet); return; }
-    if(cl.contains('cs-addsheet')){ openPicker(sheet); return; }
-    if(cl.contains('cs-pcancel')){ sheet.querySelector('.cs-picker').hidden=true; return; }
-    if(cl.contains('cs-padd')){ addSheet(sheet); return; }
-    if(cl.contains('cs-del')){ delSheet(sheet); return; }
-    if(t.tagName==='I'&&sheet.classList.contains('ed')){
-      var bar=t.parentNode, n=Array.prototype.indexOf.call(bar.children,t)+1;
-      bar.dataset.v=(bar.dataset.v==n)?'0':String(n);
+    if(cl.contains('cs-key')){ askToken(wrap); return; }
+    if(cl.contains('cs-edit')){ enterEdit(wrap); return; }
+    if(cl.contains('cs-cancel')){ panels(wrap).forEach(function(p){ apply(p,snapshots.get(p)||{}); }); setMode(wrap,false); msg(wrap,''); return; }
+    if(cl.contains('cs-save')){ save(wrap); return; }
+    if(cl.contains('cs-addsheet')){ openPicker(wrap); return; }
+    if(cl.contains('cs-pcancel')){ wrap.querySelector('.cs-picker').hidden=true; return; }
+    if(cl.contains('cs-padd')){ addSheet(wrap); return; }
+    if(cl.contains('cs-del')){ delSheet(wrap); return; }
+    if(t.tagName==='I'){
+      var sheet=t.closest('.cs');
+      if(sheet&&sheet.classList.contains('ed')){
+        var bar=t.parentNode, n=Array.prototype.indexOf.call(bar.children,t)+1;
+        bar.dataset.v=(bar.dataset.v==n)?'0':String(n);
+      }
     }
   });
   root.addEventListener('change',function(e){
     var t=e.target;
-    if(t.classList&&t.classList.contains('csw-sel')){ var w=t.closest('.csw'); refreshWrap(w,t.value); fitAll(w); }
+    if(t.classList&&t.classList.contains('csw-sel')){
+      var w=t.closest('.csw'); refreshWrap(w,t.value); fitAll(w);
+      setMode(w,w.classList.contains('ed'));   // 編集中なら、どのシートを見ても編集中(そうでなければ編集中にならない)
+      if(w.classList.contains('ed')) msg(w,hint(w));
+    }
   });
   root.addEventListener('input',function(e){ if(e.target.classList&&e.target.classList.contains('cs-tx')) fit(e.target); });
 
   /* ---------- 初期化 ---------- */
   q0(root,'.csw').forEach(function(wrap){
-    wrap.innerHTML='<div class="csw-bar" hidden><select class="csw-sel"></select></div>';
-    var em=document.createElement('div');
-    em.className='cs cs-empty'; em.dataset.c=wrap.dataset.c; em.dataset.id=wrap.dataset.id; em.dataset.no='0'; em.dataset.name='';
-    em.innerHTML='<div class="cs-h"><b>チェックシート</b><span class="cs-ctl"><button type="button" class="cs-edit">✎ 編集</button><button type="button" class="cs-save" hidden>保存</button><button type="button" class="cs-cancel" hidden>キャンセル</button></span></div><div class="cs-msg"></div>';
-    wrap.appendChild(em);
-    prepPanel(em);
+    wrap.insertAdjacentHTML('beforebegin','<div class="csw-title">チェックシート</div>');
+    wrap.innerHTML='<div class="cs-h"><div class="csw-bar" hidden><select class="csw-sel"></select></div><span class="cs-ctl"><button type="button" class="cs-key"></button><button type="button" class="cs-edit">✎ 編集</button><button type="button" class="cs-addsheet" hidden>＋ シート追加</button><button type="button" class="cs-del" hidden>シート削除</button><button type="button" class="cs-save" hidden>保存</button><button type="button" class="cs-cancel" hidden>キャンセル</button></span></div>'
+      +'<div class="cs-picker" hidden><select class="cs-psel"></select><button type="button" class="cs-padd">追加</button><button type="button" class="cs-pcancel">閉じる</button></div>'
+      +'<div class="cs-msg"></div>';
     refreshWrap(wrap);
   });
   refreshKeys();
@@ -688,7 +695,6 @@ function setToken(t){
   // 保存データ(追加済みシート)を読み込む
   if(GH_OWNER&&GH_REPO){
     q0(root,'.csw').forEach(function(wrap){
-      var em=wrap.querySelector('.cs-empty');
       getRemote(wrap.dataset.id).then(function(remote){
         var nos=Object.keys(remote.sheets).map(Number).filter(function(n){ return n>=1; });
         return Promise.all(nos.map(function(no){
@@ -697,7 +703,7 @@ function setToken(t){
           rs.forEach(function(r){ makePanel(wrap,r.no,r.p,(remote.sheets[r.no]||{}).values); });
           if(rs.length) refreshWrap(wrap);
         });
-      }).catch(function(err){ msg(em,'保存データを読み込めませんでした: '+err.message,true); });
+      }).catch(function(err){ msg(wrap,'保存データを読み込めませんでした: '+err.message,true); });
     });
   }
 })();
