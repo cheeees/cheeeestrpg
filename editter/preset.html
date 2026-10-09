@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>プリセット読み込み・選択モーダル</title>
+<title>プリセットエディタ</title>
 <style>
 :root {
   --bg: #fff;
@@ -12,6 +12,8 @@
   --mut: #7a6f62;
   --line: #e6dccb;
   --main: #8e632b;
+  --main-deep: #5c3c0f;
+  --accent: #ffd60a;
   --on: #fff;
   --soft: #fff8d6;
   --hover: #fff1b0;
@@ -26,7 +28,6 @@ body {
   font-size: 14px;
 }
 
-/* ヘッダー */
 header {
   display: flex;
   align-items: center;
@@ -34,13 +35,9 @@ header {
   flex-wrap: wrap;
   padding: 12px 16px;
   border-bottom: 1px solid var(--line);
+  background: var(--bg);
 }
-header h1 {
-  font-size: 16px;
-  margin: 0;
-  color: var(--main);
-  flex: 1;
-}
+header h1 { font-size: 16px; margin: 0; color: var(--main); flex: 1; }
 
 button {
   padding: 6px 12px;
@@ -54,12 +51,138 @@ button {
 }
 button:hover { background: var(--hover); }
 button.p { background: var(--main); color: var(--on); border-color: var(--main); }
+button.p:hover { background: var(--main-deep); }
 button.p:disabled { background: #ccc; border-color: #ccc; cursor: not-allowed; }
 
-/* モーダル枠 */
+#app { max-width: 760px; margin: 0 auto; padding: 18px 14px 60px; }
+
+/* ファイル選択バー */
+.filebar {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--soft);
+  padding: 12px;
+  margin-bottom: 12px;
+}
+.filebar > label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--main);
+  margin: 0 0 6px 2px;
+}
+.selrow { display: flex; gap: 8px; align-items: stretch; }
+#fileSel {
+  flex: 1;
+  min-width: 0;
+  height: 46px;
+  padding: 0 40px 0 14px;
+  border: 2px solid var(--main);
+  border-radius: 10px;
+  background-color: var(--card);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='M3 6l5 5 5-5' fill='none' stroke='%238e632b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  color: var(--fg);
+  font: inherit;
+  font-size: 16px;   /* iOSで拡大されないように16px以上 */
+  font-weight: 700;
+  -webkit-appearance: none;
+  appearance: none;
+  text-overflow: ellipsis;
+}
+#fileSel:focus-visible { outline: 3px solid var(--accent); outline-offset: 1px; }
+#bReload { width: 46px; flex: none; padding: 0; font-size: 18px; border-radius: 10px; }
+#cur {
+  margin-top: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--card);
+  border: 1px dashed var(--line);
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--main-deep);
+}
+#cur .dirty { display: block; color: var(--danger); font-weight: 700; }
+#bNew { width: 100%; margin-top: 10px; min-height: 44px; font-size: 14px; border-radius: 10px; }
+
+/* タブバー */
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.bar .sp { flex: 1; }
+.b {
+  padding: 7px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--fg);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+.b:hover { background: var(--hover); }
+.b.on, .b.p { background: var(--main); border-color: var(--main); color: var(--on); }
+
+.msg { min-height: 1.5em; font-size: 13px; margin: 0 0 10px; color: var(--mut); }
+.msg.err { color: var(--danger); }
+
+.card {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 14px;
+  background: var(--card);
+}
+
+/* エディタフォーム */
+.ed label { display: block; font-size: 12px; color: var(--mut); margin: 8px 0 3px; }
+.ed input[type=text] {
+  width: 100%;
+  padding: 7px 9px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 14px;
+  background: var(--bg);
+  color: var(--fg);
+}
+.ed input[type=number] {
+  width: 90px;
+  padding: 7px 9px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font: inherit;
+}
+.ed fieldset { border: 1px solid var(--line); border-radius: 8px; margin: 14px 0 0; padding: 6px 12px 12px; }
+.ed fieldset fieldset { background: #fffdf3; }
+.ed legend { font-size: 12px; font-weight: 700; color: var(--main); padding: 0 6px; }
+.ed .hd { display: flex; gap: 6px; align-items: center; margin-top: 8px; }
+.ed .hd input { flex: 1; }
+.ed .it { display: grid; grid-template-columns: 1.6fr 1fr 1fr auto; gap: 6px; align-items: center; margin-top: 6px; }
+.ed .mini {
+  padding: 5px 8px;
+  font-size: 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--card);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.ed .ops { display: flex; gap: 4px; }
+@media(max-width:560px) {
+  .ed .it { grid-template-columns: 1fr 1fr; }
+  .ed .it .ops { grid-column: 1/-1; }
+  .ed .it input:first-child { grid-column: 1/-1; }
+}
+
+/* モーダル */
 .preset-modal-backdrop {
-  position: fixed;
-  top: 0; left: 0; width: 100vw; height: 100vh;
+  position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
   background: rgba(0,0,0,0.4);
   display: flex; align-items: center; justify-content: center;
   z-index: 10000;
@@ -77,37 +200,15 @@ button.p:disabled { background: #ccc; border-color: #ccc; cursor: not-allowed; }
   overflow: hidden;
 }
 .preset-modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  display: flex; align-items: center; justify-content: space-between;
   padding: 12px 16px;
   border-bottom: 1px solid var(--line);
   background: var(--soft);
 }
-.preset-modal-header h3 {
-  margin: 0;
-  font-size: 15px;
-  color: var(--main);
-}
-.preset-modal-body {
-  padding: 16px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-.preset-sec h4 {
-  margin: 0 0 8px 0;
-  font-size: 13px;
-  color: var(--main);
-  border-bottom: 1px solid var(--line);
-  padding-bottom: 4px;
-}
-.preset-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 8px;
-}
+.preset-modal-header h3 { margin: 0; font-size: 15px; color: var(--main); }
+.preset-modal-body { padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; }
+.preset-sec h4 { margin: 0 0 8px 0; font-size: 13px; color: var(--main); border-bottom: 1px solid var(--line); padding-bottom: 4px; }
+.preset-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px; }
 .preset-card {
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -117,105 +218,251 @@ button.p:disabled { background: #ccc; border-color: #ccc; cursor: not-allowed; }
   text-align: left;
   transition: all 0.15s ease;
 }
-.preset-card:hover {
-  background: var(--hover);
-  border-color: var(--main);
-}
-.preset-card.selected {
-  background: var(--soft);
-  border: 2px solid var(--main);
-  font-weight: bold;
-}
-.preset-card .title {
-  font-size: 13px;
-  color: var(--fg);
-  margin-bottom: 4px;
-}
+.preset-card:hover { background: var(--hover); border-color: var(--main); }
+.preset-card.selected { background: var(--soft); border: 2px solid var(--main); padding: 9px 11px; font-weight: bold; }
+.preset-card .title { font-size: 13px; color: var(--fg); margin-bottom: 4px; }
 .preset-card .badge {
-  font-size: 11px;
-  color: var(--mut);
-  background: #f5f0e6;
-  padding: 2px 6px;
-  border-radius: 4px;
-  display: inline-block;
+  font-size: 11px; color: var(--mut); background: #f5f0e6;
+  padding: 2px 6px; border-radius: 4px; display: inline-block; margin-right: 4px;
 }
-#presetMsg {
-  min-height: 1.2em;
-  font-size: 12px;
-  color: var(--mut);
-}
+#presetMsg { min-height: 1.2em; font-size: 12px; color: var(--mut); }
 #presetMsg.err { color: var(--danger); }
-
 .preset-modal-footer {
   padding: 12px 16px;
   border-top: 1px solid var(--line);
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
+  display: flex; justify-content: flex-end; gap: 8px;
   background: var(--bg);
 }
 </style>
+<style id="cs-css"></style>
 </head>
 <body>
 
 <header>
-  <h1>プリセット選択</h1>
+  <h1>シートプリセット エディタ</h1>
   <button id="bKey" type="button">🔒 トークン</button>
-  <button id="bOpenModal" type="button" class="p">＋ プリセットを追加</button>
 </header>
 
-<!-- プリセット選択モーダル -->
+<div id="app">
+
+  <!-- ファイル選択 -->
+  <div class="filebar">
+    <label for="fileSel">保存済みデータを選んで編集</label>
+    <div class="selrow">
+      <select id="fileSel"><option value="">読み込み中…</option></select>
+      <button type="button" id="bReload" title="一覧を再取得" aria-label="一覧を再取得">↻</button>
+    </div>
+    <div id="cur"></div>
+    <button type="button" id="bNew">＋ 新規作成（プリセット読み込み）</button>
+  </div>
+
+  <div class="bar">
+    <button class="b on" id="t-ed">編集</button>
+    <button class="b" id="t-pv">プレビュー</button>
+    <span class="sp"></span>
+    <button class="b p" id="bSaveGH">保存</button>
+  </div>
+
+  <p class="msg" id="msg"></p>
+
+  <div class="card ed" id="edit"></div>
+  <div class="card" id="prev" hidden></div>
+</div>
+
+<!-- プリセット選択モーダル (新規作成用) -->
 <div id="presetModal" class="preset-modal-backdrop" style="display: none;">
   <div class="preset-modal">
     <div class="preset-modal-header">
-      <h3>シートプリセットの読み込み</h3>
+      <h3>プリセットから新規作成</h3>
       <button type="button" id="bCloseModal">✕</button>
     </div>
-    
     <div class="preset-modal-body">
       <div id="presetMsg"></div>
-
-      <!-- 1. data/preset/base から取得した雛形 -->
       <div class="preset-sec">
         <h4>■ 雛形（data/preset/base）から選ぶ</h4>
         <div id="basePresetList" class="preset-grid"></div>
       </div>
-
-      <!-- 2. data/preset 内の既存プリセット（preset-01, No.1 は自動除外） -->
       <div class="preset-sec">
-        <h4>■ 保存済みプリセット（data/preset）から選ぶ</h4>
+        <h4>■ 保存済みデータ（data/preset）をコピーして作る</h4>
         <div id="customPresetList" class="preset-grid"></div>
       </div>
     </div>
-
     <div class="preset-modal-footer">
       <button type="button" id="bCancelModal">キャンセル</button>
-      <button type="button" id="bApplyPreset" class="p" disabled>決定して追加</button>
+      <button type="button" id="bApplyPreset" class="p" disabled>決定して読み込み</button>
     </div>
   </div>
 </div>
 
 <script>
+/* --- シートのCSS --- */
+const CSS =
+'.cs-f{color:var(--fg,#333)}'+
+'.cs-t{font-size:17px;font-weight:700;color:var(--main-deep,#5c3c0f)}'+
+'.cs-s h4{font-size:14px;margin:18px 0 6px;padding-left:8px;border-left:4px solid var(--accent,#ffd60a);color:var(--main,#8e632b)}'+
+'.cs-c{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:2px 28px}'+
+'.cs-g>b{display:block;font-size:13px;margin:8px 0 6px}'+
+'.cs-i{margin:0 0 12px}'+
+'.cs-i>span{display:block;font-size:12px;color:var(--mut,#7a6f62)}'+
+'.cs-r{display:flex;align-items:center;gap:6px;margin-top:3px}'+
+'.cs-r>em{flex:none;width:4.8em;font-size:13px;font-style:normal}'+
+'.cs-r>em:first-child{text-align:right}'+
+'.cs-b{display:flex;flex:1;gap:3px;max-width:300px}'+
+'.cs-b input{-webkit-appearance:none;appearance:none;margin:0;flex:1;min-width:0;max-width:26px;aspect-ratio:1;border:1.5px solid var(--main,#8e632b);border-radius:3px;background:var(--card,#fff);cursor:pointer}'+
+'.cs-b input:hover{background:var(--hover,#fff1b0)}'+
+'.cs-b input:checked{background:var(--main,#8e632b)}'+
+'.cs-b input:focus-visible{outline:2px solid var(--accent,#ffd60a);outline-offset:1px}'+
+'.cs-rs{margin-top:6px;padding:4px 12px;border:1px solid var(--line,#e6dccb);border-radius:99px;background:none;color:var(--mut,#7a6f62);font:inherit;font-size:12px;cursor:pointer}'+
+'@media(max-width:480px){.cs-r{flex-wrap:wrap;row-gap:5px}.cs-r>em{width:auto;font-size:12px}.cs-r>em:first-child{order:1;text-align:left;flex:1}.cs-r>em:last-child{order:2;text-align:right}.cs-b{order:3;flex-basis:100%;max-width:none}.cs-b input{max-width:30px}}';
+document.getElementById('cs-css').textContent = CSS;
+
+/* --- 定数 --- */
 var GH_OWNER = "cheeees", GH_REPO = "cheeeestrpg", GH_BRANCH = "main";
 var TOKEN_KEY = "hw_gh_token", DIR = "data/preset", BASE_DIR = "data/preset/base";
 var memToken = "";
+const KEY = 'cs-tpl2', FILE_KEY = 'cs-file2';
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+const D = [
+  ['感情表現',[['内面',[['アップダウンは','穏やか','激しい'],['湿度','淡白','執着'],['温度','冷徹','熱血']]],['外面',[['表現度','抑圧','発散'],['表現方法','平凡','独特'],['刺激耐性','低い','高い']]]]],
+  ['思考体系',[['認識の傾向',[['物事のとらえ方','抽象的','具体的'],['責任感は','弱い','強い'],['出来事のとらえ方','悲観的','楽観的']]],['考え方の傾向',[['優先するのは','感性','理性'],['柔軟性','堅実','臨機応変'],['視野の広さ','刹那的','計画的']]]]],
+  ['集団行動',[['軸とする思考',[['行動基準','利己的','利他的'],['集団への迎合度合い','反骨','順応'],['集団内で重視する要素','自由度','連帯感']]],['行動の傾向',[['対人行動','内向的','外向的'],['考え方の違いには','対立','融和'],['異質な存在への反応','排他的','包摂的']]]]],
+  ['社会生活',[['軸とする思想',[['社会に求めるもの','自律','公正'],['重きを置くのは','美学','利益'],['問題解決の手段は','保守的','革新的']]],['態度の傾向',[['自己実現の手段は','芸術派','実務派'],['生活志向は','拠点型','旅人型'],['新しいことをはじめるときは','先行型','追従型']]]]]
+];
+const defaultTpl = () => fix({
+  type: 'slider',
+  no: 0,
+  rows: [],
+  title: 'キャラクター性格・行動チェックシート',
+  boxes: 11,
+  reset: 'チェックをリセット',
+  sections: D.map(s => ({
+    name: s[0],
+    groups: s[1].map(g => ({ name: g[0], items: g[1].map(i => ({ q: i[0], l: i[1], r: i[2] })) }))
+  }))
+});
+
+/* --- データ形式の変換 (リポジトリのJSON ⇔ エディタ内部) --- */
+const strip = (v, ch) => String(v ?? '').replace(new RegExp('^' + ch + '\\s*'), '');
+function allItems(t) {
+  if (t.type === 'table') return t.rows;
+  const a = [];
+  t.sections.forEach(x => x.groups.forEach(g => g.items.forEach(i => a.push(i))));
+  return a;
+}
+function fix(t) {   // 項目idと次の番号を整える
+  const items = allItems(t);
+  let n = (t.nextId || 1) - 1;
+  items.forEach(i => { const m = /^i(\d+)$/.exec(i.id || ''); if (m) n = Math.max(n, +m[1]); });
+  items.forEach(i => { if (!i.id) i.id = 'i' + (++n); });
+  t.nextId = n + 1;
+  return t;
+}
+function fromFile(d) {
+  const table = d.type === 'table' || (Array.isArray(d.rows) && !d.sections);
+  const t = {
+    type: table ? 'table' : 'slider',
+    no: d.no || 0,
+    title: d.name || d.title || '無題のシート',
+    boxes: d.scale || d.boxes || 11,
+    reset: d.reset || 'チェックをリセット',
+    nextId: d.nextId || 1,
+    sections: [],
+    rows: []
+  };
+  if (table) {
+    t.rows = (d.rows || []).map(r => ({ id: r.id, label: r.label || '' }));
+    if (!t.rows.length) t.rows = [{ label: '項目' }];
+  } else {
+    t.sections = (d.sections || []).map(x => ({
+      name: x.title ?? x.name ?? '',
+      groups: (x.cols || x.groups || []).map(c => ({
+        name: strip(c.sub ?? c.name, '■'),
+        items: (c.items || []).map(i => ({ id: i.id, q: strip(i.q, '・'), l: i.l || '', r: i.r || '' }))
+      }))
+    }));
+    if (!t.sections.length) t.sections = [{ name: '新規セクション', groups: [{ name: '新規グループ', items: [{ q: '項目名', l: '左', r: '右' }] }] }];
+  }
+  return fix(t);
+}
+function toFile(t, no) {
+  fix(t);
+  const o = { no: no || t.no || 0 };
+  if (t.type === 'table') {
+    o.type = 'table';
+    o.name = t.title;
+    o.nextId = t.nextId;
+    o.rows = t.rows.map(r => ({ id: r.id, label: r.label }));
+    return o;
+  }
+  o.name = t.title;
+  o.scale = t.boxes;
+  if (t.reset && t.reset !== 'チェックをリセット') o.reset = t.reset;
+  o.nextId = t.nextId;
+  o.sections = t.sections.map(x => ({
+    title: x.name,
+    cols: x.groups.map(g => ({
+      sub: '■' + g.name,
+      items: g.items.map(i => ({ id: i.id, q: '・' + i.q, l: i.l, r: i.r }))
+    }))
+  }));
+  return o;
+}
+const noOf = name => { const m = /(\d+)\.json$/i.exec(name || ''); return m ? Number(m[1]) : 0; };
+
+/* --- 状態 --- */
+let tpl;
+try { tpl = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
+if (!tpl || !tpl.type) tpl = defaultTpl(); else fix(tpl);
+
+let currentFile = null;   // 今編集している保存済みファイル名(null = 新規)
+try { currentFile = localStorage.getItem(FILE_KEY) || null; } catch (e) {}
+let files = [];           // data/preset 内の *.json
+let dirty = false;        // 未保存の変更あり
+
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(tpl)); } catch (e) {} };
+const say = (t, err) => {
+  const m = $('#msg');
+  m.textContent = t || '';
+  m.className = err ? 'msg err' : 'msg';
+};
+function sayModal(t, err) {
+  const m = $('#presetMsg');
+  m.textContent = t || '';
+  m.className = err ? 'err' : '';
+}
+
+function setFile(f) {
+  currentFile = f;
+  try { if (f) localStorage.setItem(FILE_KEY, f); else localStorage.removeItem(FILE_KEY); } catch (e) {}
+  refreshCur();
+}
+function markDirty() { if (!dirty) { dirty = true; refreshCur(); } }
+function confirmDiscard() { return !dirty || confirm('未保存の変更があります。破棄して続けますか?'); }
+
+function refreshCur() {
+  $('#fileSel').value = (currentFile && files.includes(currentFile)) ? currentFile : '';
+  const d = dirty ? '<span class="dirty">● 未保存の変更あり</span>' : '';
+  $('#cur').innerHTML = currentFile
+    ? '編集中：<b>' + esc(currentFile) + '</b>（保存すると上書き）' + d
+    : '新規作成中（未保存）' + d;
+  $('#bSaveGH').textContent = currentFile ? '上書き保存' : '新規保存';
+}
 
 /* --- トークン管理 --- */
 function getToken() {
-  try { var t = localStorage.getItem(TOKEN_KEY); if (t) return t; } catch (e) {}
+  try { const t = localStorage.getItem(TOKEN_KEY); if (t) return t; } catch (e) {}
   return memToken;
 }
 function setToken(t) {
   memToken = t;
   try { if (t) localStorage.setItem(TOKEN_KEY, t); else localStorage.removeItem(TOKEN_KEY); } catch (e) {}
 }
-function refreshKey() {
-  var h = !!getToken();
-  document.getElementById('bKey').textContent = h ? '🔑 トークン' : '🔒 トークン';
-}
+function refreshKey() { $('#bKey').textContent = getToken() ? '🔑 トークン' : '🔒 トークン'; }
 
-document.getElementById('bKey').addEventListener('click', function () {
-  var v = window.prompt(
+$('#bKey').addEventListener('click', function () {
+  const v = window.prompt(
     'GitHubのトークンを入力してください(Contents: Read and write)。\nこの端末のブラウザ内にだけ保存されます。\n空欄でOKを押すと削除します。',
     getToken()
   );
@@ -225,176 +472,327 @@ document.getElementById('bKey').addEventListener('click', function () {
   say(v.trim() ? 'トークンを設定しました' : 'トークンを削除しました');
 });
 
-/* --- API ヘルパー --- */
+/* --- GitHub API ヘルパー --- */
 function url(path) {
   return 'https://api.github.com/repos/' + encodeURIComponent(GH_OWNER) + '/' + encodeURIComponent(GH_REPO) + '/contents/' + path.split('/').map(encodeURIComponent).join('/');
 }
 function hdr() {
-  var h = { 'Accept': 'application/vnd.github+json' }, t = getToken();
+  const h = { 'Accept': 'application/vnd.github+json' }, t = getToken();
   if (t) h.Authorization = 'Bearer ' + t;
   return h;
 }
 function dec(c) {
-  var b = atob((c || '').replace(/\s/g, '')), u = new Uint8Array(b.length);
-  for (var i = 0; i < b.length; i++) u[i] = b.charCodeAt(i);
+  const b = atob((c || '').replace(/\s/g, '')), u = new Uint8Array(b.length);
+  for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i);
   return new TextDecoder().decode(u);
 }
-function say(t, err) {
-  var m = document.getElementById('presetMsg');
-  m.textContent = t || '';
-  m.className = err ? 'err' : '';
+async function fetchJson(path) {
+  const r = await fetch(url(path) + '?ref=' + encodeURIComponent(GH_BRANCH), { headers: hdr(), cache: 'no-store' });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  const j = await r.json();
+  return JSON.parse(dec(j.content));
 }
-function pad(no) { return (no < 10 ? '0' : '') + no; }
 
-let selectedPreset = null;
-
-/* --- 1. 雛形 (data/preset/base) の読み込み --- */
-async function loadBasePresets() {
+/* --- 保存済みファイルの一覧 (プルダウン) --- */
+async function listFiles() {
+  const sel = $('#fileSel');
   try {
-    var r = await fetch(url(BASE_DIR) + '?ref=' + encodeURIComponent(GH_BRANCH), { headers: hdr(), cache: 'no-store' });
-    if (!r.ok) return fallbackBasePresets();
-    var arr = await r.json();
-    if (!Array.isArray(arr)) return fallbackBasePresets();
-
-    var baseList = [];
-    for (var f of arr) {
-      if (f.name.endsWith('.json')) {
-        try {
-          var res = await fetch(url(f.path) + '?ref=' + encodeURIComponent(GH_BRANCH), { headers: hdr(), cache: 'no-store' });
-          if (res.ok) {
-            var j = await res.json();
-            var data = JSON.parse(dec(j.content));
-            baseList.push({ file: f.name, data: data });
-          }
-        } catch (e) {}
-      }
-    }
-    return baseList.length ? baseList : fallbackBasePresets();
+    const r = await fetch(url(DIR) + '?ref=' + encodeURIComponent(GH_BRANCH), { headers: hdr(), cache: 'no-store' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const arr = await r.json();
+    files = (Array.isArray(arr) ? arr : [])
+      .filter(f => f.type === 'file' && /\.json$/i.test(f.name))
+      .map(f => f.name)
+      .sort((a, b) => a.localeCompare(b, 'ja', { numeric: true }));
   } catch (e) {
-    return fallbackBasePresets();
+    files = [];
+    say('保存済みデータの一覧を取得できませんでした(' + e.message + ')。トークンや通信を確認してください', true);
+  }
+  sel.innerHTML = '<option value="">— 保存済みデータを選ぶ（' + files.length + '件）—</option>' +
+    files.map(f => '<option value="' + esc(f) + '">' + esc(f) + '</option>').join('');
+  refreshCur();
+}
+
+async function loadFile(name) {
+  say(name + ' を読み込み中…');
+  try {
+    const data = await fetchJson(DIR + '/' + name);
+    tpl = fromFile(data);
+    dirty = false;
+    save();
+    setFile(name);
+    edit();
+    if (!$('#prev').hidden) show('pv');
+    say(name + ' を読み込みました。編集して「上書き保存」できます');
+  } catch (e) {
+    say(name + ' を読み込めませんでした(' + e.message + ')', true);
+    refreshCur();
   }
 }
 
-// ローカルまたはAPI取得失敗時の代替（雛形）
-function fallbackBasePresets() {
-  return [
-    {
-      file: 'base1.json',
-      data: {
-        name: '基本シート1 (性格・行動チェックシート)',
-        type: 'slider',
-        scale: 11
-      }
-    },
-    {
-      file: 'base2.json',
-      data: {
-        name: '基本シート2 (うちのこ総復習プロフィール)',
-        type: 'table'
-      }
-    }
-  ];
+$('#fileSel').addEventListener('change', function () {
+  const v = this.value;
+  if (!v || v === currentFile) { refreshCur(); return; }
+  if (!confirmDiscard()) { refreshCur(); return; }
+  loadFile(v);
+});
+$('#bReload').addEventListener('click', async function () { say('一覧を更新中…'); await listFiles(); if (files.length) say('一覧を更新しました'); });
+
+/* --- エディタ & 描画 --- */
+function sheet(t, p) {
+  let n = 0;
+  return `<form class=cs-f onsubmit="return false"><div class=cs-t>◆${esc(t.title)}</div>` +
+  t.sections.map(s => `<section class=cs-s><h4>${esc(s.name)}</h4><div class=cs-c>` +
+    s.groups.map(g => `<div class=cs-g><b>■${esc(g.name)}</b>` +
+      g.items.map(it => {
+        const nm = `k${p}_${(n++).toString(36)}`;
+        return `<div class=cs-i><span>・${esc(it.q)}：</span><div class=cs-r><em>${esc(it.l)}</em><div class=cs-b>` +
+        `<input type=radio name=${nm}>`.repeat(t.boxes) + `</div><em>${esc(it.r)}</em></div></div>`;
+      }).join('') + `</div>`).join('') + `</div></section>`).join('') +
+  `<button type=reset class=cs-rs>${esc(t.reset || 'チェックをリセット')}</button></form>`;
 }
 
-/* --- 2. 既存プリセット (data/preset/*.json) の読み込み (preset-01, No.1 は除外) --- */
-async function loadCustomPresets() {
-  try {
-    var r = await fetch(url(DIR) + '?ref=' + encodeURIComponent(GH_BRANCH), { headers: hdr(), cache: 'no-store' });
-    if (!r.ok) return [];
-    var arr = await r.json();
-    if (!Array.isArray(arr)) return [];
+const ref = p => {
+  const a = p.split('.'), k = a.pop();
+  let o = tpl;
+  a.forEach(x => o = o[x]);
+  return [o, k];
+};
 
-    var customList = [];
-    for (var f of arr) {
-      // 数値ファイル名 (例: 02.json, 03.json) のみ対象
-      var m = /^(\d+)\.json$/.exec(f.name || '');
-      if (m) {
-        var no = Number(m[1]);
-        // preset-01 または No.1 (エディタ専用/組み込み) は除外
-        if (no <= 1) continue;
-
-        try {
-          var res = await fetch(url(f.path) + '?ref=' + encodeURIComponent(GH_BRANCH), { headers: hdr(), cache: 'no-store' });
-          if (res.ok) {
-            var j = await res.json();
-            var data = JSON.parse(dec(j.content));
-            customList.push({ no: no, file: f.name, data: data });
-          }
-        } catch (e) {}
-      }
-    }
-    customList.sort(function (a, b) { return a.no - b.no; });
-    return customList;
-  } catch (e) {
-    return [];
+function edit() {
+  const f = (p, v, ph) => `<input type=text data-p="${p}" value="${esc(v)}" placeholder="${ph || ''}">`;
+  const ops = p => `<span class=ops><button type=button class=mini data-a=mv data-d=-1 data-p="${p}">↑</button><button type=button class=mini data-a=mv data-d=1 data-p="${p}">↓</button><button type=button class=mini data-a=del data-p="${p}">削除</button></span>`;
+  if (tpl.type === 'table') {
+    $('#edit').innerHTML =
+    `<label>タイトル</label>${f('title', tpl.title)}<fieldset><legend>項目(自由記入の表)</legend>` +
+    tpl.rows.map((r, i) => `<div class=hd>${f(`rows.${i}.label`, r.label, '項目名')}${ops(`rows.${i}`)}</div>`).join('') +
+    `<div style="margin-top:8px"><button type=button class=mini data-a=add data-p=rows>＋項目を追加</button></div></fieldset>`;
+    return;
   }
+  $('#edit').innerHTML =
+  `<label>タイトル</label>${f('title', tpl.title)}
+   <label>リセットボタンの文字</label>${f('reset', tpl.reset)}
+   <label>チェックのマスの数(3〜15)</label><input type=number min=3 max=15 data-p=boxes value="${tpl.boxes}">` +
+  tpl.sections.map((s, si) => `<fieldset><legend>セクション ${si + 1}</legend><div class=hd>${f(`sections.${si}.name`, s.name, 'セクション名')}${ops(`sections.${si}`)}</div>` +
+    s.groups.map((g, gi) => `<fieldset><legend>グループ ${gi + 1}</legend><div class=hd>${f(`sections.${si}.groups.${gi}.name`, g.name, 'グループ名')}${ops(`sections.${si}.groups.${gi}`)}</div>` +
+      g.items.map((it, ii) => { const b = `sections.${si}.groups.${gi}.items.${ii}`; return `<div class=it>${f(b + '.q', it.q, '項目名')}${f(b + '.l', it.l, '左')}${f(b + '.r', it.r, '右')}${ops(b)}</div>`; }).join('') +
+      `<div style="margin-top:8px"><button type=button class=mini data-a=add data-p="sections.${si}.groups.${gi}.items">＋項目を追加</button></div></fieldset>`).join('') +
+    `<div style="margin-top:8px"><button type=button class=mini data-a=add data-p="sections.${si}.groups">＋グループを追加</button></div></fieldset>`).join('') +
+  `<div style="margin-top:12px"><button type=button class=mini data-a=add data-p=sections>＋セクションを追加</button></div>`;
 }
 
-/* --- レンダリング --- */
-function renderCards(containerId, list) {
-  var container = document.getElementById(containerId);
-  container.innerHTML = '';
+function preview() {
+  if (tpl.type !== 'table') return sheet(tpl, 'v');
+  return `<div class=cs-t>◆${esc(tpl.title)}</div><table style="width:100%;border-collapse:collapse;margin-top:10px">` +
+    tpl.rows.map(r => `<tr><th style="width:36%;text-align:left;font-weight:normal;padding:8px;border:1px solid var(--line);background:var(--soft)">${esc(r.label)}</th><td style="padding:8px;border:1px solid var(--line)">&nbsp;</td></tr>`).join('') +
+    '</table>';
+}
 
-  if (!list || list.length === 0) {
-    container.innerHTML = '<div style="font-size:12px; color:var(--mut);">選択できる項目がありません</div>';
+function show(v) {
+  $('#edit').hidden = v !== 'ed';
+  $('#prev').hidden = v !== 'pv';
+  $('#t-ed').classList.toggle('on', v === 'ed');
+  $('#t-pv').classList.toggle('on', v === 'pv');
+  if (v === 'pv') $('#prev').innerHTML = preview();
+}
+
+/* --- GitHubへ保存 (PUT) --- */
+function nextName() {
+  let max = 0, prefix = '';
+  files.forEach(f => {
+    const m = /^(preset-)?(\d+)\.json$/i.exec(f);
+    if (m) { max = Math.max(max, Number(m[2])); if (m[1]) prefix = m[1]; }
+  });
+  return prefix + String(max + 1).padStart(2, '0') + '.json';
+}
+
+async function saveToGitHub() {
+  if (!getToken()) {
+    alert('GitHubトークンが設定されていません。「🔒 トークン」から入力してください。');
     return;
   }
 
+  let fileName = currentFile;
+  if (fileName) {
+    if (!confirm(fileName + ' を上書き保存しますか?')) return;
+  } else {
+    fileName = window.prompt('新規保存するファイル名を入力してください', nextName());
+    if (!fileName) return;
+    fileName = fileName.trim();
+    if (!/\.json$/i.test(fileName)) fileName += '.json';
+    if (!/^[\w.\-]+$/.test(fileName)) { say('ファイル名には英数字・「-」「_」「.」だけ使えます', true); return; }
+    if (files.includes(fileName) && !confirm(fileName + ' は既に存在します。上書きしますか?')) return;
+  }
+  const filePath = DIR + '/' + fileName;
+
+  say('GitHubに保存中…');
+
+  let sha = '';
+  try {
+    const resGet = await fetch(url(filePath) + '?ref=' + encodeURIComponent(GH_BRANCH), { headers: hdr(), cache: 'no-store' });
+    if (resGet.ok) sha = (await resGet.json()).sha;
+    else if (resGet.status !== 404) { say('保存前の確認に失敗しました (HTTP ' + resGet.status + ')', true); return; }
+  } catch (e) { say('通信エラーが発生しました', true); return; }
+
+  tpl.no = noOf(fileName) || tpl.no;
+  const bytes = new TextEncoder().encode(JSON.stringify(toFile(tpl, noOf(fileName)), null, 2));
+  let binary = '';
+  bytes.forEach(b => { binary += String.fromCharCode(b); });
+
+  const body = {
+    message: 'Update preset: ' + (tpl.title || fileName),
+    content: btoa(binary),
+    branch: GH_BRANCH
+  };
+  if (sha) body.sha = sha;
+
+  try {
+    const res = await fetch(url(filePath), { method: 'PUT', headers: hdr(), body: JSON.stringify(body) });
+    if (res.ok) {
+      dirty = false;
+      setFile(fileName);
+      await listFiles();
+      say('保存しました (' + filePath + ')');
+    } else {
+      const err = await res.json().catch(() => ({}));
+      say('保存失敗: ' + (err.message || 'HTTP ' + res.status), true);
+    }
+  } catch (err) {
+    say('通信エラーが発生しました', true);
+  }
+}
+$('#bSaveGH').addEventListener('click', saveToGitHub);
+
+/* --- 新規作成: プリセット読み込みモーダル --- */
+let selectedPreset = null;
+
+function fallbackBasePresets() {
+  return [{ file: '(仮)基本シート', data: toFile(defaultTpl(), 0) }];
+}
+
+/* data/preset/base の *.json を全部読む。失敗理由も返す */
+async function loadBasePresets() {
+  const list = [], errs = [];
+  let dirErr = '';
+  try {
+    const r = await fetch(url(BASE_DIR) + '?ref=' + encodeURIComponent(GH_BRANCH), { headers: hdr(), cache: 'no-store' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const arr = await r.json();
+    if (!Array.isArray(arr)) throw new Error('フォルダではありません');
+    const names = arr.filter(f => f.type === 'file' && /\.json$/i.test(f.name))
+      .sort((a, b) => a.name.localeCompare(b.name, 'ja', { numeric: true }));
+    for (const f of names) {
+      try { list.push({ file: f.name, data: await fetchJson(f.path) }); }
+      catch (e) { errs.push(f.name + '(' + e.message + ')'); }
+    }
+    if (!names.length) dirErr = 'base フォルダに .json がありません';
+  } catch (e) {
+    dirErr = BASE_DIR + ' を読み込めませんでした(' + e.message + ')。トークンやパスを確認してください';
+  }
+  if (!list.length) return { list: fallbackBasePresets(), error: (dirErr || '読み込めるファイルがありません') + '。仮の雛形を表示しています' };
+  return { list, error: errs.length ? '読み込めなかったファイル: ' + errs.join(', ') : '' };
+}
+
+async function loadCustomPresets() {
+  const list = [];
+  for (const name of files) {
+    try { list.push({ file: name, data: await fetchJson(DIR + '/' + name) }); } catch (e) {}
+  }
+  return list;
+}
+
+function renderCards(containerId, list, showFile) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+  if (!list.length) {
+    container.innerHTML = '<div style="font-size:12px;color:var(--mut)">選択できる項目がありません</div>';
+    return;
+  }
   list.forEach(function (item) {
-    var card = document.createElement('div');
+    const card = document.createElement('div');
     card.className = 'preset-card';
-
-    var typeName = item.data.type === 'table' ? '表(自由記入)' : 'スライダー(段階)';
-    var noPrefix = item.no ? 'No.' + item.no + ' ' : '';
-
     card.innerHTML =
-      '<div class="title">' + noPrefix + (item.data.name || '無題のプリセット') + '</div>' +
-      '<span class="badge">' + typeName + '</span>';
-
+      '<div class="title">' + esc(item.data.name || item.data.title || '無題のプリセット') + '</div>' +
+      '<span class="badge">' + (item.data.type === 'table' ? '表(自由記入)' : 'スライダー(段階)') + '</span>' +
+      (showFile ? '<span class="badge">' + esc(item.file) + '</span>' : '');
     card.addEventListener('click', function () {
-      document.querySelectorAll('.preset-card').forEach(function (c) { c.classList.remove('selected'); });
+      document.querySelectorAll('.preset-card').forEach(c => c.classList.remove('selected'));
       card.classList.add('selected');
       selectedPreset = item.data;
-      document.getElementById('bApplyPreset').disabled = false;
+      $('#bApplyPreset').disabled = false;
     });
-
     container.appendChild(card);
   });
 }
 
-/* --- モーダル操作 --- */
 async function openModal() {
-  document.getElementById('presetModal').style.display = 'flex';
-  document.getElementById('bApplyPreset').disabled = true;
+  if (!confirmDiscard()) return;
+  $('#presetModal').style.display = 'flex';
+  $('#bApplyPreset').disabled = true;
   selectedPreset = null;
-  say('プリセット読み込み中…');
-
-  var bases = await loadBasePresets();
-  renderCards('basePresetList', bases);
-
-  var customs = await loadCustomPresets();
-  renderCards('customPresetList', customs);
-
-  say('');
+  sayModal('プリセット読み込み中…');
+  const base = await loadBasePresets();
+  renderCards('basePresetList', base.list, true);
+  renderCards('customPresetList', await loadCustomPresets(), true);
+  sayModal(base.error, !!base.error);
 }
+function closeModal() { $('#presetModal').style.display = 'none'; }
 
-function closeModal() {
-  document.getElementById('presetModal').style.display = 'none';
-}
+$('#bNew').addEventListener('click', openModal);
+$('#bCloseModal').addEventListener('click', closeModal);
+$('#bCancelModal').addEventListener('click', closeModal);
 
-document.getElementById('bOpenModal').addEventListener('click', openModal);
-document.getElementById('bCloseModal').addEventListener('click', closeModal);
-document.getElementById('bCancelModal').addEventListener('click', closeModal);
-
-document.getElementById('bApplyPreset').addEventListener('click', function () {
+$('#bApplyPreset').addEventListener('click', function () {
   if (!selectedPreset) return;
-  alert('「' + selectedPreset.name + '」を追加しました！');
-  console.log('追加されたプリセット:', selectedPreset);
+  tpl = fromFile(JSON.parse(JSON.stringify(selectedPreset)));
+  tpl.no = 0;
+  save();
+  dirty = true;
+  setFile(null);          // 新規扱い(保存時にファイル名を決める)
+  edit();
+  if (!$('#prev').hidden) show('pv');
+  say('プリセット「' + tpl.title + '」から新規作成しました。編集して「新規保存」してください');
   closeModal();
 });
 
-// 起動時処理
+/* --- エディタ操作 --- */
+document.addEventListener('click', e => {
+  const t = e.target.closest('button');
+  if (!t) return;
+  const a = t.dataset.a;
+  if (a) {
+    const [o, k] = ref(t.dataset.p);
+    if (a === 'mv') { const i = +k, j = i + +t.dataset.d; if (j >= 0 && j < o.length) [o[i], o[j]] = [o[j], o[i]]; }
+    if (a === 'del' && confirm('削除しますか?')) o.splice(+k, 1);
+    if (a === 'add') {
+      const it = () => ({ id: 'i' + (tpl.nextId++), q: '項目', l: '左', r: '右' });
+      if (k === 'rows') o[k].push({ id: 'i' + (tpl.nextId++), label: '項目' });
+      else if (k === 'items') o[k].push(it());
+      else if (k === 'groups') o[k].push({ name: 'グループ', items: [it()] });
+      else o[k].push({ name: '新しいセクション', groups: [{ name: 'グループ', items: [it()] }] });
+    }
+    save(); markDirty(); edit(); return;
+  }
+  if (t.id === 't-ed') show('ed');
+  if (t.id === 't-pv') show('pv');
+});
+
+document.addEventListener('input', e => {
+  const p = e.target.dataset && e.target.dataset.p;
+  if (p) {
+    const [o, k] = ref(p);
+    o[k] = p === 'boxes' ? Math.min(15, Math.max(3, parseInt(e.target.value) || 11)) : e.target.value;
+    save(); markDirty();
+  }
+});
+
+window.addEventListener('beforeunload', e => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
+
+/* --- 起動 --- */
 refreshKey();
+edit();
+refreshCur();
+listFiles();
 </script>
 <script src="editter.js"></script>
 <script src="ghfs.js"></script>
