@@ -205,7 +205,6 @@
 #hw-root .cs-b i{flex:1;max-width:18px;aspect-ratio:1;border:1.5px solid var(--mut);border-radius:2px;background:var(--card);display:block}
 #hw-root .cs.ed .cs-b i{cursor:pointer}
 @media(hover:hover){#hw-root .cs.ed .cs-b i:hover{background:var(--hover)}}
-#hw-root .cs.ed{outline:2px solid var(--accent);outline-offset:2px}
 #hw-root .cs-b[data-v="1"] i:nth-child(1){background:var(--main);border-color:var(--main)}
 #hw-root .cs-b[data-v="2"] i:nth-child(2){background:var(--main);border-color:var(--main)}
 #hw-root .cs-b[data-v="3"] i:nth-child(3){background:var(--main);border-color:var(--main)}
@@ -237,7 +236,7 @@
 #hw-root .cs-tbl th,#hw-root .cs-tbl td{border:1px solid var(--line);padding:0;vertical-align:middle}
 #hw-root .cs-tbl th{width:34%;max-width:11em;padding:8px 8px;background:var(--bg);color:var(--fg);font-size:13px;font-weight:600;text-align:center;line-height:1.4}
 #hw-root .cs .cs-tx{display:block;width:100%;height:auto;margin:0;border-radius:0;box-sizing:border-box;min-height:2.4em;padding:8px 10px;border:0;background:transparent;color:var(--fg);font:inherit;font-size:14px;line-height:1.5;resize:none;field-sizing:content;overflow:hidden;outline:none}
-#hw-root .cs.ed .cs-tx{background:var(--card);box-shadow:inset 0 0 0 2px var(--main)}
+#hw-root .cs.ed .cs-tx{background:var(--card);box-shadow:inset 0 0 0 1px var(--line)}
 
 /* ===== デザイン統一(ボタン・プルダウン)/ タップ時の色は即時 ===== */
 #hw-root{-webkit-tap-highlight-color:transparent}
@@ -250,6 +249,25 @@
 #hw-root .csw-sel,#hw-root .cs-picker select{box-sizing:border-box;min-height:32px;max-width:100%;min-width:0;padding:5px 14px;border:1px solid var(--line);border-radius:99px;background:var(--card);color:var(--fg);font:inherit;font-size:13px}
 #hw-root .cs-picker{padding:8px 10px;border:1px dashed var(--line);border-radius:10px}
 #hw-root .cs-ctl button:not(.cs-save):active,#hw-root .cs-picker button:not(.cs-padd):active{background:var(--hover)}
+
+/* 見出しは折り返さない(幅は文字数に合わせる)。改行したい所だけ JSON 内の \n */
+#hw-root .cs-l,#hw-root .cs-rr{white-space:pre-line;word-break:keep-all}
+#hw-root .cs-line{grid-template-columns:var(--wl,4em) 1fr var(--wr,4em)}
+#hw-root .cs-tbl th{width:min(calc(var(--thw,6) * 1em + 1em + 16px),60%);white-space:pre-line;word-break:keep-all}
+
+/* 選択中(フォーカス時)の囲み枠を出さない */
+#hw-root .cs :focus,#hw-root .cs :focus-visible,#hw-root .csw :focus,#hw-root .csw :focus-visible{outline:none}
+#hw-root .cs .cs-tx:focus{box-shadow:inset 0 0 0 1px var(--line)}
+
+/* スマホ: 編集中のボタン(鍵〜キャンセル)を1行に */
+@media(max-width:600px){
+  #hw-root .cs.ed .cs-ctl{flex:1 1 100%;flex-wrap:nowrap;justify-content:space-between;gap:4px}
+  #hw-root .cs.ed .cs-ctl button{flex:0 0 auto;min-height:30px;padding:4px 6px;font-size:11.5px}
+  #hw-root .cs.ed .cs-ctl .cs-key{padding:4px 8px}
+}
+@media(max-width:360px){
+  #hw-root .cs.ed .cs-ctl button{padding:4px 4px;font-size:10.5px}
+}
 </style>
 <!-- ▼▼▼ 【ここに貼り付けてね】ここから ▼▼▼
      編集モードの「コードを書き出す」で出たコードを、この行と「ここまで」の行の間に丸ごと貼り付けてください。
@@ -430,12 +448,22 @@ function setToken(t){
   }
 
   /* ---------- プリセット → シートのHTML ---------- */
+  // 見出しの幅(em)。全角=1、半角=0.55。\n で区切った行のうち最長のもの
+  function tw(str){
+    var m=0;
+    String(str==null?'':str).split('\n').forEach(function(line){
+      var w=0; for(var i=0;i<line.length;i++) w+=line.charCodeAt(i)<256?0.55:1;
+      if(w>m) m=w;
+    });
+    return m;
+  }
   function buildSheet(c,id,preset){
-    var no=preset.no, n=preset.scale, boxes=new Array(n+1).join('<i></i>'), h='';
+    var no=preset.no, n=preset.scale, boxes=new Array(n+1).join('<i></i>'), h='', ml=3, mr=3, mt=0;
     h+='<div class="cs-h"><b>'+esc(preset.name)+'</b><span class="cs-ctl"><button type="button" class="cs-edit">✎ 編集</button><button type="button" class="cs-save" hidden>保存</button><button type="button" class="cs-cancel" hidden>キャンセル</button></span></div><div class="cs-msg"></div>';
     if(preset.type==='table'){
       h+='<table class="cs-tbl"><tbody>';
       (preset.rows||[]).forEach(function(r){
+        mt=Math.max(mt,tw(r.label));
         h+='<tr><th>'+esc(r.label)+'</th><td><textarea class="cs-tx" rows="1" readonly data-k="'+esc(r.id)+'" id="cs-'+esc(c)+'-p'+no+'-'+esc(r.id)+'"></textarea></td></tr>';
       });
       h+='</tbody></table>';
@@ -449,6 +477,7 @@ function setToken(t){
         h+='<div class="cs-col">';
         if(col.sub) h+='<div class="cs-sub">'+esc(col.sub)+'</div>';
         (col.items||[]).forEach(function(it){
+          ml=Math.max(ml,tw(it.l)); mr=Math.max(mr,tw(it.r));
           h+='<div class="cs-r">';
           if(it.q) h+='<div class="cs-q">'+esc(it.q)+'</div>';
           h+='<div class="cs-line"><span class="cs-l">'+esc(it.l)+'</span><div class="cs-b" id="cs-'+esc(c)+'-p'+no+'-'+esc(it.id)+'" data-k="'+esc(it.id)+'" data-v="0">'+boxes+'</div><span class="cs-rr">'+esc(it.r)+'</span></div></div>';
@@ -459,6 +488,7 @@ function setToken(t){
     });
     var el=document.createElement('div');
     el.className='cs'; el.dataset.c=c; el.dataset.id=id; el.dataset.no=String(no); el.dataset.name=preset.name;
+    el.style.setProperty('--wl',(ml+0.4)+'em'); el.style.setProperty('--wr',(mr+0.4)+'em'); el.style.setProperty('--thw',String(mt));
     el.innerHTML=h;
     return el;
   }
@@ -470,7 +500,7 @@ function setToken(t){
     sheet.querySelector('.cs-edit').hidden=on;
     sheet.querySelector('.cs-save').hidden=!on;
     sheet.querySelector('.cs-cancel').hidden=!on;
-    ['.cs-key','.cs-addsheet','.cs-del'].forEach(function(s){ var b=sheet.querySelector(s); if(b) b.hidden=!on; });
+    ['.cs-addsheet','.cs-del'].forEach(function(s){ var b=sheet.querySelector(s); if(b) b.hidden=!on; });
     if(sheet.classList.contains('cs-empty')) sheet.querySelector('.cs-save').hidden=true;
     if(!on){ var pk=sheet.querySelector('.cs-picker'); if(pk) pk.hidden=true; }
   }
@@ -494,7 +524,11 @@ function setToken(t){
       if(text) b.textContent=text;
       ctl.insertBefore(b,save);
     }
-    mk('cs-key'); mk('cs-addsheet','＋ シート追加');
+    if(!sheet.querySelector('.cs-key')){
+      var kb=document.createElement('button'); kb.type='button'; kb.className='cs-key';
+      ctl.insertBefore(kb,ctl.querySelector('.cs-edit')||ctl.firstChild);
+    }
+    mk('cs-addsheet','＋ シート追加');
     if(!sheet.classList.contains('cs-empty')) mk('cs-del','シート削除');
     if(!sheet.querySelector('.cs-picker')){
       var pk=document.createElement('div'); pk.className='cs-picker'; pk.hidden=true;
@@ -598,7 +632,7 @@ function setToken(t){
     var id=sheet.dataset.id, no=sheet.dataset.no, base=snapshots.get(sheet)||{}, local=values(sheet);
     var changed={};
     Object.keys(local).forEach(function(k){ if(base[k]===undefined?(local[k]!=='0'&&local[k]!==''):local[k]!==String(base[k])) changed[k]=local[k]; });
-    if(!Object.keys(changed).length){ setMode(sheet,false); msg(sheet,'変更はありません'); return; }
+    if(!Object.keys(changed).length){ setMode(sheet,false); msg(sheet,''); return; }
     msg(sheet,'保存中…');
     try{
       var doc=await updateDoc(id,function(d){
@@ -607,7 +641,7 @@ function setToken(t){
         Object.keys(changed).forEach(function(k){ tgt[k]=changed[k]; });
       },sheet);
       apply(sheet,doc.sheets[no].values);
-      snapshots.set(sheet,values(sheet)); setMode(sheet,false); msg(sheet,'GitHubに保存しました');
+      snapshots.set(sheet,values(sheet)); setMode(sheet,false); msg(sheet,'');
     }catch(err){ msg(sheet,String(err.message||err),true); }
   }
 
@@ -636,7 +670,7 @@ function setToken(t){
 
   /* ---------- 初期化 ---------- */
   q0(root,'.csw').forEach(function(wrap){
-    wrap.innerHTML='<div class="csw-bar" hidden><span>表示シート</span><select class="csw-sel"></select></div>';
+    wrap.innerHTML='<div class="csw-bar" hidden><select class="csw-sel"></select></div>';
     var em=document.createElement('div');
     em.className='cs cs-empty'; em.dataset.c=wrap.dataset.c; em.dataset.id=wrap.dataset.id; em.dataset.no='0'; em.dataset.name='';
     em.innerHTML='<div class="cs-h"><b>チェックシート</b><span class="cs-ctl"><button type="button" class="cs-edit">✎ 編集</button><button type="button" class="cs-save" hidden>保存</button><button type="button" class="cs-cancel" hidden>キャンセル</button></span></div><div class="cs-msg"></div>';
