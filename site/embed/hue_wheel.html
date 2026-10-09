@@ -187,7 +187,6 @@
 #hw-root .cs-ctl{display:flex;gap:6px}
 #hw-root .cs-ctl button{padding:5px 14px;border:1px solid var(--line);border-radius:99px;background:var(--card);color:var(--mut);font:inherit;font-size:13px;cursor:pointer}
 #hw-root .cs-ctl .cs-key{padding:5px 10px;line-height:1}
-#hw-root .cs-ctl .cs-key.set{border-color:var(--main)}
 #hw-root .cs-ctl .cs-save{background:var(--main);color:var(--on);border-color:var(--main)}
 #hw-root .cs-ctl button[hidden]{display:none}
 #hw-root .cs-msg{min-height:1.2em;font-size:12px;color:var(--mut)}
@@ -242,7 +241,6 @@
 #hw-root{-webkit-tap-highlight-color:transparent}
 #hw-root .cs-ctl button,#hw-root .cs-picker button{box-sizing:border-box;min-height:32px;padding:5px 14px;border:1px solid var(--line);border-radius:99px;background:var(--card);color:var(--mut);font:inherit;font-size:13px;line-height:1.2;white-space:nowrap;cursor:pointer;transition:none}
 #hw-root .cs-ctl .cs-key{padding:5px 12px}
-#hw-root .cs-ctl .cs-key.set{border-color:var(--main)}
 #hw-root .cs-ctl .cs-save,#hw-root .cs-picker .cs-padd{background:var(--main);color:var(--on);border-color:var(--main)}
 #hw-root .cs-ctl .cs-del{color:#c0392b;border-color:#c0392b}
 #hw-root .cs-ctl button[hidden],#hw-root .cs-picker[hidden]{display:none}
@@ -254,7 +252,7 @@
 #hw-root .cs-l,#hw-root .cs-rr{white-space:pre-line;word-break:keep-all}
 #hw-root .cs-line{grid-template-columns:var(--wld,4em) 1fr var(--wrd,4em)}
 #hw-root br.sp{display:none}
-#hw-root .cs-tbl th{width:min(calc(var(--thd,6) * 1em + 1em + 16px),42%);white-space:pre-line;word-break:normal;overflow-wrap:anywhere}
+#hw-root .cs-tbl th{width:min(calc(var(--thd,6) * 1em + 1em + 16px),34%);white-space:pre-line;word-break:normal;overflow-wrap:anywhere}
 
 /* 選択中(フォーカス時)の囲み枠を出さない */
 #hw-root .cs :focus,#hw-root .cs :focus-visible,#hw-root .csw :focus,#hw-root .csw :focus-visible{outline:none}
@@ -264,7 +262,8 @@
 @media(max-width:600px){
   #hw-root br.sp{display:inline}
   #hw-root .cs-line{grid-template-columns:var(--wl,4em) 1fr var(--wr,4em)}
-  #hw-root .cs-tbl th{font-size:12px;padding:6px;width:min(calc(var(--thw,6) * 1em + 1em + 12px),42%)}
+  #hw-root .cs-tbl th{font-size:12px;padding:6px 4px;width:min(calc(var(--thw,6) * 1em + 1em + 8px),30%)}
+  #hw-root .cs .cs-tx{padding:8px}
   #hw-root .cs.ed .cs-ctl{flex:1 1 100%;flex-wrap:nowrap;justify-content:space-between;gap:4px}
   #hw-root .cs.ed .cs-ctl button{flex:0 0 auto;min-height:30px;padding:4px 6px;font-size:11.5px}
   #hw-root .cs.ed .cs-ctl .cs-key{padding:4px 8px}
