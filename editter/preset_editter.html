@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>プリセット読み込み・選択モーダル</title>
+<style>
+:root {
+  --bg: #fff;
+  --fg: #333;
+  --card: #fff;
+  --mut: #7a6f62;
+  --line: #e6dccb;
+  --main: #8e632b;
+  --on: #fff;
+  --soft: #fff8d6;
+  --hover: #fff1b0;
+  --danger: #c0392b;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: "Hiragino Maru Gothic ProN", "Hiragino Sans", "Yu Gothic", sans-serif;
+  font-size: 14px;
+}
+
+/* ヘッダー */
+header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line);
+}
+header h1 {
+  font-size: 16px;
+  margin: 0;
+  color: var(--main);
+  flex: 1;
+}
+
+button {
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--fg);
+  font: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+button:hover { background: var(--hover); }
+button.p { background: var(--main); color: var(--on); border-color: var(--main); }
+button.p:disabled { background: #ccc; border-color: #ccc; cursor: not-allowed; }
+
+/* モーダル枠 */
+.preset-modal-backdrop {
+  position: fixed;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  background: rgba(0,0,0,0.4);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 10000;
+}
+.preset-modal {
+  background: var(--card);
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  width: 90%;
+  max-width: 620px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  overflow: hidden;
+}
+.preset-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line);
+  background: var(--soft);
+}
+.preset-modal-header h3 {
+  margin: 0;
+  font-size: 15px;
+  color: var(--main);
+}
+.preset-modal-body {
+  padding: 16px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.preset-sec h4 {
+  margin: 0 0 8px 0;
+  font-size: 13px;
+  color: var(--main);
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 4px;
+}
+.preset-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 8px;
+}
+.preset-card {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: var(--card);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+.preset-card:hover {
+  background: var(--hover);
+  border-color: var(--main);
+}
+.preset-card.selected {
+  background: var(--soft);
+  border: 2px solid var(--main);
+  font-weight: bold;
+}
+.preset-card .title {
+  font-size: 13px;
+  color: var(--fg);
+  margin-bottom: 4px;
+}
+.preset-card .badge {
+  font-size: 11px;
+  color: var(--mut);
+  background: #f5f0e6;
+  padding: 2px 6px;
+  border-radius: 4px;
+  display: inline-block;
+}
+#presetMsg {
+  min-height: 1.2em;
+  font-size: 12px;
+  color: var(--mut);
+}
+#presetMsg.err { color: var(--danger); }
+
+.preset-modal-footer {
+  padding: 12px 16px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  background: var(--bg);
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>プリセット選択</h1>
+  <button id="bKey" type="button">🔒 トークン</button>
+  <button id="bOpenModal" type="button" class="p">＋ プリセットを追加</button>
+</header>
+
+<!-- プリセット選択モーダル -->
+<div id="presetModal" class="preset-modal-backdrop" style="display: none;">
+  <div class="preset-modal">
+    <div class="preset-modal-header">
+      <h3>シートプリセットの読み込み</h3>
+      <button type="button" id="bCloseModal">✕</button>
+    </div>
+    
+    <div class="preset-modal-body">
+      <div id="presetMsg"></div>
+
+      <!-- 1. data/preset/base から取得した雛形 -->
+      <div class="preset-sec">
+        <h4>■ 雛形（data/preset/base）から選ぶ</h4>
+        <div id="basePresetList" class="preset-grid"></div>
+      </div>
+
+      <!-- 2. data/preset 内の既存プリセット（preset-01, No.1 は自動除外） -->
+      <div class="preset-sec">
+        <h4>■ 保存済みプリセット（data/preset）から選ぶ</h4>
+        <div id="customPresetList" class="preset-grid"></div>
+      </div>
+    </div>
+
+    <div class="preset-modal-footer">
+      <button type="button" id="bCancelModal">キャンセル</button>
+      <button type="button" id="bApplyPreset" class="p" disabled>決定して追加</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var GH_OWNER = "cheeees", GH_REPO = "cheeeestrpg", GH_BRANCH = "main";
+var TOKEN_KEY = "hw_gh_token", DIR = "data/preset", BASE_DIR = "data/preset/base";
+var memToken = "";
+
+/* --- トークン管理 --- */
+function getToken() {
+  try { var t = localStorage.getItem(TOKEN_KEY); if (t) return t; } catch (e) {}
+  return memToken;
+}
+function setToken(t) {
+  memToken = t;
+  try { if (t) localStorage.setItem(TOKEN_KEY, t); else localStorage.removeItem(TOKEN_KEY); } catch (e) {}
+}
+function refreshKey() {
+  var h = !!getToken();
+  document.getElementById('bKey').textContent = h ? '🔑 トークン' : '🔒 トークン';
+}
+
+document.getElementById('bKey').addEventListener('click', function () {
+  var v = window.prompt(
+    'GitHubのトークンを入力してください(Contents: Read and write)。\nこの端末のブラウザ内にだけ保存されます。\n空欄でOKを押すと削除します。',
+    getToken()
+  );
+  if (v === null) return;
+  setToken(v.trim());
+  refreshKey();
+  say(v.trim() ? 'トークンを設定しました' : 'トークンを削除しました');
+});
+
+/* --- API ヘルパー --- */
+function url(path) {
+  return 'https://api.github.com/repos/' + encodeURIComponent(GH_OWNER) + '/' + encodeURIComponent(GH_REPO) + '/contents/' + path.split('/').map(encodeURIComponent).join('/');
+}
+function hdr() {
+  var h = { 'Accept': 'application/vnd.github+json' }, t = getToken();
+  if (t) h.Authorization = 'Bearer ' + t;
+  return h;
+}
+function dec(c) {
+  var b = atob((c || '').replace(/\s/g, '')), u = new Uint8Array(b.length);
+  for (var i = 0; i < b.length; i++) u[i] = b.charCodeAt(i);
+  return new TextDecoder().decode(u);
+}
+function say(t, err) {
+  var m = document.getElementById('presetMsg');
+  m.textContent = t || '';
+  m.className = err ? 'err' : '';
+}
+function pad(no) { return (no < 10 ? '0' : '') + no; }
+
+let selectedPreset = null;
+
+/* --- 1. 雛形 (data/preset/base) の読み込み --- */
+async function loadBasePresets() {
+  try {
+    var r = await fetch(url(BASE_DIR) + '?ref=' + encodeURIComponent(GH_BRANCH), { headers: hdr(), cache: 'no-store' });
+    if (!r.ok) return fallbackBasePresets();
+    var arr = await r.json();
+    if (!Array.isArray(arr)) return fallbackBasePresets();
+
+    var baseList = [];
+    for (var f of arr) {
+      if (f.name.endsWith('.json')) {
+        try {
+          var res = await fetch(url(f.path) + '?ref=' + encodeURIComponent(GH_BRANCH), { headers: hdr(), cache: 'no-store' });
+          if (res.ok) {
+            var j = await res.json();
+            var data = JSON.parse(dec(j.content));
+            baseList.push({ file: f.name, data: data });
+          }
+        } catch (e) {}
+      }
+    }
+    return baseList.length ? baseList : fallbackBasePresets();
+  } catch (e) {
+    return fallbackBasePresets();
+  }
+}
+
+// ローカルまたはAPI取得失敗時の代替（雛形）
+function fallbackBasePresets() {
+  return [
+    {
+      file: 'base1.json',
+      data: {
+        name: '基本シート1 (性格・行動チェックシート)',
+        type: 'slider',
+        scale: 11
+      }
+    },
+    {
+      file: 'base2.json',
+      data: {
+        name: '基本シート2 (うちのこ総復習プロフィール)',
+        type: 'table'
+      }
+    }
+  ];
+}
+
+/* --- 2. 既存プリセット (data/preset/*.json) の読み込み (preset-01, No.1 は除外) --- */
+async function loadCustomPresets() {
+  try {
+    var r = await fetch(url(DIR) + '?ref=' + encodeURIComponent(GH_BRANCH), { headers: hdr(), cache: 'no-store' });
+    if (!r.ok) return [];
+    var arr = await r.json();
+    if (!Array.isArray(arr)) return [];
+
+    var customList = [];
+    for (var f of arr) {
+      // 数値ファイル名 (例: 02.json, 03.json) のみ対象
+      var m = /^(\d+)\.json$/.exec(f.name || '');
+      if (m) {
+        var no = Number(m[1]);
+        // preset-01 または No.1 (エディタ専用/組み込み) は除外
+        if (no <= 1) continue;
+
+        try {
+          var res = await fetch(url(f.path) + '?ref=' + encodeURIComponent(GH_BRANCH), { headers: hdr(), cache: 'no-store' });
+          if (res.ok) {
+            var j = await res.json();
+            var data = JSON.parse(dec(j.content));
+            customList.push({ no: no, file: f.name, data: data });
+          }
+        } catch (e) {}
+      }
+    }
+    customList.sort(function (a, b) { return a.no - b.no; });
+    return customList;
+  } catch (e) {
+    return [];
+  }
+}
+
+/* --- レンダリング --- */
+function renderCards(containerId, list) {
+  var container = document.getElementById(containerId);
+  container.innerHTML = '';
+
+  if (!list || list.length === 0) {
+    container.innerHTML = '<div style="font-size:12px; color:var(--mut);">選択できる項目がありません</div>';
+    return;
+  }
+
+  list.forEach(function (item) {
+    var card = document.createElement('div');
+    card.className = 'preset-card';
+
+    var typeName = item.data.type === 'table' ? '表(自由記入)' : 'スライダー(段階)';
+    var noPrefix = item.no ? 'No.' + item.no + ' ' : '';
+
+    card.innerHTML =
+      '<div class="title">' + noPrefix + (item.data.name || '無題のプリセット') + '</div>' +
+      '<span class="badge">' + typeName + '</span>';
+
+    card.addEventListener('click', function () {
+      document.querySelectorAll('.preset-card').forEach(function (c) { c.classList.remove('selected'); });
+      card.classList.add('selected');
+      selectedPreset = item.data;
+      document.getElementById('bApplyPreset').disabled = false;
+    });
+
+    container.appendChild(card);
+  });
+}
+
+/* --- モーダル操作 --- */
+async function openModal() {
+  document.getElementById('presetModal').style.display = 'flex';
+  document.getElementById('bApplyPreset').disabled = true;
+  selectedPreset = null;
+  say('プリセット読み込み中…');
+
+  var bases = await loadBasePresets();
+  renderCards('basePresetList', bases);
+
+  var customs = await loadCustomPresets();
+  renderCards('customPresetList', customs);
+
+  say('');
+}
+
+function closeModal() {
+  document.getElementById('presetModal').style.display = 'none';
+}
+
+document.getElementById('bOpenModal').addEventListener('click', openModal);
+document.getElementById('bCloseModal').addEventListener('click', closeModal);
+document.getElementById('bCancelModal').addEventListener('click', closeModal);
+
+document.getElementById('bApplyPreset').addEventListener('click', function () {
+  if (!selectedPreset) return;
+  alert('「' + selectedPreset.name + '」を追加しました！');
+  console.log('追加されたプリセット:', selectedPreset);
+  closeModal();
+});
+
+// 起動時処理
+refreshKey();
+</script>
+
+</body>
+</html>
