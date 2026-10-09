@@ -301,7 +301,7 @@ PCがHP0になった場合、身代わりとなって砕け散りPCはHP全回�
 /* ===== チェックシート保存設定 =====
    トークンはHTMLに書きません。編集中に表示される「🔒」ボタンから、各自がこの端末で入力します
    (入力したトークンは、この端末のブラウザ内にだけ保存されます)。
-   ■ シートの種類(プリセット)は preset/NN.json、キャラごとの入力値は checksheet/char-XXX.json に保存されます。
+   ■ シートの種類(プリセット)は data/preset/ の preset-NN.json(または NN.json)、キャラごとの入力値は data/checksheet/char-XXX.json に保存されます。
    ■ 固定のシートはありません。何も追加していないときはツールバー(✎ 編集)だけが表示されます。プリセットは No.1 から使えます。 */
 var GH_OWNER  = "cheeees";
 var GH_REPO   = "cheeeestrpg";
@@ -318,7 +318,7 @@ function setToken(t){
 }
 (function(){
   var root = document.getElementById('hw-root'); if(!root) return;
-  var PRESET_DIR='preset', SHEET_DIR='checksheet';
+  var PRESET_DIRS=['data/preset','preset'], SHEET_DIR='data/checksheet';
   var snapshots = new WeakMap();
   q0(root,'.csw').forEach(function(w){
     if(!w.dataset.id) w.dataset.id = 'char-' + String(Number(w.dataset.c) + 1).padStart(3, '0');
@@ -377,29 +377,50 @@ function setToken(t){
   }
 
   /* ---------- プリセット ---------- */
-  var presetMemo={}, listMemo=null;
-  function presetFile(no){ return PRESET_DIR+'/'+(no<10?'0':'')+no+'.json'; }
+  var presetMemo={}, listMemo=null, indexMemo=null;
+  /* data/preset(なければ preset)内の preset-NN.json / NN.json を番号→パスの表にする */
+  function presetIndex(){
+    if(!indexMemo){
+      indexMemo=(async function(){
+        var map={}, lastErr=null, found=false;
+        for(var d=0; d<PRESET_DIRS.length; d++){
+          var r=await fetch(contentsUrl(PRESET_DIRS[d])+'?ref='+encodeURIComponent(GH_BRANCH),{headers:headers(!!getToken()),cache:'no-store'});
+          if(r.status===404) continue;
+          if(!r.ok){ lastErr=new Error('プリセット一覧を取得できません ('+r.status+')'); continue; }
+          var arr=await r.json();
+          if(!Array.isArray(arr)) continue;
+          found=true;
+          arr.forEach(function(f){
+            if(f.type&&f.type!=='file') return;
+            var m=/^(?:preset-)?(\d+)\.json$/i.exec(f.name||'');
+            if(!m) return;
+            var n=Number(m[1]);
+            if(n>=1&&!map[n]) map[n]=f.path;
+          });
+        }
+        if(!found&&lastErr) throw lastErr;
+        return map;
+      })();
+      indexMemo.catch(function(){ indexMemo=null; });
+    }
+    return indexMemo;
+  }
   function normPreset(d,no){
     return {no:no,type:d.type==='table'?'table':'slider',name:d.name||('シート'+no),scale:Math.max(2,Math.min(11,Number(d.scale)||11)),sections:Array.isArray(d.sections)?d.sections:[],rows:Array.isArray(d.rows)?d.rows:[]};
   }
   function getPreset(no){
     if(!presetMemo[no]){
-      presetMemo[no]=getFile(presetFile(no)).then(function(f){ return f?normPreset(f.data,no):null; });
+      presetMemo[no]=presetIndex().then(function(map){ return map[no]?getFile(map[no]):null; }).then(function(f){ return f?normPreset(f.data,no):null; });
       presetMemo[no].catch(function(){ delete presetMemo[no]; });
     }
     return presetMemo[no];
   }
   function listPresets(force){
-    if(force){ presetMemo={}; listMemo=null; }
+    if(force){ presetMemo={}; listMemo=null; indexMemo=null; }
     if(!listMemo){
       listMemo=(async function(){
-        var r=await fetch(contentsUrl(PRESET_DIR)+'?ref='+encodeURIComponent(GH_BRANCH),{headers:headers(!!getToken()),cache:'no-store'});
-        if(r.status===404) return [];
-        if(!r.ok) throw new Error('プリセット一覧を取得できません ('+r.status+')');
-        var arr=await r.json(), nos=[];
-        if(!Array.isArray(arr)) return [];
-        arr.forEach(function(f){ var m=/^(\d+)\.json$/.exec(f.name||''); if(m&&Number(m[1])>=1) nos.push(Number(m[1])); });
-        nos.sort(function(a,b){return a-b;});
+        var map=await presetIndex();
+        var nos=Object.keys(map).map(Number).sort(function(a,b){return a-b;});
         var ps=await Promise.all(nos.map(function(n){ return getPreset(n).catch(function(){return null;}); }));
         return ps.filter(Boolean);
       })();
@@ -532,7 +553,7 @@ function setToken(t){
     try{ list=await listPresets(true); }catch(err){ msg(sheet,String(err.message||err),true); return; }
     var have=panels(sheet.closest('.csw')).map(function(p){ return p.dataset.no; });
     var avail=list.filter(function(p){ return have.indexOf(String(p.no))<0; });
-    if(!avail.length){ pk.hidden=true; msg(sheet,'追加できるプリセットがありません'); return; }
+    if(!avail.length){ pk.hidden=true; msg(sheet,list.length?'すべてのプリセットが追加済みです':'プリセットが見つかりません(data/preset に preset-01.json のような名前で置いてください)'); return; }
     sel.innerHTML=avail.map(function(p){ return '<option value="'+p.no+'">'+esc(p.no+'. '+p.name)+'</option>'; }).join('');
     pk.hidden=false; msg(sheet,'追加するシートを選んでください');
   }
