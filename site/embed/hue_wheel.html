@@ -280,6 +280,34 @@
 #hw-root .csw-bar .csw-sel{max-width:100%}
 #hw-root .csw .cs-h{margin-bottom:6px}
 #hw-root .csw .cs-ctl{margin-left:auto}
+@media(max-width:600px){
+  #hw-root .csw .csw-bar{flex:1 1 100%}
+  #hw-root .csw .cs-ctl,#hw-root .csw.ed .cs-ctl{margin-left:0;justify-content:flex-start}
+}
+/* 表: 見出し列を狭く / 本文の文字サイズは見出しと同じ */
+#hw-root .cs-tbl th{width:min(calc(var(--thd,6) * 1em + 4px),34%);padding:8px 6px}
+#hw-root .cs .cs-tx{font-size:13px}
+@media(max-width:600px){
+  #hw-root .cs-tbl th{width:min(calc(var(--thw,6) * 1em + 2px),30%);padding:6px 3px;font-size:12px}
+  #hw-root .cs .cs-tx{font-size:12px}
+}
+/* 表の編集中: 入力欄をマスいっぱいに(隙間・二重線をなくす) */
+#hw-root .cs-tbl td{height:1px}
+#hw-root .cs-tbl .cs-tx{height:100% !important;min-height:2.4em}
+#hw-root .cs.ed .cs-tbl td{background:#fffaf0}
+#hw-root .cs.ed .cs-tx,#hw-root .cs.ed .cs-tx:focus{background:transparent;box-shadow:none}
+/* スマホでもボタンはPCと同じ大きさ・間隔(入りきらなければ折り返す) */
+@media(max-width:600px){
+  #hw-root .csw.ed .cs-ctl,#hw-root .csw .cs-ctl{flex-wrap:wrap;gap:6px;justify-content:flex-start}
+  #hw-root .csw.ed .cs-ctl button,#hw-root .csw .cs-ctl button{flex:0 0 auto;min-height:32px;padding:5px 12px;font-size:13px}
+  #hw-root .csw.ed .cs-ctl .cs-key,#hw-root .csw .cs-ctl .cs-key{padding:5px 12px}
+}
+/* スマホ: ボタンは必ず1行。画面幅に合わせて文字・余白・間隔を少しずつ縮める */
+@media(max-width:600px){
+  #hw-root .csw.ed .cs-ctl,#hw-root .csw .cs-ctl{flex-wrap:nowrap;gap:clamp(3px,1vw,6px);justify-content:flex-start}
+  #hw-root .csw.ed .cs-ctl button,#hw-root .csw .cs-ctl button{flex:0 0 auto;min-height:32px;padding:5px clamp(5px,1.7vw,12px);font-size:clamp(10px,3.1vw,13px)}
+  #hw-root .csw.ed .cs-ctl .cs-key,#hw-root .csw .cs-ctl .cs-key{padding:5px clamp(6px,2vw,12px)}
+}
 </style>
 <!-- ▼▼▼ 【ここに貼り付けてね】ここから ▼▼▼
      編集モードの「コードを書き出す」で出たコードを、この行と「ここまで」の行の間に丸ごと貼り付けてください。
