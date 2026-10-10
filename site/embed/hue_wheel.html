@@ -314,7 +314,31 @@
   #hw-root .csw.ed .cs-ctl button,#hw-root .csw .cs-ctl button{flex:0 1 auto;min-width:0;padding:5px clamp(4px,1.4vw,10px);font-size:clamp(9.5px,2.7vw,13px)}
   #hw-root .csw.ed .cs-ctl .cs-key,#hw-root .csw .cs-ctl .cs-key{padding:5px clamp(5px,1.7vw,10px)}
 }
+/* メッセージ欄が空のときは場所を取らない / セクション間を広く、先頭セクションの上の隙間はなくす */
+#hw-root .cs-msg:empty{display:none}
+#hw-root .cs .cs-s{margin-top:28px}
+#hw-root .cs .cs-s:first-child{margin-top:4px}
+/* グループ間を広く / 項目名は中央揃え(先頭の「・」は表示しない) / 奇数マスの真ん中だけ薄いクリーム色 */
+#hw-root .cs-cols{gap:0 36px}
+@media(max-width:600px){#hw-root .cs-col+.cs-col{margin-top:22px}}
+#hw-root .cs-sub{margin:10px 0 4px}
+#hw-root .cs-q{text-align:center}
+#hw-root .cs-b[data-m="2"]:not([data-v="2"]) i:nth-child(2),
+#hw-root .cs-b[data-m="3"]:not([data-v="3"]) i:nth-child(3),
+#hw-root .cs-b[data-m="4"]:not([data-v="4"]) i:nth-child(4),
+#hw-root .cs-b[data-m="5"]:not([data-v="5"]) i:nth-child(5),
+#hw-root .cs-b[data-m="6"]:not([data-v="6"]) i:nth-child(6){background:var(--soft)}
+/* 左右の見出し列を同じ幅にして、マスを項目名(中央揃え)の真下に中央寄せ */
+#hw-root .cs-line{grid-template-columns:max(var(--wld,4em),var(--wrd,4em)) 1fr max(var(--wld,4em),var(--wrd,4em))}
+#hw-root .cs-b{justify-content:center}
+@media(max-width:600px){#hw-root .cs-line{grid-template-columns:max(var(--wl,4em),var(--wr,4em)) 1fr max(var(--wl,4em),var(--wr,4em))}}
+/* 項目名とマスの間を広く */
+#hw-root .cs-q{margin-bottom:6px}
+/* カテゴリ名(セクション名)は太字 / グループ名は少し右へインデント */
+#hw-root .cs-t{font-weight:700}
+#hw-root .cs-sub{padding-left:10px}
 </style>
+
 <!-- ▼▼▼ 【ここに貼り付けてね】ここから ▼▼▼
      編集モードの「コードを書き出す」で出たコードを、この行と「ここまで」の行の間に丸ごと貼り付けてください。
      (元からある中身は、サンプルデータなので全部消してOKです) -->
@@ -526,8 +550,8 @@ function setToken(t){
         (col.items||[]).forEach(function(it){
           ml=Math.max(ml,tw(it.l)); mr=Math.max(mr,tw(it.r)); mld=Math.max(mld,twj(it.l)); mrd=Math.max(mrd,twj(it.r));
           h+='<div class="cs-r">';
-          if(it.q) h+='<div class="cs-q">'+esc(it.q)+'</div>';
-          h+='<div class="cs-line"><span class="cs-l">'+lb(it.l)+'</span><div class="cs-b" id="cs-'+esc(c)+'-p'+no+'-'+esc(it.id)+'" data-k="'+esc(it.id)+'" data-v="0">'+boxes+'</div><span class="cs-rr">'+lb(it.r)+'</span></div></div>';
+          if(it.q) h+='<div class="cs-q">'+esc(String(it.q).replace(/^・\s*/,''))+'</div>';
+          h+='<div class="cs-line"><span class="cs-l">'+lb(it.l)+'</span><div class="cs-b" id="cs-'+esc(c)+'-p'+no+'-'+esc(it.id)+'" data-k="'+esc(it.id)+'" data-v="0"'+(n%2?' data-m="'+((n+1)/2)+'"':'')+'>'+boxes+'</div><span class="cs-rr">'+lb(it.r)+'</span></div></div>';
         });
         h+='</div>';
       });
