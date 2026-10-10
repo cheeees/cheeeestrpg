@@ -151,6 +151,22 @@ button.p:disabled { background: #ccc; border-color: #ccc; cursor: not-allowed; }
   background: var(--bg);
   color: var(--fg);
 }
+.ed textarea {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 7px 9px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.45;
+  background: var(--bg);
+  color: var(--fg);
+  resize: none;
+  overflow: hidden;
+  field-sizing: content;
+}
 .ed input[type=number] {
   width: 90px;
   padding: 7px 9px;
@@ -162,7 +178,7 @@ button.p:disabled { background: #ccc; border-color: #ccc; cursor: not-allowed; }
 .ed fieldset fieldset { background: #fffdf3; }
 .ed legend { font-size: 12px; font-weight: 700; color: var(--main); padding: 0 6px; }
 .ed .hd { display: flex; gap: 6px; align-items: center; margin-top: 8px; }
-.ed .hd input { flex: 1; }
+.ed .hd input, .ed .hd textarea { flex: 1; min-width: 0; }
 .ed select {
   width: 100%;
   padding: 7px 9px;
@@ -250,7 +266,7 @@ button.p:disabled { background: #ccc; border-color: #ccc; cursor: not-allowed; }
 .ed .blkhd { display: flex; gap: 6px; align-items: center; padding: 10px 12px; background: var(--soft); border-bottom: 1px solid var(--line); }
 .ed .blkhd .tag { flex: none; font-size: 11px; font-weight: 700; color: var(--on); background: var(--main); border-radius: 99px; padding: 2px 9px; white-space: nowrap; }
 .ed .blkhd .tag.none { background: var(--mut); }
-.ed .blkhd input[type=text] { flex: 1; min-width: 0; font-weight: 700; }
+.ed .blkhd input[type=text], .ed .blkhd textarea { flex: 1; min-width: 0; font-weight: 700; }
 .ed .blkhd .nohd { flex: 1; font-size: 12px; color: var(--mut); }
 .ed .blkdesc { padding: 8px 12px 0; }
 .ed .blkbody { padding: 4px 12px 2px; }
@@ -515,6 +531,17 @@ button.p:disabled { background: #ccc; border-color: #ccc; cursor: not-allowed; }
 #hw-root .cs-tbl th{width:min(calc(var(--thd,6) * 1em + 32px),15em)}
 @media(max-width:600px){
   #hw-root .cs-tbl th{width:min(calc(var(--thw,6) * 1em + 24px),11em)}
+}
+
+/* 表見出しの改行はPCでも効かせる / 例表示(placeholder)の改行ぶんの高さを確保 */
+#hw-root .cs-tbl th br.sp{display:inline}
+#hw-root .cs .cs-tx[style*="--pl"]{min-height:calc(var(--pl) * 1.5em + 16px)}
+#hw-root .cs .cs-tbl .cs-tx[style*="--pl"]{min-height:max(3.4em,calc(var(--pl) * 1.5em + 28px))}
+#hw-root .cs .cs-sr .cs-tx[style*="--pl"]{min-height:calc(var(--pl) * 1.5em + 26px)}
+#hw-root .cs .cs-evb .cs-tx[style*="--pl"]{min-height:calc(var(--pl) * 1.7em + 4px)}
+#hw-root .cs.ed .cs-evb .cs-tx[style*="--pl"]{min-height:calc(var(--pl) * 1.7em + 22px)}
+@media(max-width:600px){
+  #hw-root .cs .cs-tbl .cs-tx[style*="--pl"]{min-height:max(3.4em,calc(var(--pl) * 1.5em + 24px))}
 }
 </style>
 </head>
@@ -865,7 +892,9 @@ const ref = p => {
 };
 
 function edit() {
-  const f = (p, v, ph) => `<input type=text data-p="${p}" value="${esc(v)}" placeholder="${ph || ''}">`;
+  const f = (p, v, ph) => /(^|\.)(label|desc|ph|d)$/.test(p)
+    ? `<textarea rows="${String(v == null ? '' : v).split('\n').length}" data-p="${p}" placeholder="${ph || ''}">\n${esc(v)}</textarea>`
+    : `<input type=text data-p="${p}" value="${esc(v)}" placeholder="${ph || ''}">`;
   const ops = p => `<span class=ops><button type=button class=mini data-a=mv data-d=-1 data-p="${p}">↑</button><button type=button class=mini data-a=mv data-d=1 data-p="${p}">↓</button><button type=button class=mini data-a=del data-p="${p}">削除</button></span>`;
   if (tpl.type === 'groups') {
     const fr = (p, v, ph) => `<div class=fr>${f(p, v, ph)}</div>`;
@@ -951,6 +980,7 @@ function pubTwb(str) {
 }
 const pubTwbj = str => pubTwb(String(str == null ? '' : str).replace(/\n/g, ''));
 const pubTwj = str => pubTw(String(str == null ? '' : str).replace(/\n/g, ''));
+const plS = v => { const n = String(v == null ? '' : v).split('\n').length; return n > 1 ? ' style="--pl:' + n + '"' : ''; };   // 例表示の行数
 const pubLb = v => esc(v).replace(/\n/g, '<br class="sp">');
 function pubPreset() {   // 公開側と同じ正規化(マスの数は2〜11)
   const d = toFile(JSON.parse(JSON.stringify(tpl)), tpl.no || noOf(currentFile) || 1);
@@ -970,7 +1000,7 @@ function pubPreset() {   // 公開側と同じ正規化(マスの数は2〜11)
 function tlRow(ex, i, ro) {   // 年表の1行(出来事)。入力例は順番に使い回す
   const e = ex && ex.length ? ex[i % ex.length] : { t: '', d: '' };
   const r = ro === false ? '' : ' readonly';
-  return '<div class="cs-ev"><span class="cs-dot"></span><div class="cs-evb"><input type="text" class="cs-evt"' + r + ' placeholder="' + esc(e.t) + '"><textarea class="cs-tx" rows="1"' + r + ' placeholder="' + esc(e.d) + '"></textarea><button type="button" class="cs-evdel" title="この出来事を削除">×</button></div></div>';
+  return '<div class="cs-ev"><span class="cs-dot"></span><div class="cs-evb"><input type="text" class="cs-evt"' + r + ' placeholder="' + esc(e.t) + '"><textarea class="cs-tx" rows="1"' + r + ' placeholder="' + esc(e.d) + '"'+plS(e.d)+'></textarea><button type="button" class="cs-evdel" title="この出来事を削除">×</button></div></div>';
 }
 function tlRows(ex, n) { let h = ''; for (let i = 0; i < n; i++) h += tlRow(ex, i); return h; }
 function gpGroup(sec, stack, ro) {   // グループ1つ分(グループ名 + 項目のセット)
@@ -980,12 +1010,12 @@ function gpGroup(sec, stack, ro) {   // グループ1つ分(グループ名 + �
     (sec.items || []).forEach(it => {
       h += '<div class="cs-sr"><div class="cs-sl">' + pubLb(it.label) + '</div>' +
         (it.desc ? '<div class="cs-sd">' + pubLb(it.desc) + '</div>' : '') +
-        '<textarea class="cs-tx" rows="1"' + r + ' placeholder="' + esc(it.ph) + '"></textarea></div>';
+        '<textarea class="cs-tx" rows="1"' + r + ' placeholder="' + esc(it.ph) + '"'+plS(it.ph)+'></textarea></div>';
     });
   } else {
     h += '<table class="cs-tbl"><tbody>';
     (sec.items || []).forEach(it => {
-      h += '<tr><th>' + pubLb(it.label) + (it.desc ? '<span class="cs-d">' + pubLb(it.desc) + '</span>' : '') + '</th><td><textarea class="cs-tx" rows="1"' + r + ' placeholder="' + esc(it.ph) + '"></textarea></td></tr>';
+      h += '<tr><th>' + pubLb(it.label) + (it.desc ? '<span class="cs-d">' + pubLb(it.desc) + '</span>' : '') + '</th><td><textarea class="cs-tx" rows="1"' + r + ' placeholder="' + esc(it.ph) + '"'+plS(it.ph)+'></textarea></td></tr>';
     });
     h += '</tbody></table>';
   }
@@ -1005,7 +1035,7 @@ function pubSheet(preset) {
     window.__gp = { secs: preset.sections, stack: preset.layout === 'stack' };
     preset.sections.forEach((sec, si) => {
       let gm = 0, gmd = 0;
-      (sec.items || []).forEach(it => { gm = Math.max(gm, pubTwb(it.label)); gmd = Math.max(gmd, pubTwbj(it.label)); });
+      (sec.items || []).forEach(it => { gm = Math.max(gm, pubTwb(it.label)); gmd = Math.max(gmd, pubTwb(it.label)); });
       h += '<div class="cs-s cs-g" style="--thw:' + gm + ';--thd:' + gmd + '"><div class="cs-hh"><div class="cs-t">' + pubLb(sec.title) + '</div>' + (sec.desc ? '<div class="cs-hdd">' + pubLb(sec.desc) + '</div>' : '') + '</div>' +
         '<div class="cs-gl" data-si="' + si + '">' + gpFill(si) + '</div>' +
         '<button type="button" class="cs-gadd" data-si="' + si + '">＋ グループを追加</button></div>';
@@ -1021,20 +1051,20 @@ function pubSheet(preset) {
     });
     groups.forEach(g => {
       let gm = 0, gmd = 0;
-      g.rows.forEach(r => { gm = Math.max(gm, pubTwb(r.label)); gmd = Math.max(gmd, pubTwbj(r.label)); });
+      g.rows.forEach(r => { gm = Math.max(gm, pubTwb(r.label)); gmd = Math.max(gmd, pubTwb(r.label)); });
       h += '<div class="cs-s cs-g" style="--thw:' + gm + ';--thd:' + gmd + '">';
       if (g.head) h += '<div class="cs-hh"><div class="cs-t">' + pubLb(g.head.heading) + '</div>' + (g.head.desc ? '<div class="cs-hdd">' + pubLb(g.head.desc) + '</div>' : '') + '</div>';
       if (stack) {
         g.rows.forEach(r => {
           h += '<div class="cs-sr"><div class="cs-sl">' + pubLb(r.label) + '</div>' +
             (r.desc ? '<div class="cs-sd">' + pubLb(r.desc) + '</div>' : '') +
-            '<textarea class="cs-tx" rows="1" readonly placeholder="' + esc(r.ph) + '" data-k="' + esc(r.id) + '"></textarea></div>';
+            '<textarea class="cs-tx" rows="1" readonly placeholder="' + esc(r.ph) + '"'+plS(r.ph)+' data-k="' + esc(r.id) + '"'+plS(r.id)+'></textarea></div>';
         });
       } else if (g.rows.length) {
         h += '<table class="cs-tbl"><tbody>';
         g.rows.forEach(r => {
-          mt = Math.max(mt, pubTwb(r.label)); mtd = Math.max(mtd, pubTwbj(r.label));
-          h += '<tr><th>' + pubLb(r.label) + (r.desc ? '<span class="cs-d">' + pubLb(r.desc) + '</span>' : '') + '</th><td><textarea class="cs-tx" rows="1" readonly placeholder="' + esc(r.ph) + '" data-k="' + esc(r.id) + '"></textarea></td></tr>';
+          mt = Math.max(mt, pubTwb(r.label)); mtd = Math.max(mtd, pubTwb(r.label));
+          h += '<tr><th>' + pubLb(r.label) + (r.desc ? '<span class="cs-d">' + pubLb(r.desc) + '</span>' : '') + '</th><td><textarea class="cs-tx" rows="1" readonly placeholder="' + esc(r.ph) + '"'+plS(r.ph)+' data-k="' + esc(r.id) + '"'+plS(r.id)+'></textarea></td></tr>';
         });
         h += '</tbody></table>';
       }
@@ -1329,6 +1359,7 @@ document.addEventListener('input', e => {
   const p = e.target.dataset && e.target.dataset.p;
   if (p) {
     const [o, k] = ref(p);
+    if (e.target.tagName === 'TEXTAREA') e.target.rows = e.target.value.split('\n').length;
     o[k] = p === 'boxes' ? Math.min(15, Math.max(3, parseInt(e.target.value) || 11)) : p === 'count' ? Math.min(10, Math.max(1, parseInt(e.target.value) || 3)) : /^gsec\.\d+\.count$/.test(p) ? Math.min(5, Math.max(1, parseInt(e.target.value) || 1)) : e.target.value;
     save(); markDirty();
   }
