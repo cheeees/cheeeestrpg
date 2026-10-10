@@ -481,6 +481,18 @@ button.p:disabled { background: #ccc; border-color: #ccc; cursor: not-allowed; }
 #hw-root .cs-evdel,#hw-root .cs-tladd{display:none}
 #hw-root .cs.ed .cs-evdel{display:block;position:absolute;top:3px;right:4px;width:26px;height:26px;padding:0;border:0;border-radius:50%;background:transparent;color:var(--mut);font:inherit;font-size:18px;line-height:1;cursor:pointer}
 #hw-root .cs.ed .cs-tladd{display:inline-block;margin:10px 0 0 28px;min-height:32px;padding:5px 14px;border:1px solid var(--main);border-radius:99px;background:var(--card);color:var(--main);font:inherit;font-size:13px;cursor:pointer}
+
+/* グループ追加式(セクション → グループ → 項目) */
+#hw-root .cs-gp + .cs-gp{margin-top:30px;padding-top:24px;border-top:1px dashed var(--line)}
+#hw-root .cs-gph{position:relative}
+#hw-root .cs-gpl{display:block;width:100%;margin:0;padding:3px 8px;border:0;border-left:3px solid var(--accent);border-radius:0;background:transparent;color:var(--main);font:inherit;font-size:14px;font-weight:700;line-height:1.6;outline:none}
+#hw-root .cs-gpl::placeholder{color:#b9ad9c;opacity:1}
+#hw-root .cs.ed .cs-gpl{padding:6px 34px 6px 10px;border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:0 6px 6px 0;background:#fffaf0}
+#hw-root .cs-gph + .cs-sr{margin-top:14px}
+#hw-root .cs-gph + .cs-tbl{margin-top:14px}
+#hw-root .cs-gpdel,#hw-root .cs-gadd{display:none}
+#hw-root .cs.ed .cs-gpdel{display:block;position:absolute;top:50%;right:5px;transform:translateY(-50%);width:26px;height:26px;padding:0;border:0;border-radius:50%;background:transparent;color:var(--mut);font:inherit;font-size:18px;line-height:1;cursor:pointer}
+#hw-root .cs.ed .cs-gadd{display:inline-block;margin-top:24px;min-height:32px;padding:5px 14px;border:1px solid var(--main);border-radius:99px;background:var(--card);color:var(--main);font:inherit;font-size:13px;cursor:pointer}
 </style>
 </head>
 <body>
@@ -576,6 +588,7 @@ const strip = (v, ch) => String(v ?? '').replace(new RegExp('^' + ch + '\\s*'), 
 function allItems(t) {
   if (t.type === 'table') return t.rows;
   if (t.type === 'timeline') return [];
+  if (t.type === 'groups') { const g = []; t.gsec.forEach(x => x.items.forEach(i => g.push(i))); return g; }
   const a = [];
   t.sections.forEach(x => x.groups.forEach(g => g.items.forEach(i => a.push(i))));
   return a;
@@ -590,10 +603,17 @@ function fix(t) {   // 項目idと次の番号を整える
   return t;
 }
 function fromFile(d) {
-  const tl = d.type === 'timeline';
-  const table = !tl && (d.type === 'table' || (Array.isArray(d.rows) && !d.sections));
+  const tl = d.type === 'timeline', gp = d.type === 'groups';
+  const table = !tl && !gp && (d.type === 'table' || (Array.isArray(d.rows) && !d.sections));
   const t = {
-    type: tl ? 'timeline' : (table ? 'table' : 'slider'),
+    type: tl ? 'timeline' : gp ? 'groups' : (table ? 'table' : 'slider'),
+    gsec: gp ? (d.sections || []).map(x => ({
+      title: x.title || '',
+      desc: x.desc || '',
+      groupPh: x.groupPh || '',
+      count: Math.max(1, Math.min(5, Number(x.count) || 1)),
+      items: (x.items || []).map(i => ({ id: i.id, label: i.label || '', desc: i.desc || '', ph: i.ph || '' }))
+    })) : [],
     count: Math.max(1, Math.min(10, Number(d.count) || 3)),
     examples: (d.examples || []).map(x => ({ t: x.t || '', d: x.d || '' })),
     no: d.no || 0,
@@ -611,7 +631,7 @@ function fromFile(d) {
       ? { heading: r.heading || '', desc: r.desc || '' }
       : { id: r.id, label: r.label || '', desc: r.desc || '', ph: r.ph || '' });
     if (!t.rows.length) t.rows = [{ label: '項目' }];
-  } else if (!tl) {
+  } else if (!tl && !gp) {
     t.sections = (d.sections || []).map(x => ({
       name: x.title ?? x.name ?? '',
       groups: (x.cols || x.groups || []).map(c => ({
@@ -626,6 +646,27 @@ function fromFile(d) {
 function toFile(t, no) {
   fix(t);
   const o = { no: no || t.no || 0 };
+  if (t.type === 'groups') {
+    o.type = 'groups';
+    o.name = t.title;
+    if (t.desc) o.desc = t.desc;
+    if (t.layout === 'stack') o.layout = 'stack';
+    o.nextId = t.nextId;
+    o.sections = t.gsec.map(x => {
+      const y = { title: x.title };
+      if (x.desc) y.desc = x.desc;
+      if (x.groupPh) y.groupPh = x.groupPh;
+      y.count = x.count || 1;
+      y.items = x.items.map(i => {
+        const z = { id: i.id, label: i.label };
+        if (i.desc) z.desc = i.desc;
+        if (i.ph) z.ph = i.ph;
+        return z;
+      });
+      return y;
+    });
+    return o;
+  }
   if (t.type === 'timeline') {
     o.type = 'timeline';
     o.name = t.title;
@@ -803,11 +844,26 @@ const ref = p => {
 function edit() {
   const f = (p, v, ph) => `<input type=text data-p="${p}" value="${esc(v)}" placeholder="${ph || ''}">`;
   const ops = p => `<span class=ops><button type=button class=mini data-a=mv data-d=-1 data-p="${p}">↑</button><button type=button class=mini data-a=mv data-d=1 data-p="${p}">↓</button><button type=button class=mini data-a=del data-p="${p}">削除</button></span>`;
+  if (tpl.type === 'groups') {
+    const fr = (p, v, ph) => `<div class=fr>${f(p, v, ph)}</div>`;
+    $('#edit').innerHTML =
+    `<label>タイトル</label>${f('title', tpl.title)}
+     <label>シートの説明(任意)</label>${f('desc', tpl.desc, 'このシートの使い方など')}
+     <label>グループ内の項目のレイアウト</label><select data-p="layout"><option value=""${tpl.layout === 'stack' ? '' : ' selected'}>横並び(項目名｜入力欄)</option><option value="stack"${tpl.layout === 'stack' ? ' selected' : ''}>縦並び(項目名の下に入力欄)</option></select>` +
+    tpl.gsec.map((x, si) => `<fieldset><legend>セクション ${si + 1}</legend><div class=hd>${f(`gsec.${si}.title`, x.title, 'セクション名')}${ops(`gsec.${si}`)}</div>${fr(`gsec.${si}.desc`, x.desc, 'セクションの説明(任意)')}
+      <label>グループ名の入力例(✎編集中、グループ名の欄に薄く表示)</label>${f(`gsec.${si}.groupPh`, x.groupPh, '例: 左手の火傷痕')}
+      <label>最初に並べるグループの数(1〜5)</label><input type=number min=1 max=5 data-p="gsec.${si}.count" value="${x.count}">
+      <fieldset><legend>グループの中身(✎編集中に「グループを追加」すると、この項目のセットが増えます)</legend>` +
+      x.items.map((it, ii) => { const b = `gsec.${si}.items.${ii}`; return `<fieldset><legend>項目 ${ii + 1}</legend><div class=hd>${f(b + '.label', it.label, '項目名')}${ops(b)}</div>${fr(b + '.desc', it.desc, '項目の説明(任意)')}${fr(b + '.ph', it.ph, '入力例(未入力のとき薄く表示)')}</fieldset>`; }).join('') +
+      `<div style="margin-top:8px"><button type=button class=mini data-a=addgi data-p="gsec.${si}.items">＋項目を追加</button></div></fieldset></fieldset>`).join('') +
+    `<div style="margin-top:12px"><button type=button class=mini data-a=addgs data-p=gsec>＋セクションを追加</button></div>`;
+    return;
+  }
   if (tpl.type === 'timeline') {
     const fr = (p, v, ph) => `<div class=fr>${f(p, v, ph)}</div>`;
     $('#edit').innerHTML =
     `<label>タイトル</label>${f('title', tpl.title)}
-     <label>シートの説明(任意・✎編集中だけ表示)</label>${f('desc', tpl.desc, 'このシートの使い方など')}
+     <label>シートの説明(任意)</label>${f('desc', tpl.desc, 'このシートの使い方など')}
      <label>最初に並べる出来事の数(1〜10)</label><input type=number min=1 max=10 data-p=count value="${tpl.count}">
      <fieldset><legend>入力例(未入力のとき薄く表示。上から順に使い、足りなければ繰り返します)</legend>` +
     tpl.examples.map((x, i) => `<fieldset><legend>例 ${i + 1}</legend><div class=hd>${f(`examples.${i}.t`, x.t, '見出しの例(年齢・出来事など)')}${ops(`examples.${i}`)}</div>${fr(`examples.${i}.d`, x.d, '説明の例')}</fieldset>`).join('') +
@@ -818,7 +874,7 @@ function edit() {
     const fr = (p, v, ph) => `<div class=fr>${f(p, v, ph)}</div>`;
     $('#edit').innerHTML =
     `<label>タイトル</label>${f('title', tpl.title)}
-     <label>シートの説明(任意・✎編集中だけ表示)</label>${f('desc', tpl.desc, 'このシートの使い方など')}
+     <label>シートの説明(任意)</label>${f('desc', tpl.desc, 'このシートの使い方など')}
      <label>レイアウト</label><select data-p="layout"><option value=""${tpl.layout === 'stack' ? '' : ' selected'}>横並び(項目名｜入力欄)</option><option value="stack"${tpl.layout === 'stack' ? ' selected' : ''}>縦並び(項目名の下に入力欄)</option></select>
      <fieldset><legend>項目(自由記入の表)</legend>` +
     tpl.rows.map((r, i) => isH(r)
@@ -830,7 +886,7 @@ function edit() {
   }
   $('#edit').innerHTML =
   `<label>タイトル</label>${f('title', tpl.title)}
-   <label>シートの説明(任意・✎編集中だけ表示)</label>${f('desc', tpl.desc, 'このシートの使い方など')}
+   <label>シートの説明(任意)</label>${f('desc', tpl.desc, 'このシートの使い方など')}
    <label>リセットボタンの文字</label>${f('reset', tpl.reset)}
    <label>チェックのマスの数(3〜15)</label><input type=number min=3 max=15 data-p=boxes value="${tpl.boxes}">` +
   tpl.sections.map((s, si) => `<fieldset><legend>セクション ${si + 1}</legend><div class=hd>${f(`sections.${si}.name`, s.name, 'セクション名')}${ops(`sections.${si}`)}</div>` +
@@ -856,7 +912,7 @@ function pubPreset() {   // 公開側と同じ正規化(マスの数は2〜11)
   const d = toFile(JSON.parse(JSON.stringify(tpl)), tpl.no || noOf(currentFile) || 1);
   return {
     no: d.no || 1,
-    type: d.type === 'table' ? 'table' : (d.type === 'timeline' ? 'timeline' : 'slider'),
+    type: d.type === 'table' ? 'table' : (d.type === 'timeline' ? 'timeline' : (d.type === 'groups' ? 'groups' : 'slider')),
     count: d.count || 3,
     examples: Array.isArray(d.examples) ? d.examples : [],
     name: d.name || ('シート' + (d.no || 1)),
@@ -873,11 +929,43 @@ function tlRow(ex, i, ro) {   // 年表の1行(出来事)。入力例は順番�
   return '<div class="cs-ev"><span class="cs-dot"></span><div class="cs-evb"><input type="text" class="cs-evt"' + r + ' placeholder="' + esc(e.t) + '"><textarea class="cs-tx" rows="1"' + r + ' placeholder="' + esc(e.d) + '"></textarea><button type="button" class="cs-evdel" title="この出来事を削除">×</button></div></div>';
 }
 function tlRows(ex, n) { let h = ''; for (let i = 0; i < n; i++) h += tlRow(ex, i); return h; }
+function gpGroup(sec, stack, ro) {   // グループ1つ分(グループ名 + 項目のセット)
+  const r = ro === false ? '' : ' readonly';
+  let h = '<div class="cs-gp"><div class="cs-gph"><input type="text" class="cs-gpl"' + r + ' placeholder="' + esc(sec.groupPh) + '"><button type="button" class="cs-gpdel" title="このグループを削除">×</button></div>';
+  if (stack) {
+    (sec.items || []).forEach(it => {
+      h += '<div class="cs-sr"><div class="cs-sl">' + pubLb(it.label) + '</div>' +
+        (it.desc ? '<div class="cs-sd">' + pubLb(it.desc) + '</div>' : '') +
+        '<textarea class="cs-tx" rows="1"' + r + ' placeholder="' + esc(it.ph) + '"></textarea></div>';
+    });
+  } else {
+    h += '<table class="cs-tbl"><tbody>';
+    (sec.items || []).forEach(it => {
+      h += '<tr><th>' + pubLb(it.label) + (it.desc ? '<span class="cs-d">' + pubLb(it.desc) + '</span>' : '') + '</th><td><textarea class="cs-tx" rows="1"' + r + ' placeholder="' + esc(it.ph) + '"></textarea></td></tr>';
+    });
+    h += '</tbody></table>';
+  }
+  return h + '</div>';
+}
+function gpFill(si) {   // セクションsiの初期グループ群
+  const g = window.__gp, sec = g.secs[si];
+  let h = '';
+  for (let k = 0; k < (sec.count || 1); k++) h += gpGroup(sec, g.stack);
+  return h;
+}
 function pubSheet(preset) {
   const no = preset.no, n = preset.scale, c = 'pv';
   const boxes = new Array(n + 1).join('<i></i>');
   let h = '', ml = 3, mr = 3, mt = 0, mld = 3, mrd = 3, mtd = 0;
-  if (preset.type === 'timeline') {
+  if (preset.type === 'groups') {
+    window.__gp = { secs: preset.sections, stack: preset.layout === 'stack' };
+    preset.sections.forEach((sec, si) => {
+      (sec.items || []).forEach(it => { mt = Math.max(mt, pubTw(it.label)); mtd = Math.max(mtd, pubTwj(it.label)); });
+      h += '<div class="cs-s cs-g"><div class="cs-hh"><div class="cs-t">' + pubLb(sec.title) + '</div>' + (sec.desc ? '<div class="cs-hdd">' + pubLb(sec.desc) + '</div>' : '') + '</div>' +
+        '<div class="cs-gl" data-si="' + si + '">' + gpFill(si) + '</div>' +
+        '<button type="button" class="cs-gadd" data-si="' + si + '">＋ グループを追加</button></div>';
+    });
+  } else if (preset.type === 'timeline') {
     window.__tl = { ex: preset.examples, n: preset.count };
     h += '<div class="cs-tl">' + tlRows(preset.examples, preset.count) + '</div><button type="button" class="cs-tladd">＋ 出来事を追加</button>';
   } else if (preset.type === 'table') {
@@ -939,7 +1027,7 @@ function pvMode(on) {
   const w = $('#pvw'); if (!w) return;
   w.classList.toggle('ed', on);
   const sh = w.querySelector('.cs'); sh.classList.toggle('ed', on);
-  sh.querySelectorAll('.cs-tx,.cs-evt').forEach(t => { t.readOnly = !on; });
+  sh.querySelectorAll('.cs-tx,.cs-evt,.cs-gpl').forEach(t => { t.readOnly = !on; });
   w.querySelector('.cs-edit').hidden = on;
   ['cs-addsheet', 'cs-del', 'cs-save', 'cs-cancel'].forEach(k => { w.querySelector('.' + k).hidden = !on; });
   w.querySelector('.cs-msg').textContent = on ? (sh.querySelector('.cs-tx') ? '各項目に自由に入力できます' : 'マスをクリックで塗りつぶし（もう一度押すと解除）') : '';
@@ -948,6 +1036,12 @@ document.addEventListener('click', e => {
   const t = e.target;
   if (!t.closest || !t.closest('#pvw')) return;
   if (t.classList.contains('cs-edit')) { pvMode(true); return; }
+  if (t.classList.contains('cs-gadd')) {
+    const box = $('#pvw .cs-gl[data-si="' + t.dataset.si + '"]'), g = window.__gp;
+    if (box && g) box.insertAdjacentHTML('beforeend', gpGroup(g.secs[+t.dataset.si], g.stack, false));
+    return;
+  }
+  if (t.classList.contains('cs-gpdel')) { const gp = t.closest('.cs-gp'); if (gp) gp.remove(); return; }
   if (t.classList.contains('cs-tladd')) {
     const box = $('#pvw .cs-tl');
     box.insertAdjacentHTML('beforeend', tlRow((window.__tl || {}).ex, box.children.length, false));
@@ -956,6 +1050,7 @@ document.addEventListener('click', e => {
   if (t.classList.contains('cs-evdel')) { const ev = t.closest('.cs-ev'); if (ev) ev.remove(); return; }
   if (t.classList.contains('cs-cancel')) {
     const tlb = $('#pvw .cs-tl'); if (tlb && window.__tl) tlb.innerHTML = tlRows(window.__tl.ex, window.__tl.n);
+    if (window.__gp) $('#pvw').querySelectorAll('.cs-gl').forEach(b => { b.innerHTML = gpFill(+b.dataset.si); });
     $('#pvw').querySelectorAll('.cs-b').forEach(b => { b.dataset.v = '0'; });
     $('#pvw').querySelectorAll('.cs-tx,.cs-evt').forEach(x => { x.value = ''; });
     pvMode(false); return;
@@ -1091,7 +1186,7 @@ function renderCards(containerId, list, showFile) {
     card.className = 'preset-card';
     card.innerHTML =
       '<div class="title">' + esc(item.data.name || item.data.title || '無題のプリセット') + '</div>' +
-      '<span class="badge">' + (item.data.type === 'table' ? '表(自由記入)' : item.data.type === 'timeline' ? '年表(出来事を追加)' : 'スライダー(段階)') + '</span>' +
+      '<span class="badge">' + (item.data.type === 'table' ? '表(自由記入)' : item.data.type === 'timeline' ? '年表(出来事を追加)' : item.data.type === 'groups' ? 'グループ追加式' : 'スライダー(段階)') + '</span>' +
       (showFile ? '<span class="badge">' + esc(item.file) + '</span>' : '');
     card.addEventListener('click', function () {
       document.querySelectorAll('.preset-card').forEach(c => c.classList.remove('selected'));
@@ -1144,6 +1239,8 @@ document.addEventListener('click', e => {
     if (a === 'del' && confirm('削除しますか?')) o.splice(+k, 1);
     if (a === 'addh') o[k].push({ heading: '見出し', desc: '' });
     if (a === 'addex') o[k].push({ t: '', d: '' });
+    if (a === 'addgi') o[k].push({ id: 'i' + (tpl.nextId++), label: '項目', desc: '', ph: '' });
+    if (a === 'addgs') o[k].push({ title: '新しいセクション', desc: '', groupPh: '', count: 1, items: [{ id: 'i' + (tpl.nextId++), label: '項目', desc: '', ph: '' }] });
     if (a === 'add') {
       const it = () => ({ id: 'i' + (tpl.nextId++), q: '項目', l: '左', r: '右' });
       if (k === 'rows') o[k].push({ id: 'i' + (tpl.nextId++), label: '項目', desc: '', ph: '' });
@@ -1161,7 +1258,7 @@ document.addEventListener('input', e => {
   const p = e.target.dataset && e.target.dataset.p;
   if (p) {
     const [o, k] = ref(p);
-    o[k] = p === 'boxes' ? Math.min(15, Math.max(3, parseInt(e.target.value) || 11)) : p === 'count' ? Math.min(10, Math.max(1, parseInt(e.target.value) || 3)) : e.target.value;
+    o[k] = p === 'boxes' ? Math.min(15, Math.max(3, parseInt(e.target.value) || 11)) : p === 'count' ? Math.min(10, Math.max(1, parseInt(e.target.value) || 3)) : /^gsec\.\d+\.count$/.test(p) ? Math.min(5, Math.max(1, parseInt(e.target.value) || 1)) : e.target.value;
     save(); markDirty();
   }
 });
