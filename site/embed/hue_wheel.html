@@ -425,6 +425,17 @@
 @media(max-width:600px){
   #hw-root .cs-tbl th{width:min(calc(var(--thw,6) * 1em + 24px),11em)}
 }
+
+/* 表見出しの改行はPCでも効かせる / 例表示(placeholder)の改行ぶんの高さを確保 */
+#hw-root .cs-tbl th br.sp{display:inline}
+#hw-root .cs .cs-tx[style*="--pl"]{min-height:calc(var(--pl) * 1.5em + 16px)}
+#hw-root .cs .cs-tbl .cs-tx[style*="--pl"]{min-height:max(3.4em,calc(var(--pl) * 1.5em + 28px))}
+#hw-root .cs .cs-sr .cs-tx[style*="--pl"]{min-height:calc(var(--pl) * 1.5em + 26px)}
+#hw-root .cs .cs-evb .cs-tx[style*="--pl"]{min-height:calc(var(--pl) * 1.7em + 4px)}
+#hw-root .cs.ed .cs-evb .cs-tx[style*="--pl"]{min-height:calc(var(--pl) * 1.7em + 22px)}
+@media(max-width:600px){
+  #hw-root .cs .cs-tbl .cs-tx[style*="--pl"]{min-height:max(3.4em,calc(var(--pl) * 1.5em + 24px))}
+}
 </style>
 <!-- ▼▼▼ 【ここに貼り付けてね】ここから ▼▼▼
      編集モードの「コードを書き出す」で出たコードを、この行と「ここまで」の行の間に丸ごと貼り付けてください。
@@ -650,12 +661,13 @@ function setToken(t){
   }
   function twbj(str){ return twb(String(str==null?'':str).replace(/\n/g,'')); }
   function twj(str){ return tw(String(str==null?'':str).replace(/\n/g,'')); }   // 改行なしで1行に並べたときの幅(PC用)
+  function plS(v){ var n=String(v==null?'':v).split('\n').length; return n>1?' style="--pl:'+n+'"':''; }   // 例表示の行数
   function lb(v){ return esc(v).replace(/\n/g,'<br class="sp">'); }          // \n はスマホだけ改行
   /* 年表の1行(出来事)。入力例(placeholder)は順番に使い回す */
   function tlRow(ex,i,ro,v){
     var p=ex&&ex.length?ex[i%ex.length]:{t:'',d:''}, r=ro===false?'':' readonly';
     v=v||{};
-    return '<div class="cs-ev"><span class="cs-dot"></span><div class="cs-evb"><input type="text" class="cs-evt"'+r+' placeholder="'+esc(p.t)+'" value="'+esc(v.t)+'"><textarea class="cs-tx" rows="1"'+r+' placeholder="'+esc(p.d)+'">\n'+esc(v.d)+'</textarea><button type="button" class="cs-evdel" title="この出来事を削除">×</button></div></div>';
+    return '<div class="cs-ev"><span class="cs-dot"></span><div class="cs-evb"><input type="text" class="cs-evt"'+r+' placeholder="'+esc(p.t)+'" value="'+esc(v.t)+'"><textarea class="cs-tx" rows="1"'+r+' placeholder="'+esc(p.d)+'"'+plS(p.d)+'>\n'+esc(v.d)+'</textarea><button type="button" class="cs-evdel" title="この出来事を削除">×</button></div></div>';
   }
   function tlRows(ex,n,list){ var h='',i; if(list){ for(i=0;i<list.length;i++) h+=tlRow(ex,i,true,list[i]); } else { for(i=0;i<n;i++) h+=tlRow(ex,i,true); } return h; }
   /* グループ1つ分(グループ名 + 項目のセット) */
@@ -664,7 +676,7 @@ function setToken(t){
     h='<div class="cs-gp"><div class="cs-gph"><input type="text" class="cs-gpl"'+r+' placeholder="'+esc(sec.groupPh)+'" value="'+esc(v&&v.n)+'"><button type="button" class="cs-gpdel" title="このグループを削除">×</button></div>';
     if(!stack) h+='<table class="cs-tbl"><tbody>';
     items.forEach(function(it,ii){
-      var id=it.id||('i'+(ii+1)), ta='<textarea class="cs-tx" rows="1"'+r+' data-i="'+esc(id)+'" placeholder="'+esc(it.ph)+'">\n'+esc(vv[id])+'</textarea>';
+      var id=it.id||('i'+(ii+1)), ta='<textarea class="cs-tx" rows="1"'+r+' data-i="'+esc(id)+'"'+' placeholder="'+esc(it.ph)+'"'+plS(it.ph)+'>\n'+esc(vv[id])+'</textarea>';
       if(stack) h+='<div class="cs-sr"><div class="cs-sl">'+lb(it.label)+'</div>'+(it.desc?'<div class="cs-sd">'+lb(it.desc)+'</div>':'')+ta+'</div>';
       else h+='<tr><th>'+lb(it.label)+(it.desc?'<span class="cs-d">'+lb(it.desc)+'</span>':'')+'</th><td>'+ta+'</td></tr>';
     });
@@ -682,7 +694,7 @@ function setToken(t){
     if(preset.type==='groups'){
       (preset.sections||[]).forEach(function(sec,si){
         var gm=0, gmd=0;
-        (sec.items||[]).forEach(function(it){ gm=Math.max(gm,twb(it.label)); gmd=Math.max(gmd,twbj(it.label)); });
+        (sec.items||[]).forEach(function(it){ gm=Math.max(gm,twb(it.label)); gmd=Math.max(gmd,twb(it.label)); });
         h+='<div class="cs-s cs-g" style="--thw:'+gm+';--thd:'+gmd+'"><div class="cs-hh"><div class="cs-t">'+lb(sec.title)+'</div>'+(sec.desc?'<div class="cs-hdd">'+lb(sec.desc)+'</div>':'')+'</div>'
           +'<div class="cs-gl" data-si="'+si+'">'+gpList(sec,stack)+'</div>'
           +'<button type="button" class="cs-gadd" data-si="'+si+'">＋ グループを追加</button></div>';
@@ -699,19 +711,19 @@ function setToken(t){
       });
       groups.forEach(function(g){
         var gm=0, gmd=0;
-        g.rows.forEach(function(r){ gm=Math.max(gm,twb(r.label)); gmd=Math.max(gmd,twbj(r.label)); });
+        g.rows.forEach(function(r){ gm=Math.max(gm,twb(r.label)); gmd=Math.max(gmd,twb(r.label)); });
         h+='<div class="cs-s cs-g" style="--thw:'+gm+';--thd:'+gmd+'">';
         if(g.head) h+='<div class="cs-hh"><div class="cs-t">'+lb(g.head.heading)+'</div>'+(g.head.desc?'<div class="cs-hdd">'+lb(g.head.desc)+'</div>':'')+'</div>';
         if(stack){
           g.rows.forEach(function(r){
             h+='<div class="cs-sr"><div class="cs-sl">'+lb(r.label)+'</div>'+(r.desc?'<div class="cs-sd">'+lb(r.desc)+'</div>':'')
-              +'<textarea class="cs-tx" rows="1" readonly placeholder="'+esc(r.ph)+'" data-k="'+esc(r.id)+'" id="cs-'+esc(c)+'-p'+no+'-'+esc(r.id)+'"></textarea></div>';
+              +'<textarea class="cs-tx" rows="1" readonly placeholder="'+esc(r.ph)+'"'+plS(r.ph)+' data-k="'+esc(r.id)+'"'+plS(r.id)+' id="cs-'+esc(c)+'-p'+no+'-'+esc(r.id)+'"'+plS(r.id)+'></textarea></div>';
           });
         }else if(g.rows.length){
           h+='<table class="cs-tbl"><tbody>';
           g.rows.forEach(function(r){
-            mt=Math.max(mt,twb(r.label)); mtd=Math.max(mtd,twbj(r.label));
-            h+='<tr><th>'+lb(r.label)+(r.desc?'<span class="cs-d">'+lb(r.desc)+'</span>':'')+'</th><td><textarea class="cs-tx" rows="1" readonly placeholder="'+esc(r.ph)+'" data-k="'+esc(r.id)+'" id="cs-'+esc(c)+'-p'+no+'-'+esc(r.id)+'"></textarea></td></tr>';
+            mt=Math.max(mt,twb(r.label)); mtd=Math.max(mtd,twb(r.label));
+            h+='<tr><th>'+lb(r.label)+(r.desc?'<span class="cs-d">'+lb(r.desc)+'</span>':'')+'</th><td><textarea class="cs-tx" rows="1" readonly placeholder="'+esc(r.ph)+'"'+plS(r.ph)+' data-k="'+esc(r.id)+'"'+plS(r.id)+' id="cs-'+esc(c)+'-p'+no+'-'+esc(r.id)+'"'+plS(r.id)+'></textarea></td></tr>';
           });
           h+='</tbody></table>';
         }
