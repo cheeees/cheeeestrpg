@@ -421,9 +421,9 @@
 #hw-root .cs.ed .cs-gadd{display:inline-block;margin-top:24px;min-height:32px;padding:5px 14px;border:1px solid var(--main);border-radius:99px;background:var(--card);color:var(--main);font:inherit;font-size:13px;cursor:pointer}
 /* 表の見出し列の幅: ブロックごとに --thd(PC)/--thw(スマホ) で計算。
    %を含む min() は固定レイアウトの表で無効になる(列が等分される)ので、絶対値だけで上限をかける */
-#hw-root .cs-tbl th{width:min(calc(var(--thd,6) * 1em + 24px),15em)}
+#hw-root .cs-tbl th{width:min(calc(var(--thd,6) * 1em + 32px),15em)}
 @media(max-width:600px){
-  #hw-root .cs-tbl th{width:min(calc(var(--thw,6) * 1em + 14px),8.5em)}
+  #hw-root .cs-tbl th{width:min(calc(var(--thw,6) * 1em + 24px),11em)}
 }
 </style>
 <!-- ▼▼▼ 【ここに貼り付けてね】ここから ▼▼▼
@@ -639,6 +639,16 @@ function setToken(t){
     });
     return m;
   }
+  // 表の見出し列用: 英数字の種類ごとに幅を見積もる(折り返し防止)
+  function twb(str){
+    var m=0;
+    String(str==null?'':str).split('\n').forEach(function(line){
+      var w=0; for(var i=0;i<line.length;i++){ var ch=line.charAt(i), c=line.charCodeAt(i); w+=c<256?(/[A-Z0-9]/.test(ch)?0.75:/[a-z]/.test(ch)?0.64:0.55):1; }
+      if(w>m) m=w;
+    });
+    return m;
+  }
+  function twbj(str){ return twb(String(str==null?'':str).replace(/\n/g,'')); }
   function twj(str){ return tw(String(str==null?'':str).replace(/\n/g,'')); }   // 改行なしで1行に並べたときの幅(PC用)
   function lb(v){ return esc(v).replace(/\n/g,'<br class="sp">'); }          // \n はスマホだけ改行
   /* 年表の1行(出来事)。入力例(placeholder)は順番に使い回す */
@@ -672,7 +682,7 @@ function setToken(t){
     if(preset.type==='groups'){
       (preset.sections||[]).forEach(function(sec,si){
         var gm=0, gmd=0;
-        (sec.items||[]).forEach(function(it){ gm=Math.max(gm,tw(it.label)); gmd=Math.max(gmd,twj(it.label)); });
+        (sec.items||[]).forEach(function(it){ gm=Math.max(gm,twb(it.label)); gmd=Math.max(gmd,twbj(it.label)); });
         h+='<div class="cs-s cs-g" style="--thw:'+gm+';--thd:'+gmd+'"><div class="cs-hh"><div class="cs-t">'+lb(sec.title)+'</div>'+(sec.desc?'<div class="cs-hdd">'+lb(sec.desc)+'</div>':'')+'</div>'
           +'<div class="cs-gl" data-si="'+si+'">'+gpList(sec,stack)+'</div>'
           +'<button type="button" class="cs-gadd" data-si="'+si+'">＋ グループを追加</button></div>';
@@ -689,7 +699,7 @@ function setToken(t){
       });
       groups.forEach(function(g){
         var gm=0, gmd=0;
-        g.rows.forEach(function(r){ gm=Math.max(gm,tw(r.label)); gmd=Math.max(gmd,twj(r.label)); });
+        g.rows.forEach(function(r){ gm=Math.max(gm,twb(r.label)); gmd=Math.max(gmd,twbj(r.label)); });
         h+='<div class="cs-s cs-g" style="--thw:'+gm+';--thd:'+gmd+'">';
         if(g.head) h+='<div class="cs-hh"><div class="cs-t">'+lb(g.head.heading)+'</div>'+(g.head.desc?'<div class="cs-hdd">'+lb(g.head.desc)+'</div>':'')+'</div>';
         if(stack){
@@ -700,7 +710,7 @@ function setToken(t){
         }else if(g.rows.length){
           h+='<table class="cs-tbl"><tbody>';
           g.rows.forEach(function(r){
-            mt=Math.max(mt,tw(r.label)); mtd=Math.max(mtd,twj(r.label));
+            mt=Math.max(mt,twb(r.label)); mtd=Math.max(mtd,twbj(r.label));
             h+='<tr><th>'+lb(r.label)+(r.desc?'<span class="cs-d">'+lb(r.desc)+'</span>':'')+'</th><td><textarea class="cs-tx" rows="1" readonly placeholder="'+esc(r.ph)+'" data-k="'+esc(r.id)+'" id="cs-'+esc(c)+'-p'+no+'-'+esc(r.id)+'"></textarea></td></tr>';
           });
           h+='</tbody></table>';
