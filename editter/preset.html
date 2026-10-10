@@ -163,6 +163,17 @@ button.p:disabled { background: #ccc; border-color: #ccc; cursor: not-allowed; }
 .ed legend { font-size: 12px; font-weight: 700; color: var(--main); padding: 0 6px; }
 .ed .hd { display: flex; gap: 6px; align-items: center; margin-top: 8px; }
 .ed .hd input { flex: 1; }
+.ed select {
+  width: 100%;
+  padding: 7px 9px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 14px;
+  background: var(--bg);
+  color: var(--fg);
+}
+.ed .fr { margin-top: 6px; }
 .ed .it { display: grid; grid-template-columns: 1.6fr 1fr 1fr auto; gap: 6px; align-items: center; margin-top: 6px; }
 .ed .mini {
   padding: 5px 8px;
@@ -421,6 +432,20 @@ button.p:disabled { background: #ccc; border-color: #ccc; cursor: not-allowed; }
   #hw-root .csw .cs-ctl .cs-key,#hw-root .csw.ed .cs-ctl .cs-key{padding:5px clamp(9px,2.6vw,14px)}
   #hw-root .csw.ed .cs-ctl button{flex:1 0 auto}
 }
+
+/* ===== 説明文 / 見出し行 / 縦並び(stack)レイアウト / 入力例(placeholder) ===== */
+#hw-root .cs-desc{margin:4px 0 12px;font-size:12px;line-height:1.7;color:var(--mut)}
+#hw-root .cs-tx::placeholder{color:#b9ad9c;opacity:1}
+#hw-root .cs-hd{padding:7px 10px;background:var(--soft);border-left:4px solid var(--accent);font-size:13px;font-weight:700;color:var(--main);text-align:left;line-height:1.5}
+#hw-root .cs-hd .cs-hdd{display:block;margin-top:2px;font-size:11px;font-weight:400;color:var(--mut);line-height:1.6}
+#hw-root .cs-tbl th .cs-d{display:block;margin-top:3px;font-size:10.5px;font-weight:400;color:var(--mut);line-height:1.4}
+#hw-root .cs-stk .cs-hd{margin:24px 0 2px}
+#hw-root .cs-stk .cs-hd:first-child{margin-top:4px}
+#hw-root .cs-sr{margin-top:12px}
+#hw-root .cs-sl{font-size:13px;font-weight:600;color:var(--fg);line-height:1.5;white-space:pre-line}
+#hw-root .cs-sd{margin-top:1px;font-size:11px;color:var(--mut);line-height:1.6}
+#hw-root .cs-sr .cs-tx{margin-top:4px;border:1px solid var(--line);border-radius:6px;padding:8px 10px;min-height:3.4em}
+#hw-root .cs.ed .cs-sr .cs-tx,#hw-root .cs.ed .cs-sr .cs-tx:focus{background:#fffaf0}
 </style>
 </head>
 <body>
@@ -519,8 +544,9 @@ function allItems(t) {
   t.sections.forEach(x => x.groups.forEach(g => g.items.forEach(i => a.push(i))));
   return a;
 }
+function isH(r) { return !!r && r.heading !== undefined; }   // 見出し行(idなし)
 function fix(t) {   // 項目idと次の番号を整える
-  const items = allItems(t);
+  const items = allItems(t).filter(i => !isH(i));
   let n = (t.nextId || 1) - 1;
   items.forEach(i => { const m = /^i(\d+)$/.exec(i.id || ''); if (m) n = Math.max(n, +m[1]); });
   items.forEach(i => { if (!i.id) i.id = 'i' + (++n); });
@@ -535,12 +561,16 @@ function fromFile(d) {
     title: d.name || d.title || '無題のシート',
     boxes: d.scale || d.boxes || 11,
     reset: d.reset || 'チェックをリセット',
+    desc: d.desc || '',
+    layout: d.layout === 'stack' ? 'stack' : '',
     nextId: d.nextId || 1,
     sections: [],
     rows: []
   };
   if (table) {
-    t.rows = (d.rows || []).map(r => ({ id: r.id, label: r.label || '' }));
+    t.rows = (d.rows || []).map(r => isH(r)
+      ? { heading: r.heading || '', desc: r.desc || '' }
+      : { id: r.id, label: r.label || '', desc: r.desc || '', ph: r.ph || '' });
     if (!t.rows.length) t.rows = [{ label: '項目' }];
   } else {
     t.sections = (d.sections || []).map(x => ({
@@ -560,11 +590,20 @@ function toFile(t, no) {
   if (t.type === 'table') {
     o.type = 'table';
     o.name = t.title;
+    if (t.desc) o.desc = t.desc;
+    if (t.layout === 'stack') o.layout = 'stack';
     o.nextId = t.nextId;
-    o.rows = t.rows.map(r => ({ id: r.id, label: r.label }));
+    o.rows = t.rows.map(r => {
+      if (isH(r)) { const h = { heading: r.heading }; if (r.desc) h.desc = r.desc; return h; }
+      const x = { id: r.id, label: r.label };
+      if (r.desc) x.desc = r.desc;
+      if (r.ph) x.ph = r.ph;
+      return x;
+    });
     return o;
   }
   o.name = t.title;
+  if (t.desc) o.desc = t.desc;
   o.scale = t.boxes;
   if (t.reset && t.reset !== 'チェックをリセット') o.reset = t.reset;
   o.nextId = t.nextId;
@@ -718,14 +757,22 @@ function edit() {
   const f = (p, v, ph) => `<input type=text data-p="${p}" value="${esc(v)}" placeholder="${ph || ''}">`;
   const ops = p => `<span class=ops><button type=button class=mini data-a=mv data-d=-1 data-p="${p}">↑</button><button type=button class=mini data-a=mv data-d=1 data-p="${p}">↓</button><button type=button class=mini data-a=del data-p="${p}">削除</button></span>`;
   if (tpl.type === 'table') {
+    const fr = (p, v, ph) => `<div class=fr>${f(p, v, ph)}</div>`;
     $('#edit').innerHTML =
-    `<label>タイトル</label>${f('title', tpl.title)}<fieldset><legend>項目(自由記入の表)</legend>` +
-    tpl.rows.map((r, i) => `<div class=hd>${f(`rows.${i}.label`, r.label, '項目名')}${ops(`rows.${i}`)}</div>`).join('') +
-    `<div style="margin-top:8px"><button type=button class=mini data-a=add data-p=rows>＋項目を追加</button></div></fieldset>`;
+    `<label>タイトル</label>${f('title', tpl.title)}
+     <label>シートの説明(タイトルの下に表示。空欄なら非表示)</label>${f('desc', tpl.desc, 'このシートの使い方など')}
+     <label>レイアウト</label><select data-p="layout"><option value=""${tpl.layout === 'stack' ? '' : ' selected'}>横並び(項目名｜入力欄)</option><option value="stack"${tpl.layout === 'stack' ? ' selected' : ''}>縦並び(項目名の下に入力欄)</option></select>
+     <fieldset><legend>項目(自由記入の表)</legend>` +
+    tpl.rows.map((r, i) => isH(r)
+      ? `<fieldset><legend>見出し</legend><div class=hd>${f(`rows.${i}.heading`, r.heading, '見出し')}${ops(`rows.${i}`)}</div>${fr(`rows.${i}.desc`, r.desc, '見出しの説明(任意)')}</fieldset>`
+      : `<fieldset><legend>項目</legend><div class=hd>${f(`rows.${i}.label`, r.label, '項目名')}${ops(`rows.${i}`)}</div>${fr(`rows.${i}.desc`, r.desc, '項目の説明(任意)')}${fr(`rows.${i}.ph`, r.ph, '入力例(未入力のとき薄く表示)')}</fieldset>`
+    ).join('') +
+    `<div style="margin-top:8px"><button type=button class=mini data-a=add data-p=rows>＋項目を追加</button> <button type=button class=mini data-a=addh data-p=rows>＋見出しを追加</button></div></fieldset>`;
     return;
   }
   $('#edit').innerHTML =
   `<label>タイトル</label>${f('title', tpl.title)}
+   <label>シートの説明(タイトルの下に表示。空欄なら非表示)</label>${f('desc', tpl.desc, 'このシートの使い方など')}
    <label>リセットボタンの文字</label>${f('reset', tpl.reset)}
    <label>チェックのマスの数(3〜15)</label><input type=number min=3 max=15 data-p=boxes value="${tpl.boxes}">` +
   tpl.sections.map((s, si) => `<fieldset><legend>セクション ${si + 1}</legend><div class=hd>${f(`sections.${si}.name`, s.name, 'セクション名')}${ops(`sections.${si}`)}</div>` +
@@ -753,6 +800,8 @@ function pubPreset() {   // 公開側と同じ正規化(マスの数は2〜11)
     no: d.no || 1,
     type: d.type === 'table' ? 'table' : 'slider',
     name: d.name || ('シート' + (d.no || 1)),
+    desc: d.desc || '',
+    layout: d.layout === 'stack' ? 'stack' : '',
     scale: Math.max(2, Math.min(11, Number(d.scale) || 11)),
     sections: Array.isArray(d.sections) ? d.sections : [],
     rows: Array.isArray(d.rows) ? d.rows : []
@@ -762,11 +811,27 @@ function pubSheet(preset) {
   const no = preset.no, n = preset.scale, c = 'pv';
   const boxes = new Array(n + 1).join('<i></i>');
   let h = '', ml = 3, mr = 3, mt = 0, mld = 3, mrd = 3, mtd = 0;
-  if (preset.type === 'table') {
+  if (preset.type === 'table' && preset.layout === 'stack') {
+    h += '<div class="cs-stk">';
+    preset.rows.forEach(r => {
+      if (r.heading !== undefined) {
+        h += '<div class="cs-hd">' + pubLb(r.heading) + (r.desc ? '<span class="cs-hdd">' + pubLb(r.desc) + '</span>' : '') + '</div>';
+        return;
+      }
+      h += '<div class="cs-sr"><div class="cs-sl">' + pubLb(r.label) + '</div>' +
+        (r.desc ? '<div class="cs-sd">' + pubLb(r.desc) + '</div>' : '') +
+        '<textarea class="cs-tx" rows="1" readonly placeholder="' + esc(r.ph) + '" data-k="' + esc(r.id) + '"></textarea></div>';
+    });
+    h += '</div>';
+  } else if (preset.type === 'table') {
     h += '<table class="cs-tbl"><tbody>';
     preset.rows.forEach(r => {
+      if (r.heading !== undefined) {
+        h += '<tr><td colspan="2" class="cs-hd">' + pubLb(r.heading) + (r.desc ? '<span class="cs-hdd">' + pubLb(r.desc) + '</span>' : '') + '</td></tr>';
+        return;
+      }
       mt = Math.max(mt, pubTw(r.label)); mtd = Math.max(mtd, pubTwj(r.label));
-      h += '<tr><th>' + pubLb(r.label) + '</th><td><textarea class="cs-tx" rows="1" readonly data-k="' + esc(r.id) + '"></textarea></td></tr>';
+      h += '<tr><th>' + pubLb(r.label) + (r.desc ? '<span class="cs-d">' + pubLb(r.desc) + '</span>' : '') + '</th><td><textarea class="cs-tx" rows="1" readonly placeholder="' + esc(r.ph) + '" data-k="' + esc(r.id) + '"></textarea></td></tr>';
     });
     h += '</tbody></table>';
   } else preset.sections.forEach(s => {
@@ -787,7 +852,8 @@ function pubSheet(preset) {
     });
     h += '</div></div>';
   });
-  return `<div class="cs" style="--wl:${ml + 0.4}em;--wr:${mr + 0.4}em;--thw:${mt};--wld:${mld + 0.4}em;--wrd:${mrd + 0.4}em;--thd:${mtd}">${h}</div>`;
+  const dsc = preset.desc ? '<div class="cs-desc">' + pubLb(preset.desc) + '</div>' : '';
+  return `<div class="cs" style="--wl:${ml + 0.4}em;--wr:${mr + 0.4}em;--thw:${mt};--wld:${mld + 0.4}em;--wrd:${mrd + 0.4}em;--thd:${mtd}">${dsc}${h}</div>`;
 }
 function preview() {
   const p = pubPreset();
@@ -998,9 +1064,10 @@ document.addEventListener('click', e => {
     const [o, k] = ref(t.dataset.p);
     if (a === 'mv') { const i = +k, j = i + +t.dataset.d; if (j >= 0 && j < o.length) [o[i], o[j]] = [o[j], o[i]]; }
     if (a === 'del' && confirm('削除しますか?')) o.splice(+k, 1);
+    if (a === 'addh') o[k].push({ heading: '見出し', desc: '' });
     if (a === 'add') {
       const it = () => ({ id: 'i' + (tpl.nextId++), q: '項目', l: '左', r: '右' });
-      if (k === 'rows') o[k].push({ id: 'i' + (tpl.nextId++), label: '項目' });
+      if (k === 'rows') o[k].push({ id: 'i' + (tpl.nextId++), label: '項目', desc: '', ph: '' });
       else if (k === 'items') o[k].push(it());
       else if (k === 'groups') o[k].push({ name: 'グループ', items: [it()] });
       else o[k].push({ name: '新しいセクション', groups: [{ name: 'グループ', items: [it()] }] });
