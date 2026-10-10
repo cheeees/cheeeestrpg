@@ -337,8 +337,29 @@
 /* カテゴリ名(セクション名)は太字 / グループ名は少し右へインデント */
 #hw-root .cs-t{font-weight:700}
 #hw-root .cs-sub{padding-left:10px}
-</style>
+/* プルダウンは全幅・1行目、ボタンは2行目で左詰め(PC・スマホ共通) */
+#hw-root .csw .cs-h{row-gap:8px}
+#hw-root .csw .csw-bar{flex:1 1 100%;margin:0}
+#hw-root .csw .csw-bar .csw-sel{width:100%;max-width:100%}
+#hw-root .csw .cs-ctl,#hw-root .csw.ed .cs-ctl{margin-left:0;justify-content:flex-start;flex:0 1 auto}
+/* スマホ: ボタン文字の左右に余白をもう少し(1行は維持) */
+@media(max-width:600px){
+  #hw-root .csw.ed .cs-ctl button,#hw-root .csw .cs-ctl button{padding:5px clamp(6px,2vw,11px);font-size:clamp(9.5px,2.6vw,13px)}
+  #hw-root .csw.ed .cs-ctl .cs-key,#hw-root .csw .cs-ctl .cs-key{padding:5px clamp(7px,2.2vw,11px)}
+}
+/* 通過シナリオの見出しの上に余白 */
+#hw-root .card>div:has(>ul.scl):not([hidden]){padding-top:28px}
 
+/* スマホ: ボタン文字の左右余白をさらに広げる(1行のまま。余った幅は各ボタンに均等に配分) */
+@media(max-width:600px){
+  #hw-root .csw{padding:10px}
+  #hw-root .csw .cs-ctl,#hw-root .csw.ed .cs-ctl{gap:3px;padding-right:0}
+  #hw-root .csw.ed .cs-ctl{width:100%}
+  #hw-root .csw .cs-ctl button,#hw-root .csw.ed .cs-ctl button{padding:5px clamp(8px,2.4vw,14px);font-size:clamp(9px,2.4vw,13px)}
+  #hw-root .csw .cs-ctl .cs-key,#hw-root .csw.ed .cs-ctl .cs-key{padding:5px clamp(9px,2.6vw,14px)}
+  #hw-root .csw.ed .cs-ctl button{flex:1 0 auto}
+}
+</style>
 <!-- ▼▼▼ 【ここに貼り付けてね】ここから ▼▼▼
      編集モードの「コードを書き出す」で出たコードを、この行と「ここまで」の行の間に丸ごと貼り付けてください。
      (元からある中身は、サンプルデータなので全部消してOKです) -->
