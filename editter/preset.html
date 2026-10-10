@@ -512,9 +512,9 @@ button.p:disabled { background: #ccc; border-color: #ccc; cursor: not-allowed; }
 #hw-root .cs.ed .cs-gadd{display:inline-block;margin-top:24px;min-height:32px;padding:5px 14px;border:1px solid var(--main);border-radius:99px;background:var(--card);color:var(--main);font:inherit;font-size:13px;cursor:pointer}
 /* 表の見出し列の幅: ブロックごとに --thd(PC)/--thw(スマホ) で計算。
    %を含む min() は固定レイアウトの表で無効になる(列が等分される)ので、絶対値だけで上限をかける */
-#hw-root .cs-tbl th{width:min(calc(var(--thd,6) * 1em + 24px),15em)}
+#hw-root .cs-tbl th{width:min(calc(var(--thd,6) * 1em + 32px),15em)}
 @media(max-width:600px){
-  #hw-root .cs-tbl th{width:min(calc(var(--thw,6) * 1em + 14px),8.5em)}
+  #hw-root .cs-tbl th{width:min(calc(var(--thw,6) * 1em + 24px),11em)}
 }
 </style>
 </head>
@@ -939,6 +939,17 @@ function pubTw(str) {
   });
   return m;
 }
+// 表の見出し列用: 英数字は太字だと全角より少し狭い程度なので、種類ごとに幅を見積もる(折り返し防止)
+function pubTwb(str) {
+  let m = 0;
+  String(str == null ? '' : str).split('\n').forEach(line => {
+    let w = 0;
+    for (const ch of line) { const c = ch.charCodeAt(0); w += c < 256 ? (/[A-Z0-9]/.test(ch) ? 0.75 : /[a-z]/.test(ch) ? 0.64 : 0.55) : 1; }
+    if (w > m) m = w;
+  });
+  return m;
+}
+const pubTwbj = str => pubTwb(String(str == null ? '' : str).replace(/\n/g, ''));
 const pubTwj = str => pubTw(String(str == null ? '' : str).replace(/\n/g, ''));
 const pubLb = v => esc(v).replace(/\n/g, '<br class="sp">');
 function pubPreset() {   // 公開側と同じ正規化(マスの数は2〜11)
@@ -994,7 +1005,7 @@ function pubSheet(preset) {
     window.__gp = { secs: preset.sections, stack: preset.layout === 'stack' };
     preset.sections.forEach((sec, si) => {
       let gm = 0, gmd = 0;
-      (sec.items || []).forEach(it => { gm = Math.max(gm, pubTw(it.label)); gmd = Math.max(gmd, pubTwj(it.label)); });
+      (sec.items || []).forEach(it => { gm = Math.max(gm, pubTwb(it.label)); gmd = Math.max(gmd, pubTwbj(it.label)); });
       h += '<div class="cs-s cs-g" style="--thw:' + gm + ';--thd:' + gmd + '"><div class="cs-hh"><div class="cs-t">' + pubLb(sec.title) + '</div>' + (sec.desc ? '<div class="cs-hdd">' + pubLb(sec.desc) + '</div>' : '') + '</div>' +
         '<div class="cs-gl" data-si="' + si + '">' + gpFill(si) + '</div>' +
         '<button type="button" class="cs-gadd" data-si="' + si + '">＋ グループを追加</button></div>';
@@ -1010,7 +1021,7 @@ function pubSheet(preset) {
     });
     groups.forEach(g => {
       let gm = 0, gmd = 0;
-      g.rows.forEach(r => { gm = Math.max(gm, pubTw(r.label)); gmd = Math.max(gmd, pubTwj(r.label)); });
+      g.rows.forEach(r => { gm = Math.max(gm, pubTwb(r.label)); gmd = Math.max(gmd, pubTwbj(r.label)); });
       h += '<div class="cs-s cs-g" style="--thw:' + gm + ';--thd:' + gmd + '">';
       if (g.head) h += '<div class="cs-hh"><div class="cs-t">' + pubLb(g.head.heading) + '</div>' + (g.head.desc ? '<div class="cs-hdd">' + pubLb(g.head.desc) + '</div>' : '') + '</div>';
       if (stack) {
@@ -1022,7 +1033,7 @@ function pubSheet(preset) {
       } else if (g.rows.length) {
         h += '<table class="cs-tbl"><tbody>';
         g.rows.forEach(r => {
-          mt = Math.max(mt, pubTw(r.label)); mtd = Math.max(mtd, pubTwj(r.label));
+          mt = Math.max(mt, pubTwb(r.label)); mtd = Math.max(mtd, pubTwbj(r.label));
           h += '<tr><th>' + pubLb(r.label) + (r.desc ? '<span class="cs-d">' + pubLb(r.desc) + '</span>' : '') + '</th><td><textarea class="cs-tx" rows="1" readonly placeholder="' + esc(r.ph) + '" data-k="' + esc(r.id) + '"></textarea></td></tr>';
         });
         h += '</tbody></table>';
