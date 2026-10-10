@@ -359,6 +359,66 @@
   #hw-root .csw .cs-ctl .cs-key,#hw-root .csw.ed .cs-ctl .cs-key{padding:5px clamp(9px,2.6vw,14px)}
   #hw-root .csw.ed .cs-ctl button{flex:1 0 auto}
 }
+/* ===== 説明文(✎編集中だけ表示) / 見出し(中央揃え・見出しごとに表を分離) / 縦並び / 年表 / 余白 ===== */
+#hw-root .cs-tx::placeholder,#hw-root .cs-evt::placeholder{color:#b9ad9c;opacity:1}
+#hw-root .cs-desc,#hw-root .cs-hdd,#hw-root .cs-sd,#hw-root .cs-tbl th .cs-d{display:none}
+#hw-root .cs.ed .cs-desc,#hw-root .cs.ed .cs-hdd,#hw-root .cs.ed .cs-sd,#hw-root .cs.ed .cs-tbl th .cs-d{display:block}
+#hw-root .cs-desc{margin:6px 0 14px;font-size:12px;line-height:1.7;color:var(--mut)}
+#hw-root .cs-hdd{margin-top:4px;font-size:11px;line-height:1.6;color:var(--mut);text-align:center}
+#hw-root .cs-sd{margin-top:2px;font-size:11px;color:var(--mut);line-height:1.6}
+#hw-root .cs-tbl th .cs-d{margin-top:4px;font-size:10.5px;font-weight:400;color:var(--mut);line-height:1.4}
+/* 見出し: 02のカテゴリ名と同じ大きさ(14px太字)で中央揃え。左右に線 */
+#hw-root .cs-hh{margin-bottom:12px}
+#hw-root .cs-hh .cs-t{justify-content:center;gap:14px}
+#hw-root .cs-hh .cs-t::before{content:"";flex:1;height:1px;background:var(--line)}
+/* 見出しごとのまとまりの間隔 */
+#hw-root .cs .cs-g{margin-top:36px}
+#hw-root .cs .cs-g:first-child{margin-top:6px}
+#hw-root .cs:not(.ed) .cs-desc + .cs-g{margin-top:6px}
+#hw-root .cs.ed .cs-desc + .cs-g{margin-top:20px}
+/* 表の余白 */
+#hw-root .cs-tbl{margin-top:0}
+#hw-root .cs-tbl th{padding:16px 10px;width:min(calc(var(--thd,6) * 1em + 24px),36%)}
+#hw-root .cs-tbl .cs-tx{padding:14px 16px;min-height:3.4em}
+#hw-root .csw{padding:20px 18px}
+@media(max-width:600px){
+  #hw-root .csw{padding:14px 12px}
+  #hw-root .cs-tbl th{padding:12px 6px;width:min(calc(var(--thw,6) * 1em + 14px),32%)}
+  #hw-root .cs-tbl .cs-tx{padding:12px}
+}
+/* 縦並び(stack) */
+#hw-root .cs-sr{margin-top:20px}
+#hw-root .cs-hh + .cs-sr{margin-top:0}
+#hw-root .cs-sl{font-size:13px;font-weight:600;color:var(--fg);line-height:1.5;white-space:pre-line}
+#hw-root .cs-sr .cs-tx{margin-top:6px;border:1px solid var(--line);border-radius:6px;padding:12px 14px;min-height:3.6em}
+#hw-root .cs.ed .cs-sr .cs-tx,#hw-root .cs.ed .cs-sr .cs-tx:focus{background:#fffaf0}
+/* 年表(縦線タイムライン・出来事は自由に追加) */
+#hw-root .cs-tl{margin-top:16px;padding:0 2px}
+#hw-root .cs-ev{position:relative;display:grid;grid-template-columns:16px minmax(0,1fr);column-gap:12px;padding-bottom:28px}
+#hw-root .cs-ev:last-child{padding-bottom:6px}
+#hw-root .cs-ev::before{content:"";position:absolute;left:7px;top:22px;bottom:-2px;width:2px;background:var(--line)}
+#hw-root .cs-ev:last-child::before{display:none}
+#hw-root .cs-dot{display:block;width:16px;height:16px;margin-top:5px;border:3px solid var(--main);border-radius:50%;background:var(--card)}
+#hw-root .cs-evb{position:relative;min-width:0}
+#hw-root .cs-evt{display:block;width:100%;margin:0;padding:2px 0;border:0;border-radius:0;background:transparent;color:var(--main-deep);font:inherit;font-size:14px;font-weight:700;line-height:1.6;outline:none}
+#hw-root .cs-evb .cs-tx{margin-top:2px;padding:2px 0 0;min-height:1.8em;font-size:13px;line-height:1.7}
+#hw-root .cs.ed .cs-evt{padding:4px 34px 4px 10px;border:1px solid var(--line);border-radius:6px;background:#fffaf0}
+#hw-root .cs.ed .cs-evb .cs-tx,#hw-root .cs.ed .cs-evb .cs-tx:focus{margin-top:6px;padding:10px 12px;min-height:3.6em;border:1px solid var(--line);border-radius:6px;background:#fffaf0;box-shadow:none}
+#hw-root .cs-evdel,#hw-root .cs-tladd{display:none}
+#hw-root .cs.ed .cs-evdel{display:block;position:absolute;top:3px;right:4px;width:26px;height:26px;padding:0;border:0;border-radius:50%;background:transparent;color:var(--mut);font:inherit;font-size:18px;line-height:1;cursor:pointer}
+#hw-root .cs.ed .cs-tladd{display:inline-block;margin:10px 0 0 28px;min-height:32px;padding:5px 14px;border:1px solid var(--main);border-radius:99px;background:var(--card);color:var(--main);font:inherit;font-size:13px;cursor:pointer}
+
+/* グループ追加式(セクション → グループ → 項目) */
+#hw-root .cs-gp + .cs-gp{margin-top:30px;padding-top:24px;border-top:1px dashed var(--line)}
+#hw-root .cs-gph{position:relative}
+#hw-root .cs-gpl{display:block;width:100%;margin:0;padding:3px 8px;border:0;border-left:3px solid var(--accent);border-radius:0;background:transparent;color:var(--main);font:inherit;font-size:14px;font-weight:700;line-height:1.6;outline:none}
+#hw-root .cs-gpl::placeholder{color:#b9ad9c;opacity:1}
+#hw-root .cs.ed .cs-gpl{padding:6px 34px 6px 10px;border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:0 6px 6px 0;background:#fffaf0}
+#hw-root .cs-gph + .cs-sr{margin-top:14px}
+#hw-root .cs-gph + .cs-tbl{margin-top:14px}
+#hw-root .cs-gpdel,#hw-root .cs-gadd{display:none}
+#hw-root .cs.ed .cs-gpdel{display:block;position:absolute;top:50%;right:5px;transform:translateY(-50%);width:26px;height:26px;padding:0;border:0;border-radius:50%;background:transparent;color:var(--mut);font:inherit;font-size:18px;line-height:1;cursor:pointer}
+#hw-root .cs.ed .cs-gadd{display:inline-block;margin-top:24px;min-height:32px;padding:5px 14px;border:1px solid var(--main);border-radius:99px;background:var(--card);color:var(--main);font:inherit;font-size:13px;cursor:pointer}
 </style>
 <!-- ▼▼▼ 【ここに貼り付けてね】ここから ▼▼▼
      編集モードの「コードを書き出す」で出たコードを、この行と「ここまで」の行の間に丸ごと貼り付けてください。
@@ -411,6 +471,7 @@ PCがHP0になった場合、身代わりとなって砕け散りPCはHP全回�
    トークンはHTMLに書きません。編集中に表示される「🔒」ボタンから、各自がこの端末で入力します
    (入力したトークンは、この端末のブラウザ内にだけ保存されます)。
    ■ シートの種類(プリセット)は data/preset/ の preset-NN.json(または NN.json)、キャラごとの入力値は data/checksheet/char-XXX.json に保存されます。
+   ■ シートの種類は4つ(スライダー/表/年表/グループ追加式)に対応しています。
    ■ 固定のシートはありません。何も追加していないときはツールバー(✎ 編集)だけが表示されます。プリセットは No.1 から使えます。 */
 var GH_OWNER  = "cheeees";
 var GH_REPO   = "cheeeestrpg";
@@ -439,10 +500,31 @@ function setToken(t){
   function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
   function msg(sheet, t, err){ var m=sheet.querySelector('.cs-msg'); if(m){m.textContent=t;m.style.color=err?'#c0392b':'';} }
   function key(b){ return b.dataset.k || b.id; }
-  function values(sheet){ var o={}; q(sheet,'.cs-b').forEach(function(b){o[key(b)]=String(b.dataset.v||'0');}); q(sheet,'.cs-tx').forEach(function(t){o[key(t)]=t.value;}); return o; }
+  /* 年表・グループ追加式は「増減する入力欄」なので、まとまりごとにJSON文字列1つで保存する
+     年表: tl = [{t,d},…] / グループ: g<セクション番号> = [{n:グループ名, v:{項目id:入力値}},…] */
+  function parseJ(s){ try{ var a=JSON.parse(s); return Array.isArray(a)?a:null; }catch(e){ return null; } }
+  function readTl(box){ return q(box,'.cs-ev').map(function(ev){ return {t:(ev.querySelector('.cs-evt')||{}).value||'', d:(ev.querySelector('.cs-tx')||{}).value||''}; }); }
+  function readGl(box){ return q(box,'.cs-gp').map(function(g){ var v={}; q(g,'.cs-tx').forEach(function(t){ v[t.dataset.i]=t.value; }); return {n:(g.querySelector('.cs-gpl')||{}).value||'', v:v}; }); }
+  function values(sheet){
+    var o={};
+    q(sheet,'.cs-b').forEach(function(b){o[key(b)]=String(b.dataset.v||'0');});
+    q(sheet,'.cs-tx[data-k]').forEach(function(t){o[key(t)]=t.value;});
+    q(sheet,'.cs-tl').forEach(function(b){ o.tl=JSON.stringify(readTl(b)); });
+    q(sheet,'.cs-gl').forEach(function(b){ o['g'+b.dataset.si]=JSON.stringify(readGl(b)); });
+    return o;
+  }
   function fit(t){ if(t.scrollHeight>0){ t.style.height='auto'; t.style.height=t.scrollHeight+'px'; } }
   function fitAll(el){ q(el,'.cs-tx').forEach(fit); }
-  function apply(sheet, vals){ q(sheet,'.cs-b').forEach(function(b){ var k=key(b); if(Object.prototype.hasOwnProperty.call(vals,k)) b.dataset.v=String(vals[k]); }); q(sheet,'.cs-tx').forEach(function(t){ var k=key(t); if(Object.prototype.hasOwnProperty.call(vals,k)) t.value=String(vals[k]); fit(t); }); }
+  function apply(sheet, vals){
+    var has=function(k){ return Object.prototype.hasOwnProperty.call(vals,k); }, pre=sheet.__pre;
+    q(sheet,'.cs-b').forEach(function(b){ var k=key(b); if(has(k)) b.dataset.v=String(vals[k]); });
+    q(sheet,'.cs-tx[data-k]').forEach(function(t){ var k=key(t); if(has(k)) t.value=String(vals[k]); });
+    if(pre){
+      q(sheet,'.cs-tl').forEach(function(box){ var a=has('tl')?parseJ(vals.tl):null; if(a) box.innerHTML=tlRows(pre.examples,pre.count,a); });
+      q(sheet,'.cs-gl').forEach(function(box){ var si=+box.dataset.si, a=has('g'+si)?parseJ(vals['g'+si]):null; if(a&&pre.sections[si]) box.innerHTML=gpList(pre.sections[si],pre.layout==='stack',a); });
+    }
+    q(sheet,'.cs-tx').forEach(fit);
+  }
 
   /* ---------- GitHub ---------- */
   function contentsUrl(path){
@@ -515,7 +597,10 @@ function setToken(t){
     return indexMemo;
   }
   function normPreset(d,no){
-    return {no:no,type:d.type==='table'?'table':'slider',name:d.name||('シート'+no),scale:Math.max(2,Math.min(11,Number(d.scale)||11)),sections:Array.isArray(d.sections)?d.sections:[],rows:Array.isArray(d.rows)?d.rows:[]};
+    var type=d.type==='timeline'?'timeline':d.type==='groups'?'groups':(d.type==='table'||(!d.type&&Array.isArray(d.rows)&&!d.sections))?'table':'slider';
+    return {no:no,type:type,name:d.name||d.title||('シート'+no),desc:d.desc||'',layout:d.layout==='stack'?'stack':'',
+      count:Math.max(1,Math.min(10,Number(d.count)||3)),examples:Array.isArray(d.examples)?d.examples:[],
+      scale:Math.max(2,Math.min(11,Number(d.scale)||11)),sections:Array.isArray(d.sections)?d.sections:[],rows:Array.isArray(d.rows)?d.rows:[]};
   }
   function getPreset(no){
     if(!presetMemo[no]){
@@ -550,15 +635,69 @@ function setToken(t){
   }
   function twj(str){ return tw(String(str==null?'':str).replace(/\n/g,'')); }   // 改行なしで1行に並べたときの幅(PC用)
   function lb(v){ return esc(v).replace(/\n/g,'<br class="sp">'); }          // \n はスマホだけ改行
+  /* 年表の1行(出来事)。入力例(placeholder)は順番に使い回す */
+  function tlRow(ex,i,ro,v){
+    var p=ex&&ex.length?ex[i%ex.length]:{t:'',d:''}, r=ro===false?'':' readonly';
+    v=v||{};
+    return '<div class="cs-ev"><span class="cs-dot"></span><div class="cs-evb"><input type="text" class="cs-evt"'+r+' placeholder="'+esc(p.t)+'" value="'+esc(v.t)+'"><textarea class="cs-tx" rows="1"'+r+' placeholder="'+esc(p.d)+'">\n'+esc(v.d)+'</textarea><button type="button" class="cs-evdel" title="この出来事を削除">×</button></div></div>';
+  }
+  function tlRows(ex,n,list){ var h='',i; if(list){ for(i=0;i<list.length;i++) h+=tlRow(ex,i,true,list[i]); } else { for(i=0;i<n;i++) h+=tlRow(ex,i,true); } return h; }
+  /* グループ1つ分(グループ名 + 項目のセット) */
+  function gpGroup(sec,stack,ro,v){
+    var r=ro===false?'':' readonly', vv=(v&&v.v)||{}, items=sec.items||[], h;
+    h='<div class="cs-gp"><div class="cs-gph"><input type="text" class="cs-gpl"'+r+' placeholder="'+esc(sec.groupPh)+'" value="'+esc(v&&v.n)+'"><button type="button" class="cs-gpdel" title="このグループを削除">×</button></div>';
+    if(!stack) h+='<table class="cs-tbl"><tbody>';
+    items.forEach(function(it,ii){
+      var id=it.id||('i'+(ii+1)), ta='<textarea class="cs-tx" rows="1"'+r+' data-i="'+esc(id)+'" placeholder="'+esc(it.ph)+'">\n'+esc(vv[id])+'</textarea>';
+      if(stack) h+='<div class="cs-sr"><div class="cs-sl">'+lb(it.label)+'</div>'+(it.desc?'<div class="cs-sd">'+lb(it.desc)+'</div>':'')+ta+'</div>';
+      else h+='<tr><th>'+lb(it.label)+(it.desc?'<span class="cs-d">'+lb(it.desc)+'</span>':'')+'</th><td>'+ta+'</td></tr>';
+    });
+    if(!stack) h+='</tbody></table>';
+    return h+'</div>';
+  }
+  function gpList(sec,stack,list){
+    var h='',i;
+    if(list) list.forEach(function(g){ h+=gpGroup(sec,stack,true,g); });
+    else for(i=0;i<Math.max(1,Math.min(5,Number(sec.count)||1));i++) h+=gpGroup(sec,stack,true);
+    return h;
+  }
   function buildSheet(c,id,preset){
-    var no=preset.no, n=preset.scale, boxes=new Array(n+1).join('<i></i>'), h='', ml=3, mr=3, mt=0, mld=3, mrd=3, mtd=0;
-    if(preset.type==='table'){
-      h+='<table class="cs-tbl"><tbody>';
-      (preset.rows||[]).forEach(function(r){
-        mt=Math.max(mt,tw(r.label)); mtd=Math.max(mtd,twj(r.label));
-        h+='<tr><th>'+lb(r.label)+'</th><td><textarea class="cs-tx" rows="1" readonly data-k="'+esc(r.id)+'" id="cs-'+esc(c)+'-p'+no+'-'+esc(r.id)+'"></textarea></td></tr>';
+    var no=preset.no, n=preset.scale, boxes=new Array(n+1).join('<i></i>'), h='', ml=3, mr=3, mt=0, mld=3, mrd=3, mtd=0, stack=preset.layout==='stack';
+    if(preset.type==='groups'){
+      (preset.sections||[]).forEach(function(sec,si){
+        (sec.items||[]).forEach(function(it){ mt=Math.max(mt,tw(it.label)); mtd=Math.max(mtd,twj(it.label)); });
+        h+='<div class="cs-s cs-g"><div class="cs-hh"><div class="cs-t">'+lb(sec.title)+'</div>'+(sec.desc?'<div class="cs-hdd">'+lb(sec.desc)+'</div>':'')+'</div>'
+          +'<div class="cs-gl" data-si="'+si+'">'+gpList(sec,stack)+'</div>'
+          +'<button type="button" class="cs-gadd" data-si="'+si+'">＋ グループを追加</button></div>';
       });
-      h+='</tbody></table>';
+    }
+    else if(preset.type==='timeline'){
+      h+='<div class="cs-tl">'+tlRows(preset.examples,preset.count)+'</div><button type="button" class="cs-tladd">＋ 出来事を追加</button>';
+    }
+    else if(preset.type==='table'){
+      var groups=[];
+      (preset.rows||[]).forEach(function(r){   // 見出しごとに表を分ける
+        if(r.heading!==undefined) groups.push({head:r,rows:[]});
+        else{ if(!groups.length) groups.push({head:null,rows:[]}); groups[groups.length-1].rows.push(r); }
+      });
+      groups.forEach(function(g){
+        h+='<div class="cs-s cs-g">';
+        if(g.head) h+='<div class="cs-hh"><div class="cs-t">'+lb(g.head.heading)+'</div>'+(g.head.desc?'<div class="cs-hdd">'+lb(g.head.desc)+'</div>':'')+'</div>';
+        if(stack){
+          g.rows.forEach(function(r){
+            h+='<div class="cs-sr"><div class="cs-sl">'+lb(r.label)+'</div>'+(r.desc?'<div class="cs-sd">'+lb(r.desc)+'</div>':'')
+              +'<textarea class="cs-tx" rows="1" readonly placeholder="'+esc(r.ph)+'" data-k="'+esc(r.id)+'" id="cs-'+esc(c)+'-p'+no+'-'+esc(r.id)+'"></textarea></div>';
+          });
+        }else if(g.rows.length){
+          h+='<table class="cs-tbl"><tbody>';
+          g.rows.forEach(function(r){
+            mt=Math.max(mt,tw(r.label)); mtd=Math.max(mtd,twj(r.label));
+            h+='<tr><th>'+lb(r.label)+(r.desc?'<span class="cs-d">'+lb(r.desc)+'</span>':'')+'</th><td><textarea class="cs-tx" rows="1" readonly placeholder="'+esc(r.ph)+'" data-k="'+esc(r.id)+'" id="cs-'+esc(c)+'-p'+no+'-'+esc(r.id)+'"></textarea></td></tr>';
+          });
+          h+='</tbody></table>';
+        }
+        h+='</div>';
+      });
     }
     else (preset.sections||[]).forEach(function(s){
       var cols=s.cols||[];
@@ -581,7 +720,8 @@ function setToken(t){
     var el=document.createElement('div');
     el.className='cs'; el.dataset.c=c; el.dataset.id=id; el.dataset.no=String(no); el.dataset.name=preset.name;
     el.style.setProperty('--wl',(ml+0.4)+'em'); el.style.setProperty('--wr',(mr+0.4)+'em'); el.style.setProperty('--thw',String(mt)); el.style.setProperty('--wld',(mld+0.4)+'em'); el.style.setProperty('--wrd',(mrd+0.4)+'em'); el.style.setProperty('--thd',String(mtd));
-    el.innerHTML=h;
+    el.innerHTML=(preset.desc?'<div class="cs-desc">'+lb(preset.desc)+'</div>':'')+h;
+    el.__pre=preset;
     return el;
   }
 
@@ -589,14 +729,14 @@ function setToken(t){
   function hint(wrap){
     var v=panels(wrap).filter(function(p){ return !p.hidden; })[0];
     if(!v) return '「＋ シート追加」からシートを追加できます';
-    return v.querySelector('.cs-tx')?'各項目に自由に入力できます':'マスをクリックで塗りつぶし（もう一度押すと解除）';
+    return v.querySelector('.cs-b')?'マスをクリックで塗りつぶし（もう一度押すと解除）':'各項目に自由に入力できます';
   }
   function setMode(wrap,on){
     wrap.classList.toggle('ed',on);
     var ps=panels(wrap), has=ps.length>0;
     ps.forEach(function(p){
       p.classList.toggle('ed',on);
-      q(p,'.cs-tx').forEach(function(t){ t.readOnly=!on; });
+      q(p,'.cs-tx,.cs-evt,.cs-gpl').forEach(function(t){ t.readOnly=!on; });
       if(on&&!snapshots.has(p)) snapshots.set(p,values(p));
     });
     wrap.querySelector('.cs-edit').hidden=on;
@@ -708,7 +848,7 @@ function setToken(t){
     if(!getToken()){ msg(wrap,'🔒 ボタンからトークンを入力してください',true); return; }
     var id=wrap.dataset.id, changes={}, any=false;
     panels(wrap).forEach(function(p){
-      if(!p.querySelector('.cs-b,.cs-tx')) return;
+      if(!p.querySelector('.cs-b,.cs-tx,.cs-tl,.cs-gl')) return;
       var base=snapshots.get(p)||{}, local=values(p), ch={};
       Object.keys(local).forEach(function(k){ if(base[k]===undefined?(local[k]!=='0'&&local[k]!==''):local[k]!==String(base[k])) ch[k]=local[k]; });
       if(Object.keys(ch).length){ changes[p.dataset.no]=ch; any=true; }
@@ -743,6 +883,19 @@ function setToken(t){
     if(cl.contains('cs-pcancel')){ wrap.querySelector('.cs-picker').hidden=true; return; }
     if(cl.contains('cs-padd')){ addSheet(wrap); return; }
     if(cl.contains('cs-del')){ delSheet(wrap); return; }
+    var sh0=t.closest('.cs');
+    if(cl.contains('cs-gadd')){
+      var gb=sh0&&sh0.querySelector('.cs-gl[data-si="'+t.dataset.si+'"]'), gs=sh0&&sh0.__pre&&sh0.__pre.sections[+t.dataset.si];
+      if(gb&&gs) gb.insertAdjacentHTML('beforeend',gpGroup(gs,sh0.__pre.layout==='stack',false));
+      return;
+    }
+    if(cl.contains('cs-gpdel')){ var gp=t.closest('.cs-gp'); if(gp) gp.parentNode.removeChild(gp); return; }
+    if(cl.contains('cs-tladd')){
+      var tb=sh0&&sh0.querySelector('.cs-tl');
+      if(tb) tb.insertAdjacentHTML('beforeend',tlRow(sh0.__pre&&sh0.__pre.examples,tb.children.length,false));
+      return;
+    }
+    if(cl.contains('cs-evdel')){ var ev=t.closest('.cs-ev'); if(ev) ev.parentNode.removeChild(ev); return; }
     if(t.tagName==='I'){
       var sheet=t.closest('.cs');
       if(sheet&&sheet.classList.contains('ed')){
