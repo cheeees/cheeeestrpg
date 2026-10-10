@@ -400,7 +400,9 @@ button.p:disabled { background: #ccc; border-color: #ccc; cursor: not-allowed; }
 }
 /* 表の編集中: 入力欄をマスいっぱいに(隙間・二重線をなくす) */
 #hw-root .cs-tbl td{height:1px}
-#hw-root .cs-tbl .cs-tx{height:100% !important;min-height:2.4em}
+#hw-root .cs-tbl .cs-tx{min-height:2.4em}
+#hw-root .cs-tbl td{vertical-align:middle}
+#hw-root .cs.ed .cs-tbl td{cursor:text}
 #hw-root .cs.ed .cs-tbl td{background:#fffaf0}
 #hw-root .cs.ed .cs-tx,#hw-root .cs.ed .cs-tx:focus{background:transparent;box-shadow:none}
 /* スマホでもボタンはPCと同じ大きさ・間隔(入りきらなければ折り返す) */
@@ -528,10 +530,20 @@ button.p:disabled { background: #ccc; border-color: #ccc; cursor: not-allowed; }
 #hw-root .cs.ed .cs-gadd{display:inline-block;margin-top:24px;min-height:32px;padding:5px 14px;border:1px solid var(--main);border-radius:99px;background:var(--card);color:var(--main);font:inherit;font-size:13px;cursor:pointer}
 /* 表の見出し列の幅: ブロックごとに --thd(PC)/--thw(スマホ) で計算。
    %を含む min() は固定レイアウトの表で無効になる(列が等分される)ので、絶対値だけで上限をかける */
-#hw-root .cs-tbl th{width:min(calc(var(--thd,6) * 1em + 32px),15em)}
+#hw-root .cs-tbl th{width:min(calc(var(--thd,6) * 1em + 48px),16em);padding-left:14px;padding-right:14px}
 @media(max-width:600px){
-  #hw-root .cs-tbl th{width:min(calc(var(--thw,6) * 1em + 24px),11em)}
+  #hw-root .cs-tbl th{width:min(calc(var(--thw,6) * 1em + 36px),12em);padding-left:10px;padding-right:10px}
 }
+
+/* チェックシート見出し行: タイトル + キャラ切り替え(プレビューでは見た目だけ) */
+#hw-root .csw-head{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:22px}
+#hw-root .csw-head .csw-title{margin-top:0}
+#hw-root .csw-head + .csw{margin-top:8px}
+#hw-root .csw-head .psw .swb{display:block;padding:5px 14px;border:1px solid var(--line);border-radius:99px;background:var(--card);color:var(--fg);font-size:13px;white-space:nowrap}
+#hw-root .csw-head .psw .swb::after{content:" ▾"}
+/* 中身が全部空のカテゴリは、編集中以外はカテゴリ名を出さない(行がなければまるごと非表示) */
+#hw-root .cs:not(.ed) .cs-g.cs-empty .cs-hh{display:none}
+#hw-root .cs:not(.ed) .cs-g.cs-empty.cs-norows{display:none}
 
 /* 表見出しの改行はPCでも効かせる / 例表示(placeholder)の改行ぶんの高さを確保 */
 #hw-root .cs-tbl th br.sp{display:inline}
@@ -1096,9 +1108,16 @@ function preview() {
   const note = (tpl.type !== 'table' && Number(tpl.boxes) > 11)
     ? '<p class="msg err">公開ページのマスは最大11個です。いまの設定(' + esc(tpl.boxes) + '個)でも、公開側では11個で表示されます。</p>' : '';
   return note + `<div id="hw-root"><main>
-<div class="csw-title">チェックシート</div>
+<div class="csw-head"><div class="csw-title">チェックシート</div><div class="psw"><span class="swb">キャラを切り替え</span></div></div>
 <div class="csw" id="pvw"><div class="cs-h"><div class="csw-bar"><select class="csw-sel"><option>${esc(p.no + '. ' + p.name)}</option></select></div><span class="cs-ctl"><button type="button" class="cs-key">🔒</button><button type="button" class="cs-edit">✎ 編集</button><button type="button" class="cs-addsheet" hidden>＋ シート追加</button><button type="button" class="cs-del" hidden>シート削除</button><button type="button" class="cs-save" hidden>保存</button><button type="button" class="cs-cancel" hidden>キャンセル</button></span></div>
 <div class="cs-msg"></div>${pubSheet(p)}</div></main></div>`;
+}
+function markEmpty(root) {
+  root.querySelectorAll('.cs-g').forEach(g => {
+    const e = ![...g.querySelectorAll('.cs-tx,.cs-gpl')].some(t => String(t.value || '').trim() !== '');
+    g.classList.toggle('cs-empty', e);
+    g.classList.toggle('cs-norows', !g.querySelector('.cs-tbl,.cs-sr,.cs-gl'));
+  });
 }
 function pvMode(on) {
   const w = $('#pvw'); if (!w) return;
@@ -1107,12 +1126,14 @@ function pvMode(on) {
   sh.querySelectorAll('.cs-tx,.cs-evt,.cs-gpl').forEach(t => { t.readOnly = !on; });
   w.querySelector('.cs-edit').hidden = on;
   ['cs-addsheet', 'cs-del', 'cs-save', 'cs-cancel'].forEach(k => { w.querySelector('.' + k).hidden = !on; });
+  markEmpty(w);
   w.querySelector('.cs-msg').textContent = on ? (sh.querySelector('.cs-tx') ? '各項目に自由に入力できます' : 'マスをクリックで塗りつぶし（もう一度押すと解除）') : '';
 }
 document.addEventListener('click', e => {
   const t = e.target;
   if (!t.closest || !t.closest('#pvw')) return;
   if (t.classList.contains('cs-edit')) { pvMode(true); return; }
+  if (t.tagName === 'TD' && $('#pvw').classList.contains('ed')) { const ta = t.querySelector('.cs-tx'); if (ta && !ta.readOnly) ta.focus(); return; }
   if (t.classList.contains('cs-gadd')) {
     const box = $('#pvw .cs-gl[data-si="' + t.dataset.si + '"]'), g = window.__gp;
     if (box && g) box.insertAdjacentHTML('beforeend', gpGroup(g.secs[+t.dataset.si], g.stack, false));
@@ -1143,7 +1164,7 @@ function show(v) {
   $('#prev').hidden = v !== 'pv';
   $('#t-ed').classList.toggle('on', v === 'ed');
   $('#t-pv').classList.toggle('on', v === 'pv');
-  if (v === 'pv') $('#prev').innerHTML = preview();
+  if (v === 'pv') { $('#prev').innerHTML = preview(); const pw = $('#pvw'); if (pw) markEmpty(pw); }
 }
 
 /* --- GitHubへ保存 (PUT) --- */
