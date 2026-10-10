@@ -421,10 +421,17 @@
 #hw-root .cs.ed .cs-gadd{display:inline-block;margin-top:24px;min-height:32px;padding:5px 14px;border:1px solid var(--main);border-radius:99px;background:var(--card);color:var(--main);font:inherit;font-size:13px;cursor:pointer}
 /* 表の見出し列の幅: ブロックごとに --thd(PC)/--thw(スマホ) で計算。
    %を含む min() は固定レイアウトの表で無効になる(列が等分される)ので、絶対値だけで上限をかける */
-#hw-root .cs-tbl th{width:min(calc(var(--thd,6) * 1em + 32px),15em)}
+#hw-root .cs-tbl th{width:min(calc(var(--thd,6) * 1em + 48px),16em);padding-left:14px;padding-right:14px}
 @media(max-width:600px){
-  #hw-root .cs-tbl th{width:min(calc(var(--thw,6) * 1em + 24px),11em)}
+  #hw-root .cs-tbl th{width:min(calc(var(--thw,6) * 1em + 36px),12em);padding-left:10px;padding-right:10px}
 }
+
+/* チェックシート見出し行: タイトル + キャラ切り替え */
+#hw-root .csw-head{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:22px}
+#hw-root .csw-head .csw-title{margin-top:0}
+#hw-root .csw-head + .csw{margin-top:8px}
+/* 中身が全部空のカテゴリは、編集中以外はカテゴリ名を出さない */
+#hw-root .cs:not(.ed) .cs-g.cs-empty .cs-hh{display:none}
 
 /* 表見出しの改行はPCでも効かせる / 例表示(placeholder)の改行ぶんの高さを確保 */
 #hw-root .cs-tbl th br.sp{display:inline}
@@ -762,11 +769,19 @@ function setToken(t){
     if(!v) return '「＋ シート追加」からシートを追加できます';
     return v.querySelector('.cs-b')?'マスをクリックで塗りつぶし（もう一度押すと解除）':'各項目に自由に入力できます';
   }
+  function markEmpty(sheet){
+    q(sheet,'.cs-g').forEach(function(g){
+      var e=true;
+      q(g,'.cs-tx,.cs-gpl').forEach(function(t){ if(String(t.value||'').trim()!=='') e=false; });
+      g.classList.toggle('cs-empty',e);
+    });
+  }
   function setMode(wrap,on){
     wrap.classList.toggle('ed',on);
     var ps=panels(wrap), has=ps.length>0;
     ps.forEach(function(p){
       p.classList.toggle('ed',on);
+      markEmpty(p);
       q(p,'.cs-tx,.cs-evt,.cs-gpl').forEach(function(t){ t.readOnly=!on; });
       if(on&&!snapshots.has(p)) snapshots.set(p,values(p));
     });
@@ -947,7 +962,15 @@ function setToken(t){
 
   /* ---------- 初期化 ---------- */
   q0(root,'.csw').forEach(function(wrap){
-    wrap.insertAdjacentHTML('beforebegin','<div class="csw-title">チェックシート</div>');
+    var head=document.createElement('div'); head.className='csw-head';
+    head.innerHTML='<div class="csw-title">チェックシート</div>';
+    var psw0=root.querySelector('.pnav .psw');
+    if(psw0){
+      var psw1=psw0.cloneNode(true);   // 上のキャラ切り替えと同じもの(同じスイッチを使うので連動する)
+      q0(psw1,'.swb').forEach(function(b){ if(!b.classList.contains('sb-'+wrap.dataset.c)) b.parentNode.removeChild(b); });
+      head.appendChild(psw1);
+    }
+    wrap.parentNode.insertBefore(head,wrap);
     wrap.innerHTML='<div class="cs-h"><div class="csw-bar" hidden><select class="csw-sel"></select></div><span class="cs-ctl"><button type="button" class="cs-key"></button><button type="button" class="cs-edit">✎ 編集</button><button type="button" class="cs-addsheet" hidden>＋ シート追加</button><button type="button" class="cs-del" hidden>シート削除</button><button type="button" class="cs-save" hidden>保存</button><button type="button" class="cs-cancel" hidden>キャンセル</button></span></div>'
       +'<div class="cs-picker" hidden><select class="cs-psel"></select><button type="button" class="cs-padd">追加</button><button type="button" class="cs-pcancel">閉じる</button></div>'
       +'<div class="cs-msg"></div>';
