@@ -419,6 +419,12 @@
 #hw-root .cs-gpdel,#hw-root .cs-gadd{display:none}
 #hw-root .cs.ed .cs-gpdel{display:block;position:absolute;top:50%;right:5px;transform:translateY(-50%);width:26px;height:26px;padding:0;border:0;border-radius:50%;background:transparent;color:var(--mut);font:inherit;font-size:18px;line-height:1;cursor:pointer}
 #hw-root .cs.ed .cs-gadd{display:inline-block;margin-top:24px;min-height:32px;padding:5px 14px;border:1px solid var(--main);border-radius:99px;background:var(--card);color:var(--main);font:inherit;font-size:13px;cursor:pointer}
+/* 表の見出し列の幅: ブロックごとに --thd(PC)/--thw(スマホ) で計算。
+   %を含む min() は固定レイアウトの表で無効になる(列が等分される)ので、絶対値だけで上限をかける */
+#hw-root .cs-tbl th{width:min(calc(var(--thd,6) * 1em + 24px),15em)}
+@media(max-width:600px){
+  #hw-root .cs-tbl th{width:min(calc(var(--thw,6) * 1em + 14px),8.5em)}
+}
 </style>
 <!-- ▼▼▼ 【ここに貼り付けてね】ここから ▼▼▼
      編集モードの「コードを書き出す」で出たコードを、この行と「ここまで」の行の間に丸ごと貼り付けてください。
@@ -665,8 +671,9 @@ function setToken(t){
     var no=preset.no, n=preset.scale, boxes=new Array(n+1).join('<i></i>'), h='', ml=3, mr=3, mt=0, mld=3, mrd=3, mtd=0, stack=preset.layout==='stack';
     if(preset.type==='groups'){
       (preset.sections||[]).forEach(function(sec,si){
-        (sec.items||[]).forEach(function(it){ mt=Math.max(mt,tw(it.label)); mtd=Math.max(mtd,twj(it.label)); });
-        h+='<div class="cs-s cs-g"><div class="cs-hh"><div class="cs-t">'+lb(sec.title)+'</div>'+(sec.desc?'<div class="cs-hdd">'+lb(sec.desc)+'</div>':'')+'</div>'
+        var gm=0, gmd=0;
+        (sec.items||[]).forEach(function(it){ gm=Math.max(gm,tw(it.label)); gmd=Math.max(gmd,twj(it.label)); });
+        h+='<div class="cs-s cs-g" style="--thw:'+gm+';--thd:'+gmd+'"><div class="cs-hh"><div class="cs-t">'+lb(sec.title)+'</div>'+(sec.desc?'<div class="cs-hdd">'+lb(sec.desc)+'</div>':'')+'</div>'
           +'<div class="cs-gl" data-si="'+si+'">'+gpList(sec,stack)+'</div>'
           +'<button type="button" class="cs-gadd" data-si="'+si+'">＋ グループを追加</button></div>';
       });
@@ -681,7 +688,9 @@ function setToken(t){
         else{ if(!groups.length) groups.push({head:null,rows:[]}); groups[groups.length-1].rows.push(r); }
       });
       groups.forEach(function(g){
-        h+='<div class="cs-s cs-g">';
+        var gm=0, gmd=0;
+        g.rows.forEach(function(r){ gm=Math.max(gm,tw(r.label)); gmd=Math.max(gmd,twj(r.label)); });
+        h+='<div class="cs-s cs-g" style="--thw:'+gm+';--thd:'+gmd+'">';
         if(g.head) h+='<div class="cs-hh"><div class="cs-t">'+lb(g.head.heading)+'</div>'+(g.head.desc?'<div class="cs-hdd">'+lb(g.head.desc)+'</div>':'')+'</div>';
         if(stack){
           g.rows.forEach(function(r){
