@@ -234,7 +234,151 @@ button.p:disabled { background: #ccc; border-color: #ccc; cursor: not-allowed; }
   background: var(--bg);
 }
 </style>
-<style id="cs-css"></style>
+<style id="pub-css">
+/* 公開ページ(hue_wheel)と同じ見た目 */
+#hw-root{--bgop:.1;--bg:#ffffff;--fg:#333333;--card:#ffffff;--mut:#7a6f62;--line:#e6dccb;
+--main:#8e632b;--main-deep:#5c3c0f;--accent:#ffd60a;--on:#ffffff;--soft:#fff8d6;--soft-line:#f1e3a0;--hover:#fff1b0;--zebra:#fffdf3;--img-bg:#faf6ee;--num:#8e632b}
+#hw-root,#hw-root *{box-sizing:border-box}
+#hw-root{text-align:left;margin:0;padding:20px 14px 40px;background:var(--bg);color:var(--fg);font-family:"Hiragino Maru Gothic ProN","Hiragino Sans","Yu Gothic",sans-serif;isolation:isolate;position:relative}
+#hw-root{padding:0 0 10px;background:transparent}
+#hw-root main{max-width:620px;margin:0 auto}
+#hw-root textarea{width:100%;height:110px;margin-top:10px;font:12px monospace;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:6px}
+/* ===== キャラ詳細の一番下: 性格・行動チェックシート ===== */
+#hw-root .cs{margin-top:22px;padding:14px;background:var(--card);border:1px solid var(--line);border-radius:10px}
+#hw-root .cs-h{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:4px}
+#hw-root .cs-h b{font-size:14px;color:var(--main);border-left:4px solid var(--accent);padding-left:8px}
+#hw-root .cs-ctl{display:flex;gap:6px}
+#hw-root .cs-ctl button{padding:5px 14px;border:1px solid var(--line);border-radius:99px;background:var(--card);color:var(--mut);font:inherit;font-size:13px;cursor:pointer}
+#hw-root .cs-ctl .cs-key{padding:5px 10px;line-height:1}
+#hw-root .cs-ctl .cs-save{background:var(--main);color:var(--on);border-color:var(--main)}
+#hw-root .cs-ctl button[hidden]{display:none}
+#hw-root .cs-msg{min-height:1.2em;font-size:12px;color:var(--mut)}
+#hw-root .cs-s{margin-top:14px}
+#hw-root .cs-t{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--fg)}
+#hw-root .cs-t::after{content:"";flex:1;height:1px;background:var(--line)}
+#hw-root .cs-cols{display:grid;grid-template-columns:1fr 1fr;gap:0 22px;margin-top:6px}
+@media(max-width:600px){#hw-root .cs-cols{grid-template-columns:1fr}}
+#hw-root .cs-sub{margin:6px 0 2px;font-size:12px;color:var(--mut)}
+#hw-root .cs-r{padding:4px 0 6px}
+#hw-root .cs-q{font-size:11px;color:var(--mut)}
+#hw-root .cs-line{display:grid;grid-template-columns:4em 1fr 4em;align-items:center;gap:6px;font-size:12px}
+#hw-root .cs-l{text-align:right}
+#hw-root .cs-b{display:flex;gap:2px}
+#hw-root .cs-b i{flex:1;max-width:18px;aspect-ratio:1;border:1.5px solid var(--mut);border-radius:2px;background:var(--card);display:block}
+#hw-root .cs.ed .cs-b i{cursor:pointer}
+@media(hover:hover){#hw-root .cs.ed .cs-b i:hover{background:var(--hover)}}
+#hw-root .cs-b[data-v="1"] i:nth-child(1){background:var(--main);border-color:var(--main)}
+#hw-root .cs-b[data-v="2"] i:nth-child(2){background:var(--main);border-color:var(--main)}
+#hw-root .cs-b[data-v="3"] i:nth-child(3){background:var(--main);border-color:var(--main)}
+#hw-root .cs-b[data-v="4"] i:nth-child(4){background:var(--main);border-color:var(--main)}
+#hw-root .cs-b[data-v="5"] i:nth-child(5){background:var(--main);border-color:var(--main)}
+#hw-root .cs-b[data-v="6"] i:nth-child(6){background:var(--main);border-color:var(--main)}
+#hw-root .cs-b[data-v="7"] i:nth-child(7){background:var(--main);border-color:var(--main)}
+#hw-root .cs-b[data-v="8"] i:nth-child(8){background:var(--main);border-color:var(--main)}
+#hw-root .cs-b[data-v="9"] i:nth-child(9){background:var(--main);border-color:var(--main)}
+#hw-root .cs-b[data-v="10"] i:nth-child(10){background:var(--main);border-color:var(--main)}
+#hw-root .cs-b[data-v="11"] i:nth-child(11){background:var(--main);border-color:var(--main)}
+
+/* ===== 複数シート(プルダウン切替・シート追加) ===== */
+#hw-root .csw{margin-top:22px;padding:14px;background:var(--card);border:1px solid var(--line);border-radius:10px}
+#hw-root .csw .cs{margin:0;padding:0;border:0;border-radius:0;background:none}
+#hw-root .csw-bar{display:flex;align-items:center;gap:8px;margin:6px 0 8px;font-size:13px;color:var(--mut)}
+#hw-root .csw-sel{max-width:100%;min-width:0;padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--fg);font:inherit;font-size:13px}
+#hw-root .cs-ctl{flex-wrap:wrap;justify-content:flex-end}
+#hw-root .cs-ctl .cs-del{color:#c0392b;border-color:#c0392b}
+#hw-root .cs-picker{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:8px 0 4px;padding:8px;border:1px dashed var(--line);border-radius:8px}
+#hw-root .cs-picker select{min-width:0;max-width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg);font:inherit;font-size:13px}
+#hw-root .cs-picker button{padding:5px 14px;border:1px solid var(--line);border-radius:99px;background:var(--card);color:var(--mut);font:inherit;font-size:13px;cursor:pointer}
+#hw-root .cs-picker .cs-padd{background:var(--main);color:var(--on);border-color:var(--main)}
+#hw-root .cs-cols.one{grid-template-columns:1fr}
+#hw-root .cs-missing{color:var(--mut);font-size:13px}
+
+/* 表タイプのシート */
+#hw-root .cs-tbl{width:100%;border-collapse:collapse;margin-top:6px;table-layout:fixed}
+#hw-root .cs-tbl th,#hw-root .cs-tbl td{border:1px solid var(--line);padding:0;vertical-align:middle}
+#hw-root .cs-tbl th{width:34%;max-width:11em;padding:8px 8px;background:var(--bg);color:var(--fg);font-size:13px;font-weight:600;text-align:center;line-height:1.4}
+#hw-root .cs .cs-tx{display:block;width:100%;height:auto;margin:0;border-radius:0;box-sizing:border-box;min-height:2.4em;padding:8px 10px;border:0;background:transparent;color:var(--fg);font:inherit;font-size:14px;line-height:1.5;resize:none;field-sizing:content;overflow:hidden;outline:none}
+#hw-root .cs.ed .cs-tx{background:var(--card);box-shadow:inset 0 0 0 1px var(--line)}
+
+/* ===== デザイン統一(ボタン・プルダウン)/ タップ時の色は即時 ===== */
+#hw-root{-webkit-tap-highlight-color:transparent}
+#hw-root .cs-ctl button,#hw-root .cs-picker button{box-sizing:border-box;min-height:32px;padding:5px 14px;border:1px solid var(--line);border-radius:99px;background:var(--card);color:var(--mut);font:inherit;font-size:13px;line-height:1.2;white-space:nowrap;cursor:pointer;transition:none}
+#hw-root .cs-ctl .cs-key{padding:5px 12px}
+#hw-root .cs-ctl .cs-save,#hw-root .cs-picker .cs-padd{background:var(--main);color:var(--on);border-color:var(--main)}
+#hw-root .cs-ctl .cs-del{color:#c0392b;border-color:#c0392b}
+#hw-root .cs-ctl button[hidden],#hw-root .cs-picker[hidden]{display:none}
+#hw-root .csw-sel,#hw-root .cs-picker select{box-sizing:border-box;min-height:32px;max-width:100%;min-width:0;padding:5px 14px;border:1px solid var(--line);border-radius:99px;background:var(--card);color:var(--fg);font:inherit;font-size:13px}
+#hw-root .cs-picker{padding:8px 10px;border:1px dashed var(--line);border-radius:10px}
+#hw-root .cs-ctl button:not(.cs-save):active,#hw-root .cs-picker button:not(.cs-padd):active{background:var(--hover)}
+
+/* 見出しは折り返さない(幅は文字数に合わせる)。JSON 内の \n はスマホ(600px以下)だけ改行 */
+#hw-root .cs-l,#hw-root .cs-rr{white-space:pre-line;word-break:keep-all}
+#hw-root .cs-line{grid-template-columns:var(--wld,4em) 1fr var(--wrd,4em)}
+#hw-root br.sp{display:none}
+#hw-root .cs-tbl th{width:min(calc(var(--thd,6) * 1em + 1em + 16px),34%);white-space:pre-line;word-break:normal;overflow-wrap:anywhere}
+
+/* 選択中(フォーカス時)の囲み枠を出さない */
+#hw-root .cs :focus,#hw-root .cs :focus-visible,#hw-root .csw :focus,#hw-root .csw :focus-visible{outline:none}
+#hw-root .cs .cs-tx:focus{box-shadow:inset 0 0 0 1px var(--line)}
+
+/* スマホ: 編集中のボタン(鍵〜キャンセル)を1行に */
+@media(max-width:600px){
+  #hw-root br.sp{display:inline}
+  #hw-root .cs-line{grid-template-columns:var(--wl,4em) 1fr var(--wr,4em)}
+  #hw-root .cs-tbl th{font-size:12px;padding:6px 4px;width:min(calc(var(--thw,6) * 1em + 1em + 8px),30%)}
+  #hw-root .cs .cs-tx{padding:8px}
+  #hw-root .csw.ed .cs-ctl{flex:1 1 100%;flex-wrap:nowrap;justify-content:space-between;gap:4px}
+  #hw-root .csw.ed .cs-ctl button{flex:0 0 auto;min-height:30px;padding:4px 6px;font-size:11.5px}
+  #hw-root .csw.ed .cs-ctl .cs-key{padding:4px 8px}
+}
+@media(max-width:360px){
+  #hw-root .csw.ed .cs-ctl button{padding:4px 4px;font-size:10.5px}
+}
+
+/* ===== 見出し「チェックシート」を枠の外へ / プルダウンは枠内の見出し位置へ ===== */
+#hw-root .csw-title{margin-top:22px;font-size:14px;font-weight:700;color:var(--main);border-left:4px solid var(--accent);padding-left:8px}
+#hw-root .csw-title + .csw{margin-top:8px}
+#hw-root .csw-bar{flex:1 1 auto;min-width:0;margin:0}
+#hw-root .csw-bar[hidden]{display:none}
+#hw-root .csw-bar .csw-sel{max-width:100%}
+#hw-root .csw .cs-h{margin-bottom:6px}
+#hw-root .csw .cs-ctl{margin-left:auto}
+@media(max-width:600px){
+  #hw-root .csw .csw-bar{flex:1 1 100%}
+  #hw-root .csw .cs-ctl,#hw-root .csw.ed .cs-ctl{margin-left:0;justify-content:flex-start}
+}
+/* 表: 見出し列を狭く / 本文の文字サイズは見出しと同じ */
+#hw-root .cs-tbl th{width:min(calc(var(--thd,6) * 1em + 4px),34%);padding:8px 6px}
+#hw-root .cs .cs-tx{font-size:13px}
+@media(max-width:600px){
+  #hw-root .cs-tbl th{width:min(calc(var(--thw,6) * 1em + 2px),30%);padding:6px 3px;font-size:12px}
+  #hw-root .cs .cs-tx{font-size:12px}
+}
+/* 表の編集中: 入力欄をマスいっぱいに(隙間・二重線をなくす) */
+#hw-root .cs-tbl td{height:1px}
+#hw-root .cs-tbl .cs-tx{height:100% !important;min-height:2.4em}
+#hw-root .cs.ed .cs-tbl td{background:#fffaf0}
+#hw-root .cs.ed .cs-tx,#hw-root .cs.ed .cs-tx:focus{background:transparent;box-shadow:none}
+/* スマホでもボタンはPCと同じ大きさ・間隔(入りきらなければ折り返す) */
+@media(max-width:600px){
+  #hw-root .csw.ed .cs-ctl,#hw-root .csw .cs-ctl{flex-wrap:wrap;gap:6px;justify-content:flex-start}
+  #hw-root .csw.ed .cs-ctl button,#hw-root .csw .cs-ctl button{flex:0 0 auto;min-height:32px;padding:5px 12px;font-size:13px}
+  #hw-root .csw.ed .cs-ctl .cs-key,#hw-root .csw .cs-ctl .cs-key{padding:5px 12px}
+}
+/* スマホ: ボタンは必ず1行。画面幅に合わせて文字・余白・間隔を少しずつ縮める */
+@media(max-width:600px){
+  #hw-root .csw.ed .cs-ctl,#hw-root .csw .cs-ctl{flex-wrap:nowrap;gap:clamp(3px,1vw,6px);justify-content:flex-start}
+  #hw-root .csw.ed .cs-ctl button,#hw-root .csw .cs-ctl button{flex:0 0 auto;min-height:32px;padding:5px clamp(5px,1.7vw,12px);font-size:clamp(10px,3.1vw,13px)}
+  #hw-root .csw.ed .cs-ctl .cs-key,#hw-root .csw .cs-ctl .cs-key{padding:5px clamp(6px,2vw,12px)}
+}
+/* スマホ: 右端にぴったりくっつかないよう、ボタンをもう一回り小さく */
+@media(max-width:600px){
+  #hw-root .csw .cs-ctl{max-width:100%;padding-right:4px;box-sizing:border-box;gap:clamp(3px,.8vw,5px)}
+  #hw-root .csw.ed .cs-ctl button,#hw-root .csw .cs-ctl button{flex:0 1 auto;min-width:0;padding:5px clamp(4px,1.4vw,10px);font-size:clamp(9.5px,2.7vw,13px)}
+  #hw-root .csw.ed .cs-ctl .cs-key,#hw-root .csw .cs-ctl .cs-key{padding:5px clamp(5px,1.7vw,10px)}
+}
+
+</style>
 </head>
 <body>
 
@@ -266,7 +410,7 @@ button.p:disabled { background: #ccc; border-color: #ccc; cursor: not-allowed; }
   <p class="msg" id="msg"></p>
 
   <div class="card ed" id="edit"></div>
-  <div class="card" id="prev" hidden></div>
+  <div id="prev" hidden></div>
 </div>
 
 <!-- プリセット選択モーダル (新規作成用) -->
@@ -295,26 +439,7 @@ button.p:disabled { background: #ccc; border-color: #ccc; cursor: not-allowed; }
 </div>
 
 <script>
-/* --- シートのCSS --- */
-const CSS =
-'.cs-f{color:var(--fg,#333)}'+
-'.cs-t{font-size:17px;font-weight:700;color:var(--main-deep,#5c3c0f)}'+
-'.cs-s h4{font-size:14px;margin:18px 0 6px;padding-left:8px;border-left:4px solid var(--accent,#ffd60a);color:var(--main,#8e632b)}'+
-'.cs-c{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:2px 28px}'+
-'.cs-g>b{display:block;font-size:13px;margin:8px 0 6px}'+
-'.cs-i{margin:0 0 12px}'+
-'.cs-i>span{display:block;font-size:12px;color:var(--mut,#7a6f62)}'+
-'.cs-r{display:flex;align-items:center;gap:6px;margin-top:3px}'+
-'.cs-r>em{flex:none;width:4.8em;font-size:13px;font-style:normal}'+
-'.cs-r>em:first-child{text-align:right}'+
-'.cs-b{display:flex;flex:1;gap:3px;max-width:300px}'+
-'.cs-b input{-webkit-appearance:none;appearance:none;margin:0;flex:1;min-width:0;max-width:26px;aspect-ratio:1;border:1.5px solid var(--main,#8e632b);border-radius:3px;background:var(--card,#fff);cursor:pointer}'+
-'.cs-b input:hover{background:var(--hover,#fff1b0)}'+
-'.cs-b input:checked{background:var(--main,#8e632b)}'+
-'.cs-b input:focus-visible{outline:2px solid var(--accent,#ffd60a);outline-offset:1px}'+
-'.cs-rs{margin-top:6px;padding:4px 12px;border:1px solid var(--line,#e6dccb);border-radius:99px;background:none;color:var(--mut,#7a6f62);font:inherit;font-size:12px;cursor:pointer}'+
-'@media(max-width:480px){.cs-r{flex-wrap:wrap;row-gap:5px}.cs-r>em{width:auto;font-size:12px}.cs-r>em:first-child{order:1;text-align:left;flex:1}.cs-r>em:last-child{order:2;text-align:right}.cs-b{order:3;flex-basis:100%;max-width:none}.cs-b input{max-width:30px}}';
-document.getElementById('cs-css').textContent = CSS;
+
 
 /* --- 定数 --- */
 var GH_OWNER = "cheeees", GH_REPO = "cheeeestrpg", GH_BRANCH = "main";
@@ -539,19 +664,6 @@ $('#fileSel').addEventListener('change', function () {
 $('#bReload').addEventListener('click', async function () { say('一覧を更新中…'); await listFiles(); if (files.length) say('一覧を更新しました'); });
 
 /* --- エディタ & 描画 --- */
-function sheet(t, p) {
-  let n = 0;
-  return `<form class=cs-f onsubmit="return false"><div class=cs-t>◆${esc(t.title)}</div>` +
-  t.sections.map(s => `<section class=cs-s><h4>${esc(s.name)}</h4><div class=cs-c>` +
-    s.groups.map(g => `<div class=cs-g><b>■${esc(g.name)}</b>` +
-      g.items.map(it => {
-        const nm = `k${p}_${(n++).toString(36)}`;
-        return `<div class=cs-i><span>・${esc(it.q)}：</span><div class=cs-r><em>${esc(it.l)}</em><div class=cs-b>` +
-        `<input type=radio name=${nm}>`.repeat(t.boxes) + `</div><em>${esc(it.r)}</em></div></div>`;
-      }).join('') + `</div>`).join('') + `</div></section>`).join('') +
-  `<button type=reset class=cs-rs>${esc(t.reset || 'チェックをリセット')}</button></form>`;
-}
-
 const ref = p => {
   const a = p.split('.'), k = a.pop();
   let o = tpl;
@@ -581,12 +693,91 @@ function edit() {
   `<div style="margin-top:12px"><button type=button class=mini data-a=add data-p=sections>＋セクションを追加</button></div>`;
 }
 
-function preview() {
-  if (tpl.type !== 'table') return sheet(tpl, 'v');
-  return `<div class=cs-t>◆${esc(tpl.title)}</div><table style="width:100%;border-collapse:collapse;margin-top:10px">` +
-    tpl.rows.map(r => `<tr><th style="width:36%;text-align:left;font-weight:normal;padding:8px;border:1px solid var(--line);background:var(--soft)">${esc(r.label)}</th><td style="padding:8px;border:1px solid var(--line)">&nbsp;</td></tr>`).join('') +
-    '</table>';
+/* --- プレビュー: 公開ページ(hue_wheel)と同じ作り・同じCSSで描画 --- */
+function pubTw(str) {
+  let m = 0;
+  String(str == null ? '' : str).split('\n').forEach(line => {
+    let w = 0; for (let i = 0; i < line.length; i++) w += line.charCodeAt(i) < 256 ? 0.55 : 1;
+    if (w > m) m = w;
+  });
+  return m;
 }
+const pubTwj = str => pubTw(String(str == null ? '' : str).replace(/\n/g, ''));
+const pubLb = v => esc(v).replace(/\n/g, '<br class="sp">');
+function pubPreset() {   // 公開側と同じ正規化(マスの数は2〜11)
+  const d = toFile(JSON.parse(JSON.stringify(tpl)), tpl.no || noOf(currentFile) || 1);
+  return {
+    no: d.no || 1,
+    type: d.type === 'table' ? 'table' : 'slider',
+    name: d.name || ('シート' + (d.no || 1)),
+    scale: Math.max(2, Math.min(11, Number(d.scale) || 11)),
+    sections: Array.isArray(d.sections) ? d.sections : [],
+    rows: Array.isArray(d.rows) ? d.rows : []
+  };
+}
+function pubSheet(preset) {
+  const no = preset.no, n = preset.scale, c = 'pv';
+  const boxes = new Array(n + 1).join('<i></i>');
+  let h = '', ml = 3, mr = 3, mt = 0, mld = 3, mrd = 3, mtd = 0;
+  if (preset.type === 'table') {
+    h += '<table class="cs-tbl"><tbody>';
+    preset.rows.forEach(r => {
+      mt = Math.max(mt, pubTw(r.label)); mtd = Math.max(mtd, pubTwj(r.label));
+      h += '<tr><th>' + pubLb(r.label) + '</th><td><textarea class="cs-tx" rows="1" readonly data-k="' + esc(r.id) + '"></textarea></td></tr>';
+    });
+    h += '</tbody></table>';
+  } else preset.sections.forEach(s => {
+    const cols = s.cols || [];
+    h += '<div class="cs-s">';
+    if (s.title) h += '<div class="cs-t">' + esc(s.title) + '</div>';
+    h += '<div class="cs-cols' + (cols.length < 2 ? ' one' : '') + '">';
+    cols.forEach(col => {
+      h += '<div class="cs-col">';
+      if (col.sub) h += '<div class="cs-sub">' + esc(col.sub) + '</div>';
+      (col.items || []).forEach(it => {
+        ml = Math.max(ml, pubTw(it.l)); mr = Math.max(mr, pubTw(it.r)); mld = Math.max(mld, pubTwj(it.l)); mrd = Math.max(mrd, pubTwj(it.r));
+        h += '<div class="cs-r">';
+        if (it.q) h += '<div class="cs-q">' + esc(it.q) + '</div>';
+        h += '<div class="cs-line"><span class="cs-l">' + pubLb(it.l) + '</span><div class="cs-b" data-k="' + esc(it.id) + '" data-v="0">' + boxes + '</div><span class="cs-rr">' + pubLb(it.r) + '</span></div></div>';
+      });
+      h += '</div>';
+    });
+    h += '</div></div>';
+  });
+  return `<div class="cs" style="--wl:${ml + 0.4}em;--wr:${mr + 0.4}em;--thw:${mt};--wld:${mld + 0.4}em;--wrd:${mrd + 0.4}em;--thd:${mtd}">${h}</div>`;
+}
+function preview() {
+  const p = pubPreset();
+  const note = (tpl.type !== 'table' && Number(tpl.boxes) > 11)
+    ? '<p class="msg err">公開ページのマスは最大11個です。いまの設定(' + esc(tpl.boxes) + '個)でも、公開側では11個で表示されます。</p>' : '';
+  return note + `<div id="hw-root"><main>
+<div class="csw-title">チェックシート</div>
+<div class="csw" id="pvw"><div class="cs-h"><div class="csw-bar"><select class="csw-sel"><option>${esc(p.no + '. ' + p.name)}</option></select></div><span class="cs-ctl"><button type="button" class="cs-key">🔒</button><button type="button" class="cs-edit">✎ 編集</button><button type="button" class="cs-addsheet" hidden>＋ シート追加</button><button type="button" class="cs-del" hidden>シート削除</button><button type="button" class="cs-save" hidden>保存</button><button type="button" class="cs-cancel" hidden>キャンセル</button></span></div>
+<div class="cs-msg"></div>${pubSheet(p)}</div></main></div>`;
+}
+function pvMode(on) {
+  const w = $('#pvw'); if (!w) return;
+  w.classList.toggle('ed', on);
+  const sh = w.querySelector('.cs'); sh.classList.toggle('ed', on);
+  sh.querySelectorAll('.cs-tx').forEach(t => { t.readOnly = !on; });
+  w.querySelector('.cs-edit').hidden = on;
+  ['cs-addsheet', 'cs-del', 'cs-save', 'cs-cancel'].forEach(k => { w.querySelector('.' + k).hidden = !on; });
+  w.querySelector('.cs-msg').textContent = on ? (sh.querySelector('.cs-tx') ? '各項目に自由に入力できます' : 'マスをクリックで塗りつぶし（もう一度押すと解除）') : '';
+}
+document.addEventListener('click', e => {
+  const t = e.target;
+  if (!t.closest || !t.closest('#pvw')) return;
+  if (t.classList.contains('cs-edit')) { pvMode(true); return; }
+  if (t.classList.contains('cs-cancel')) {
+    $('#pvw').querySelectorAll('.cs-b').forEach(b => { b.dataset.v = '0'; });
+    $('#pvw').querySelectorAll('.cs-tx').forEach(x => { x.value = ''; });
+    pvMode(false); return;
+  }
+  if (t.tagName === 'I' && $('#pvw').classList.contains('ed')) {
+    const bar = t.parentNode, k = Array.prototype.indexOf.call(bar.children, t) + 1;
+    bar.dataset.v = (bar.dataset.v == k) ? '0' : String(k);
+  }
+});
 
 function show(v) {
   $('#edit').hidden = v !== 'ed';
