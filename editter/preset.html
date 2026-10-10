@@ -433,19 +433,54 @@ button.p:disabled { background: #ccc; border-color: #ccc; cursor: not-allowed; }
   #hw-root .csw.ed .cs-ctl button{flex:1 0 auto}
 }
 
-/* ===== 説明文 / 見出し行 / 縦並び(stack)レイアウト / 入力例(placeholder) ===== */
-#hw-root .cs-desc{margin:4px 0 12px;font-size:12px;line-height:1.7;color:var(--mut)}
-#hw-root .cs-tx::placeholder{color:#b9ad9c;opacity:1}
-#hw-root .cs-hd{padding:7px 10px;background:var(--soft);border-left:4px solid var(--accent);font-size:13px;font-weight:700;color:var(--main);text-align:left;line-height:1.5}
-#hw-root .cs-hd .cs-hdd{display:block;margin-top:2px;font-size:11px;font-weight:400;color:var(--mut);line-height:1.6}
-#hw-root .cs-tbl th .cs-d{display:block;margin-top:3px;font-size:10.5px;font-weight:400;color:var(--mut);line-height:1.4}
-#hw-root .cs-stk .cs-hd{margin:24px 0 2px}
-#hw-root .cs-stk .cs-hd:first-child{margin-top:4px}
-#hw-root .cs-sr{margin-top:12px}
+/* ===== 説明文(✎編集中だけ表示) / 見出し(中央揃え・見出しごとに表を分離) / 縦並び / 年表 / 余白 ===== */
+#hw-root .cs-tx::placeholder,#hw-root .cs-evt::placeholder{color:#b9ad9c;opacity:1}
+#hw-root .cs-desc,#hw-root .cs-hdd,#hw-root .cs-sd,#hw-root .cs-tbl th .cs-d{display:none}
+#hw-root .cs.ed .cs-desc,#hw-root .cs.ed .cs-hdd,#hw-root .cs.ed .cs-sd,#hw-root .cs.ed .cs-tbl th .cs-d{display:block}
+#hw-root .cs-desc{margin:6px 0 14px;font-size:12px;line-height:1.7;color:var(--mut)}
+#hw-root .cs-hdd{margin-top:4px;font-size:11px;line-height:1.6;color:var(--mut);text-align:center}
+#hw-root .cs-sd{margin-top:2px;font-size:11px;color:var(--mut);line-height:1.6}
+#hw-root .cs-tbl th .cs-d{margin-top:4px;font-size:10.5px;font-weight:400;color:var(--mut);line-height:1.4}
+/* 見出し: 02のカテゴリ名と同じ大きさ(14px太字)で中央揃え。左右に線 */
+#hw-root .cs-hh{margin-bottom:12px}
+#hw-root .cs-hh .cs-t{justify-content:center;gap:14px}
+#hw-root .cs-hh .cs-t::before{content:"";flex:1;height:1px;background:var(--line)}
+/* 見出しごとのまとまりの間隔 */
+#hw-root .cs .cs-g{margin-top:36px}
+#hw-root .cs .cs-g:first-child{margin-top:6px}
+#hw-root .cs:not(.ed) .cs-desc + .cs-g{margin-top:6px}
+#hw-root .cs.ed .cs-desc + .cs-g{margin-top:20px}
+/* 表の余白 */
+#hw-root .cs-tbl{margin-top:0}
+#hw-root .cs-tbl th{padding:16px 10px;width:min(calc(var(--thd,6) * 1em + 24px),36%)}
+#hw-root .cs-tbl .cs-tx{padding:14px 16px;min-height:3.4em}
+#hw-root .csw{padding:20px 18px}
+@media(max-width:600px){
+  #hw-root .csw{padding:14px 12px}
+  #hw-root .cs-tbl th{padding:12px 6px;width:min(calc(var(--thw,6) * 1em + 14px),32%)}
+  #hw-root .cs-tbl .cs-tx{padding:12px}
+}
+/* 縦並び(stack) */
+#hw-root .cs-sr{margin-top:20px}
+#hw-root .cs-hh + .cs-sr{margin-top:0}
 #hw-root .cs-sl{font-size:13px;font-weight:600;color:var(--fg);line-height:1.5;white-space:pre-line}
-#hw-root .cs-sd{margin-top:1px;font-size:11px;color:var(--mut);line-height:1.6}
-#hw-root .cs-sr .cs-tx{margin-top:4px;border:1px solid var(--line);border-radius:6px;padding:8px 10px;min-height:3.4em}
+#hw-root .cs-sr .cs-tx{margin-top:6px;border:1px solid var(--line);border-radius:6px;padding:12px 14px;min-height:3.6em}
 #hw-root .cs.ed .cs-sr .cs-tx,#hw-root .cs.ed .cs-sr .cs-tx:focus{background:#fffaf0}
+/* 年表(縦線タイムライン・出来事は自由に追加) */
+#hw-root .cs-tl{margin-top:16px;padding:0 2px}
+#hw-root .cs-ev{position:relative;display:grid;grid-template-columns:16px minmax(0,1fr);column-gap:12px;padding-bottom:28px}
+#hw-root .cs-ev:last-child{padding-bottom:6px}
+#hw-root .cs-ev::before{content:"";position:absolute;left:7px;top:22px;bottom:-2px;width:2px;background:var(--line)}
+#hw-root .cs-ev:last-child::before{display:none}
+#hw-root .cs-dot{display:block;width:16px;height:16px;margin-top:5px;border:3px solid var(--main);border-radius:50%;background:var(--card)}
+#hw-root .cs-evb{position:relative;min-width:0}
+#hw-root .cs-evt{display:block;width:100%;margin:0;padding:2px 0;border:0;border-radius:0;background:transparent;color:var(--main-deep);font:inherit;font-size:14px;font-weight:700;line-height:1.6;outline:none}
+#hw-root .cs-evb .cs-tx{margin-top:2px;padding:2px 0 0;min-height:1.8em;font-size:13px;line-height:1.7}
+#hw-root .cs.ed .cs-evt{padding:4px 34px 4px 10px;border:1px solid var(--line);border-radius:6px;background:#fffaf0}
+#hw-root .cs.ed .cs-evb .cs-tx,#hw-root .cs.ed .cs-evb .cs-tx:focus{margin-top:6px;padding:10px 12px;min-height:3.6em;border:1px solid var(--line);border-radius:6px;background:#fffaf0;box-shadow:none}
+#hw-root .cs-evdel,#hw-root .cs-tladd{display:none}
+#hw-root .cs.ed .cs-evdel{display:block;position:absolute;top:3px;right:4px;width:26px;height:26px;padding:0;border:0;border-radius:50%;background:transparent;color:var(--mut);font:inherit;font-size:18px;line-height:1;cursor:pointer}
+#hw-root .cs.ed .cs-tladd{display:inline-block;margin:10px 0 0 28px;min-height:32px;padding:5px 14px;border:1px solid var(--main);border-radius:99px;background:var(--card);color:var(--main);font:inherit;font-size:13px;cursor:pointer}
 </style>
 </head>
 <body>
@@ -540,6 +575,7 @@ const defaultTpl = () => fix({
 const strip = (v, ch) => String(v ?? '').replace(new RegExp('^' + ch + '\\s*'), '');
 function allItems(t) {
   if (t.type === 'table') return t.rows;
+  if (t.type === 'timeline') return [];
   const a = [];
   t.sections.forEach(x => x.groups.forEach(g => g.items.forEach(i => a.push(i))));
   return a;
@@ -554,9 +590,12 @@ function fix(t) {   // 項目idと次の番号を整える
   return t;
 }
 function fromFile(d) {
-  const table = d.type === 'table' || (Array.isArray(d.rows) && !d.sections);
+  const tl = d.type === 'timeline';
+  const table = !tl && (d.type === 'table' || (Array.isArray(d.rows) && !d.sections));
   const t = {
-    type: table ? 'table' : 'slider',
+    type: tl ? 'timeline' : (table ? 'table' : 'slider'),
+    count: Math.max(1, Math.min(10, Number(d.count) || 3)),
+    examples: (d.examples || []).map(x => ({ t: x.t || '', d: x.d || '' })),
     no: d.no || 0,
     title: d.name || d.title || '無題のシート',
     boxes: d.scale || d.boxes || 11,
@@ -572,7 +611,7 @@ function fromFile(d) {
       ? { heading: r.heading || '', desc: r.desc || '' }
       : { id: r.id, label: r.label || '', desc: r.desc || '', ph: r.ph || '' });
     if (!t.rows.length) t.rows = [{ label: '項目' }];
-  } else {
+  } else if (!tl) {
     t.sections = (d.sections || []).map(x => ({
       name: x.title ?? x.name ?? '',
       groups: (x.cols || x.groups || []).map(c => ({
@@ -587,6 +626,14 @@ function fromFile(d) {
 function toFile(t, no) {
   fix(t);
   const o = { no: no || t.no || 0 };
+  if (t.type === 'timeline') {
+    o.type = 'timeline';
+    o.name = t.title;
+    if (t.desc) o.desc = t.desc;
+    o.count = t.count || 3;
+    o.examples = (t.examples || []).map(x => ({ t: x.t, d: x.d }));
+    return o;
+  }
   if (t.type === 'table') {
     o.type = 'table';
     o.name = t.title;
@@ -756,23 +803,34 @@ const ref = p => {
 function edit() {
   const f = (p, v, ph) => `<input type=text data-p="${p}" value="${esc(v)}" placeholder="${ph || ''}">`;
   const ops = p => `<span class=ops><button type=button class=mini data-a=mv data-d=-1 data-p="${p}">↑</button><button type=button class=mini data-a=mv data-d=1 data-p="${p}">↓</button><button type=button class=mini data-a=del data-p="${p}">削除</button></span>`;
+  if (tpl.type === 'timeline') {
+    const fr = (p, v, ph) => `<div class=fr>${f(p, v, ph)}</div>`;
+    $('#edit').innerHTML =
+    `<label>タイトル</label>${f('title', tpl.title)}
+     <label>シートの説明(任意・✎編集中だけ表示)</label>${f('desc', tpl.desc, 'このシートの使い方など')}
+     <label>最初に並べる出来事の数(1〜10)</label><input type=number min=1 max=10 data-p=count value="${tpl.count}">
+     <fieldset><legend>入力例(未入力のとき薄く表示。上から順に使い、足りなければ繰り返します)</legend>` +
+    tpl.examples.map((x, i) => `<fieldset><legend>例 ${i + 1}</legend><div class=hd>${f(`examples.${i}.t`, x.t, '見出しの例(年齢・出来事など)')}${ops(`examples.${i}`)}</div>${fr(`examples.${i}.d`, x.d, '説明の例')}</fieldset>`).join('') +
+    `<div style="margin-top:8px"><button type=button class=mini data-a=addex data-p=examples>＋入力例を追加</button></div></fieldset>`;
+    return;
+  }
   if (tpl.type === 'table') {
     const fr = (p, v, ph) => `<div class=fr>${f(p, v, ph)}</div>`;
     $('#edit').innerHTML =
     `<label>タイトル</label>${f('title', tpl.title)}
-     <label>シートの説明(タイトルの下に表示。空欄なら非表示)</label>${f('desc', tpl.desc, 'このシートの使い方など')}
+     <label>シートの説明(任意・✎編集中だけ表示)</label>${f('desc', tpl.desc, 'このシートの使い方など')}
      <label>レイアウト</label><select data-p="layout"><option value=""${tpl.layout === 'stack' ? '' : ' selected'}>横並び(項目名｜入力欄)</option><option value="stack"${tpl.layout === 'stack' ? ' selected' : ''}>縦並び(項目名の下に入力欄)</option></select>
      <fieldset><legend>項目(自由記入の表)</legend>` +
     tpl.rows.map((r, i) => isH(r)
-      ? `<fieldset><legend>見出し</legend><div class=hd>${f(`rows.${i}.heading`, r.heading, '見出し')}${ops(`rows.${i}`)}</div>${fr(`rows.${i}.desc`, r.desc, '見出しの説明(任意)')}</fieldset>`
-      : `<fieldset><legend>項目</legend><div class=hd>${f(`rows.${i}.label`, r.label, '項目名')}${ops(`rows.${i}`)}</div>${fr(`rows.${i}.desc`, r.desc, '項目の説明(任意)')}${fr(`rows.${i}.ph`, r.ph, '入力例(未入力のとき薄く表示)')}</fieldset>`
+      ? `<fieldset><legend>見出し</legend><div class=hd>${f(`rows.${i}.heading`, r.heading, '見出し')}${ops(`rows.${i}`)}</div>${fr(`rows.${i}.desc`, r.desc, '見出しの説明(任意・✎編集中だけ表示)')}</fieldset>`
+      : `<fieldset><legend>項目</legend><div class=hd>${f(`rows.${i}.label`, r.label, '項目名')}${ops(`rows.${i}`)}</div>${fr(`rows.${i}.desc`, r.desc, '項目の説明(任意・✎編集中だけ表示)')}${fr(`rows.${i}.ph`, r.ph, '入力例(未入力のとき薄く表示)')}</fieldset>`
     ).join('') +
     `<div style="margin-top:8px"><button type=button class=mini data-a=add data-p=rows>＋項目を追加</button> <button type=button class=mini data-a=addh data-p=rows>＋見出しを追加</button></div></fieldset>`;
     return;
   }
   $('#edit').innerHTML =
   `<label>タイトル</label>${f('title', tpl.title)}
-   <label>シートの説明(タイトルの下に表示。空欄なら非表示)</label>${f('desc', tpl.desc, 'このシートの使い方など')}
+   <label>シートの説明(任意・✎編集中だけ表示)</label>${f('desc', tpl.desc, 'このシートの使い方など')}
    <label>リセットボタンの文字</label>${f('reset', tpl.reset)}
    <label>チェックのマスの数(3〜15)</label><input type=number min=3 max=15 data-p=boxes value="${tpl.boxes}">` +
   tpl.sections.map((s, si) => `<fieldset><legend>セクション ${si + 1}</legend><div class=hd>${f(`sections.${si}.name`, s.name, 'セクション名')}${ops(`sections.${si}`)}</div>` +
@@ -798,7 +856,9 @@ function pubPreset() {   // 公開側と同じ正規化(マスの数は2〜11)
   const d = toFile(JSON.parse(JSON.stringify(tpl)), tpl.no || noOf(currentFile) || 1);
   return {
     no: d.no || 1,
-    type: d.type === 'table' ? 'table' : 'slider',
+    type: d.type === 'table' ? 'table' : (d.type === 'timeline' ? 'timeline' : 'slider'),
+    count: d.count || 3,
+    examples: Array.isArray(d.examples) ? d.examples : [],
     name: d.name || ('シート' + (d.no || 1)),
     desc: d.desc || '',
     layout: d.layout === 'stack' ? 'stack' : '',
@@ -807,33 +867,44 @@ function pubPreset() {   // 公開側と同じ正規化(マスの数は2〜11)
     rows: Array.isArray(d.rows) ? d.rows : []
   };
 }
+function tlRow(ex, i, ro) {   // 年表の1行(出来事)。入力例は順番に使い回す
+  const e = ex && ex.length ? ex[i % ex.length] : { t: '', d: '' };
+  const r = ro === false ? '' : ' readonly';
+  return '<div class="cs-ev"><span class="cs-dot"></span><div class="cs-evb"><input type="text" class="cs-evt"' + r + ' placeholder="' + esc(e.t) + '"><textarea class="cs-tx" rows="1"' + r + ' placeholder="' + esc(e.d) + '"></textarea><button type="button" class="cs-evdel" title="この出来事を削除">×</button></div></div>';
+}
+function tlRows(ex, n) { let h = ''; for (let i = 0; i < n; i++) h += tlRow(ex, i); return h; }
 function pubSheet(preset) {
   const no = preset.no, n = preset.scale, c = 'pv';
   const boxes = new Array(n + 1).join('<i></i>');
   let h = '', ml = 3, mr = 3, mt = 0, mld = 3, mrd = 3, mtd = 0;
-  if (preset.type === 'table' && preset.layout === 'stack') {
-    h += '<div class="cs-stk">';
-    preset.rows.forEach(r => {
-      if (r.heading !== undefined) {
-        h += '<div class="cs-hd">' + pubLb(r.heading) + (r.desc ? '<span class="cs-hdd">' + pubLb(r.desc) + '</span>' : '') + '</div>';
-        return;
-      }
-      h += '<div class="cs-sr"><div class="cs-sl">' + pubLb(r.label) + '</div>' +
-        (r.desc ? '<div class="cs-sd">' + pubLb(r.desc) + '</div>' : '') +
-        '<textarea class="cs-tx" rows="1" readonly placeholder="' + esc(r.ph) + '" data-k="' + esc(r.id) + '"></textarea></div>';
-    });
-    h += '</div>';
+  if (preset.type === 'timeline') {
+    window.__tl = { ex: preset.examples, n: preset.count };
+    h += '<div class="cs-tl">' + tlRows(preset.examples, preset.count) + '</div><button type="button" class="cs-tladd">＋ 出来事を追加</button>';
   } else if (preset.type === 'table') {
-    h += '<table class="cs-tbl"><tbody>';
-    preset.rows.forEach(r => {
-      if (r.heading !== undefined) {
-        h += '<tr><td colspan="2" class="cs-hd">' + pubLb(r.heading) + (r.desc ? '<span class="cs-hdd">' + pubLb(r.desc) + '</span>' : '') + '</td></tr>';
-        return;
-      }
-      mt = Math.max(mt, pubTw(r.label)); mtd = Math.max(mtd, pubTwj(r.label));
-      h += '<tr><th>' + pubLb(r.label) + (r.desc ? '<span class="cs-d">' + pubLb(r.desc) + '</span>' : '') + '</th><td><textarea class="cs-tx" rows="1" readonly placeholder="' + esc(r.ph) + '" data-k="' + esc(r.id) + '"></textarea></td></tr>';
+    const stack = preset.layout === 'stack', groups = [];
+    preset.rows.forEach(r => {   // 見出しごとに表を分ける
+      if (r.heading !== undefined) groups.push({ head: r, rows: [] });
+      else { if (!groups.length) groups.push({ head: null, rows: [] }); groups[groups.length - 1].rows.push(r); }
     });
-    h += '</tbody></table>';
+    groups.forEach(g => {
+      h += '<div class="cs-s cs-g">';
+      if (g.head) h += '<div class="cs-hh"><div class="cs-t">' + pubLb(g.head.heading) + '</div>' + (g.head.desc ? '<div class="cs-hdd">' + pubLb(g.head.desc) + '</div>' : '') + '</div>';
+      if (stack) {
+        g.rows.forEach(r => {
+          h += '<div class="cs-sr"><div class="cs-sl">' + pubLb(r.label) + '</div>' +
+            (r.desc ? '<div class="cs-sd">' + pubLb(r.desc) + '</div>' : '') +
+            '<textarea class="cs-tx" rows="1" readonly placeholder="' + esc(r.ph) + '" data-k="' + esc(r.id) + '"></textarea></div>';
+        });
+      } else if (g.rows.length) {
+        h += '<table class="cs-tbl"><tbody>';
+        g.rows.forEach(r => {
+          mt = Math.max(mt, pubTw(r.label)); mtd = Math.max(mtd, pubTwj(r.label));
+          h += '<tr><th>' + pubLb(r.label) + (r.desc ? '<span class="cs-d">' + pubLb(r.desc) + '</span>' : '') + '</th><td><textarea class="cs-tx" rows="1" readonly placeholder="' + esc(r.ph) + '" data-k="' + esc(r.id) + '"></textarea></td></tr>';
+        });
+        h += '</tbody></table>';
+      }
+      h += '</div>';
+    });
   } else preset.sections.forEach(s => {
     const cols = s.cols || [];
     h += '<div class="cs-s">';
@@ -868,7 +939,7 @@ function pvMode(on) {
   const w = $('#pvw'); if (!w) return;
   w.classList.toggle('ed', on);
   const sh = w.querySelector('.cs'); sh.classList.toggle('ed', on);
-  sh.querySelectorAll('.cs-tx').forEach(t => { t.readOnly = !on; });
+  sh.querySelectorAll('.cs-tx,.cs-evt').forEach(t => { t.readOnly = !on; });
   w.querySelector('.cs-edit').hidden = on;
   ['cs-addsheet', 'cs-del', 'cs-save', 'cs-cancel'].forEach(k => { w.querySelector('.' + k).hidden = !on; });
   w.querySelector('.cs-msg').textContent = on ? (sh.querySelector('.cs-tx') ? '各項目に自由に入力できます' : 'マスをクリックで塗りつぶし（もう一度押すと解除）') : '';
@@ -877,9 +948,16 @@ document.addEventListener('click', e => {
   const t = e.target;
   if (!t.closest || !t.closest('#pvw')) return;
   if (t.classList.contains('cs-edit')) { pvMode(true); return; }
+  if (t.classList.contains('cs-tladd')) {
+    const box = $('#pvw .cs-tl');
+    box.insertAdjacentHTML('beforeend', tlRow((window.__tl || {}).ex, box.children.length, false));
+    return;
+  }
+  if (t.classList.contains('cs-evdel')) { const ev = t.closest('.cs-ev'); if (ev) ev.remove(); return; }
   if (t.classList.contains('cs-cancel')) {
+    const tlb = $('#pvw .cs-tl'); if (tlb && window.__tl) tlb.innerHTML = tlRows(window.__tl.ex, window.__tl.n);
     $('#pvw').querySelectorAll('.cs-b').forEach(b => { b.dataset.v = '0'; });
-    $('#pvw').querySelectorAll('.cs-tx').forEach(x => { x.value = ''; });
+    $('#pvw').querySelectorAll('.cs-tx,.cs-evt').forEach(x => { x.value = ''; });
     pvMode(false); return;
   }
   if (t.tagName === 'I' && $('#pvw').classList.contains('ed')) {
@@ -1013,7 +1091,7 @@ function renderCards(containerId, list, showFile) {
     card.className = 'preset-card';
     card.innerHTML =
       '<div class="title">' + esc(item.data.name || item.data.title || '無題のプリセット') + '</div>' +
-      '<span class="badge">' + (item.data.type === 'table' ? '表(自由記入)' : 'スライダー(段階)') + '</span>' +
+      '<span class="badge">' + (item.data.type === 'table' ? '表(自由記入)' : item.data.type === 'timeline' ? '年表(出来事を追加)' : 'スライダー(段階)') + '</span>' +
       (showFile ? '<span class="badge">' + esc(item.file) + '</span>' : '');
     card.addEventListener('click', function () {
       document.querySelectorAll('.preset-card').forEach(c => c.classList.remove('selected'));
@@ -1065,6 +1143,7 @@ document.addEventListener('click', e => {
     if (a === 'mv') { const i = +k, j = i + +t.dataset.d; if (j >= 0 && j < o.length) [o[i], o[j]] = [o[j], o[i]]; }
     if (a === 'del' && confirm('削除しますか?')) o.splice(+k, 1);
     if (a === 'addh') o[k].push({ heading: '見出し', desc: '' });
+    if (a === 'addex') o[k].push({ t: '', d: '' });
     if (a === 'add') {
       const it = () => ({ id: 'i' + (tpl.nextId++), q: '項目', l: '左', r: '右' });
       if (k === 'rows') o[k].push({ id: 'i' + (tpl.nextId++), label: '項目', desc: '', ph: '' });
@@ -1082,7 +1161,7 @@ document.addEventListener('input', e => {
   const p = e.target.dataset && e.target.dataset.p;
   if (p) {
     const [o, k] = ref(p);
-    o[k] = p === 'boxes' ? Math.min(15, Math.max(3, parseInt(e.target.value) || 11)) : e.target.value;
+    o[k] = p === 'boxes' ? Math.min(15, Math.max(3, parseInt(e.target.value) || 11)) : p === 'count' ? Math.min(10, Math.max(1, parseInt(e.target.value) || 3)) : e.target.value;
     save(); markDirty();
   }
 });
