@@ -244,6 +244,23 @@ button.p:disabled { background: #ccc; border-color: #ccc; cursor: not-allowed; }
   display: flex; justify-content: flex-end; gap: 8px;
   background: var(--bg);
 }
+
+/* 表の編集: 見出しごとのブロック */
+.ed .blk { border: 1px solid var(--line); border-radius: 12px; margin-top: 16px; background: var(--card); overflow: hidden; }
+.ed .blkhd { display: flex; gap: 6px; align-items: center; padding: 10px 12px; background: var(--soft); border-bottom: 1px solid var(--line); }
+.ed .blkhd .tag { flex: none; font-size: 11px; font-weight: 700; color: var(--on); background: var(--main); border-radius: 99px; padding: 2px 9px; white-space: nowrap; }
+.ed .blkhd .tag.none { background: var(--mut); }
+.ed .blkhd input[type=text] { flex: 1; min-width: 0; font-weight: 700; }
+.ed .blkhd .nohd { flex: 1; font-size: 12px; color: var(--mut); }
+.ed .blkdesc { padding: 8px 12px 0; }
+.ed .blkbody { padding: 4px 12px 2px; }
+.ed .itm { border-left: 3px solid var(--accent); background: #fffdf3; border-radius: 0 8px 8px 0; padding: 8px 10px; margin-top: 8px; }
+.ed .itm .hd { margin-top: 0; }
+.ed .itm .hd .no { flex: none; font-size: 12px; color: var(--mut); min-width: 1.4em; text-align: center; }
+.ed .itm .two { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 6px; }
+.ed .blkft { padding: 6px 12px 12px; }
+.ed .addblk { margin-top: 16px; }
+@media(max-width:560px) { .ed .itm .two { grid-template-columns: 1fr; } }
 </style>
 <style id="pub-css">
 /* 公開ページ(hue_wheel)と同じ見た目 */
@@ -493,6 +510,12 @@ button.p:disabled { background: #ccc; border-color: #ccc; cursor: not-allowed; }
 #hw-root .cs-gpdel,#hw-root .cs-gadd{display:none}
 #hw-root .cs.ed .cs-gpdel{display:block;position:absolute;top:50%;right:5px;transform:translateY(-50%);width:26px;height:26px;padding:0;border:0;border-radius:50%;background:transparent;color:var(--mut);font:inherit;font-size:18px;line-height:1;cursor:pointer}
 #hw-root .cs.ed .cs-gadd{display:inline-block;margin-top:24px;min-height:32px;padding:5px 14px;border:1px solid var(--main);border-radius:99px;background:var(--card);color:var(--main);font:inherit;font-size:13px;cursor:pointer}
+/* 表の見出し列の幅: ブロックごとに --thd(PC)/--thw(スマホ) で計算。
+   %を含む min() は固定レイアウトの表で無効になる(列が等分される)ので、絶対値だけで上限をかける */
+#hw-root .cs-tbl th{width:min(calc(var(--thd,6) * 1em + 24px),15em)}
+@media(max-width:600px){
+  #hw-root .cs-tbl th{width:min(calc(var(--thw,6) * 1em + 14px),8.5em)}
+}
 </style>
 </head>
 <body>
@@ -871,17 +894,27 @@ function edit() {
     return;
   }
   if (tpl.type === 'table') {
-    const fr = (p, v, ph) => `<div class=fr>${f(p, v, ph)}</div>`;
+    // 見出し行から次の見出し行の手前までを1ブロックとして表示する
+    const blocks = [];
+    tpl.rows.forEach((r, i) => {
+      if (isH(r) || !blocks.length) blocks.push({ head: isH(r) ? i : -1, items: [] });
+      if (!isH(r)) blocks[blocks.length - 1].items.push(i);
+    });
+    const bops = (i, bi) => `<span class=ops>${(bi === 0 || (bi === 1 && blocks[0].head < 0)) ? '' : `<button type=button class=mini data-a=mvb data-d=-1 data-i="${i}">↑</button>`}${bi === blocks.length - 1 ? '' : `<button type=button class=mini data-a=mvb data-d=1 data-i="${i}">↓</button>`}<button type=button class=mini data-a=delb data-i="${i}">ブロック削除</button></span>`;
     $('#edit').innerHTML =
     `<label>タイトル</label>${f('title', tpl.title)}
      <label>シートの説明(任意)</label>${f('desc', tpl.desc, 'このシートの使い方など')}
-     <label>レイアウト</label><select data-p="layout"><option value=""${tpl.layout === 'stack' ? '' : ' selected'}>横並び(項目名｜入力欄)</option><option value="stack"${tpl.layout === 'stack' ? ' selected' : ''}>縦並び(項目名の下に入力欄)</option></select>
-     <fieldset><legend>項目(自由記入の表)</legend>` +
-    tpl.rows.map((r, i) => isH(r)
-      ? `<fieldset><legend>見出し</legend><div class=hd>${f(`rows.${i}.heading`, r.heading, '見出し')}${ops(`rows.${i}`)}</div>${fr(`rows.${i}.desc`, r.desc, '見出しの説明(任意・✎編集中だけ表示)')}</fieldset>`
-      : `<fieldset><legend>項目</legend><div class=hd>${f(`rows.${i}.label`, r.label, '項目名')}${ops(`rows.${i}`)}</div>${fr(`rows.${i}.desc`, r.desc, '項目の説明(任意・✎編集中だけ表示)')}${fr(`rows.${i}.ph`, r.ph, '入力例(未入力のとき薄く表示)')}</fieldset>`
-    ).join('') +
-    `<div style="margin-top:8px"><button type=button class=mini data-a=add data-p=rows>＋項目を追加</button> <button type=button class=mini data-a=addh data-p=rows>＋見出しを追加</button></div></fieldset>`;
+     <label>レイアウト</label><select data-p="layout"><option value=""${tpl.layout === 'stack' ? '' : ' selected'}>横並び(項目名｜入力欄)</option><option value="stack"${tpl.layout === 'stack' ? ' selected' : ''}>縦並び(項目名の下に入力欄)</option></select>` +
+    blocks.map((bk, bi) => {
+      const hd = bk.head >= 0
+        ? `<div class=blkhd><span class=tag>見出し</span>${f(`rows.${bk.head}.heading`, tpl.rows[bk.head].heading, '見出し')}${bops(bk.head, bi)}</div><div class=blkdesc>${f(`rows.${bk.head}.desc`, tpl.rows[bk.head].desc, '見出しの説明(任意・✎編集中だけ表示)')}</div>`
+        : `<div class=blkhd><span class="tag none">見出しなし</span><span class=nohd>最初の見出しより前の項目</span></div>`;
+      const at = bk.items.length ? bk.items[bk.items.length - 1] + 1 : bk.head + 1;
+      return `<div class=blk>${hd}<div class=blkbody>` +
+        bk.items.map((ri, n) => `<div class=itm><div class=hd><span class=no>${n + 1}</span>${f(`rows.${ri}.label`, tpl.rows[ri].label, '項目名')}${ops(`rows.${ri}`)}</div><div class=two>${f(`rows.${ri}.desc`, tpl.rows[ri].desc, '項目の説明(任意)')}${f(`rows.${ri}.ph`, tpl.rows[ri].ph, '入力例(未入力のとき薄く表示)')}</div></div>`).join('') +
+        `</div><div class=blkft><button type=button class=mini data-a=addrow data-i="${at}">＋項目を追加</button></div></div>`;
+    }).join('') +
+    `<div class=addblk><button type=button class=mini data-a=addh data-p=rows>＋見出し(新しいブロック)を追加</button></div>`;
     return;
   }
   $('#edit').innerHTML =
@@ -960,8 +993,9 @@ function pubSheet(preset) {
   if (preset.type === 'groups') {
     window.__gp = { secs: preset.sections, stack: preset.layout === 'stack' };
     preset.sections.forEach((sec, si) => {
-      (sec.items || []).forEach(it => { mt = Math.max(mt, pubTw(it.label)); mtd = Math.max(mtd, pubTwj(it.label)); });
-      h += '<div class="cs-s cs-g"><div class="cs-hh"><div class="cs-t">' + pubLb(sec.title) + '</div>' + (sec.desc ? '<div class="cs-hdd">' + pubLb(sec.desc) + '</div>' : '') + '</div>' +
+      let gm = 0, gmd = 0;
+      (sec.items || []).forEach(it => { gm = Math.max(gm, pubTw(it.label)); gmd = Math.max(gmd, pubTwj(it.label)); });
+      h += '<div class="cs-s cs-g" style="--thw:' + gm + ';--thd:' + gmd + '"><div class="cs-hh"><div class="cs-t">' + pubLb(sec.title) + '</div>' + (sec.desc ? '<div class="cs-hdd">' + pubLb(sec.desc) + '</div>' : '') + '</div>' +
         '<div class="cs-gl" data-si="' + si + '">' + gpFill(si) + '</div>' +
         '<button type="button" class="cs-gadd" data-si="' + si + '">＋ グループを追加</button></div>';
     });
@@ -975,7 +1009,9 @@ function pubSheet(preset) {
       else { if (!groups.length) groups.push({ head: null, rows: [] }); groups[groups.length - 1].rows.push(r); }
     });
     groups.forEach(g => {
-      h += '<div class="cs-s cs-g">';
+      let gm = 0, gmd = 0;
+      g.rows.forEach(r => { gm = Math.max(gm, pubTw(r.label)); gmd = Math.max(gmd, pubTwj(r.label)); });
+      h += '<div class="cs-s cs-g" style="--thw:' + gm + ';--thd:' + gmd + '">';
       if (g.head) h += '<div class="cs-hh"><div class="cs-t">' + pubLb(g.head.heading) + '</div>' + (g.head.desc ? '<div class="cs-hdd">' + pubLb(g.head.desc) + '</div>' : '') + '</div>';
       if (stack) {
         g.rows.forEach(r => {
@@ -1245,11 +1281,23 @@ document.addEventListener('click', e => {
   const t = e.target.closest('button');
   if (!t) return;
   const a = t.dataset.a;
+  if (a === 'addrow' || a === 'mvb' || a === 'delb') {   // 表のブロック操作(見出し+その項目をまとめて扱う)
+    const rows = tpl.rows, hi = +t.dataset.i, rng = [];
+    rows.forEach((r, i) => { if (isH(r) || !rng.length) rng.push({ s: i, e: i + 1, h: isH(r) }); else rng[rng.length - 1].e = i + 1; });
+    const bi = rng.findIndex(x => x.s === hi);
+    if (a === 'addrow') rows.splice(hi, 0, { id: 'i' + (tpl.nextId++), label: '項目', desc: '', ph: '' });
+    else if (bi >= 0) {
+      const d = +t.dataset.d, b = rng[bi], n = rng[bi + d];
+      if (a === 'delb') { if (confirm('この見出しと、中の項目 ' + (b.e - b.s - 1) + ' 件をまとめて削除しますか?')) rows.splice(b.s, b.e - b.s); }
+      else if (n && n.h) { const mv = rows.splice(b.s, b.e - b.s); rows.splice(d < 0 ? n.s : n.e - (b.e - b.s), 0, ...mv); }
+    }
+    save(); markDirty(); edit(); return;
+  }
   if (a) {
     const [o, k] = ref(t.dataset.p);
-    if (a === 'mv') { const i = +k, j = i + +t.dataset.d; if (j >= 0 && j < o.length) [o[i], o[j]] = [o[j], o[i]]; }
+    if (a === 'mv') { const i = +k, j = i + +t.dataset.d; if (j >= 0 && j < o.length && !(o === tpl.rows && (isH(o[i]) || isH(o[j])))) [o[i], o[j]] = [o[j], o[i]]; }
     if (a === 'del' && confirm('削除しますか?')) o.splice(+k, 1);
-    if (a === 'addh') o[k].push({ heading: '見出し', desc: '' });
+    if (a === 'addh') o[k].push({ heading: '見出し', desc: '' }, { id: 'i' + (tpl.nextId++), label: '項目', desc: '', ph: '' });
     if (a === 'addex') o[k].push({ t: '', d: '' });
     if (a === 'addgi') o[k].push({ id: 'i' + (tpl.nextId++), label: '項目', desc: '', ph: '' });
     if (a === 'addgs') o[k].push({ title: '新しいセクション', desc: '', groupPh: '', count: 1, items: [{ id: 'i' + (tpl.nextId++), label: '項目', desc: '', ph: '' }] });
