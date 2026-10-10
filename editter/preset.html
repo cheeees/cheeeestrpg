@@ -1174,6 +1174,18 @@ async function loadCustomPresets() {
   return list;
 }
 
+/* プリセットの種類の表示名(カードのバッジ) */
+const TYPE_LABEL = {
+  table: '表',
+  timeline: '年表',
+  groups: 'グループ追加式',
+  slider: '段階チェック'
+};
+function typeLabel(d) {
+  const t = d.type || (Array.isArray(d.rows) && !d.sections ? 'table' : 'slider');
+  return TYPE_LABEL[t] || TYPE_LABEL.slider;
+}
+
 function renderCards(containerId, list, showFile) {
   const container = document.getElementById(containerId);
   container.innerHTML = '';
@@ -1186,7 +1198,7 @@ function renderCards(containerId, list, showFile) {
     card.className = 'preset-card';
     card.innerHTML =
       '<div class="title">' + esc(item.data.name || item.data.title || '無題のプリセット') + '</div>' +
-      '<span class="badge">' + (item.data.type === 'table' ? '表(自由記入)' : item.data.type === 'timeline' ? '年表(出来事を追加)' : item.data.type === 'groups' ? 'グループ追加式' : 'スライダー(段階)') + '</span>' +
+      '<span class="badge">' + typeLabel(item.data) + '</span>' +
       (showFile ? '<span class="badge">' + esc(item.file) + '</span>' : '');
     card.addEventListener('click', function () {
       document.querySelectorAll('.preset-card').forEach(c => c.classList.remove('selected'));
