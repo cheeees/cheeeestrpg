@@ -1121,7 +1121,7 @@ function markEmpty(root) {
   let first = true;
   root.querySelectorAll('.cs-g').forEach(g => {
     const e = ![...g.querySelectorAll('.cs-tx,.cs-gpl')].some(t => String(t.value || '').trim() !== '');
-    const nr = !g.querySelector('.cs-tbl,.cs-sr,.cs-gl'), pn = g.closest('.cs-panel');
+    const nr = !g.querySelector('.cs-tbl,.cs-sr,.cs-gp'), pn = g.closest('.cs-panel');
     g.classList.toggle('cs-empty', e);
     g.classList.toggle('cs-norows', nr);
     const hidden = !(pn && pn.classList.contains('ed')) && e && nr;
