@@ -737,7 +737,7 @@ function hwInit(){
     q(sheet,'.cs-g').forEach(function(g){
       var e=true;
       q(g,'.cs-tx,.cs-gpl').forEach(function(t){ if(String(t.value||'').trim()!=='') e=false; });
-      var nr=!g.querySelector('.cs-tbl,.cs-sr,.cs-gl');
+      var nr=!g.querySelector('.cs-tbl,.cs-sr,.cs-gp');
       g.classList.toggle('cs-empty',e);
       g.classList.toggle('cs-norows',nr);
       var hidden=!ed&&e&&nr;   // 見た目では非表示になるカテゴリ
