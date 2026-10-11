@@ -288,7 +288,7 @@ button.p:disabled { background: #ccc; border-color: #ccc; cursor: not-allowed; }
 #hw-root main{max-width:620px;margin:0 auto}
 #hw-root textarea{width:100%;height:110px;margin-top:10px;font:12px monospace;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:6px}
 /* ===== キャラ詳細の一番下: 性格・行動チェックシート ===== */
-#hw-root .cs{margin-top:22px;padding:14px;background:var(--card);border:1px solid var(--line);border-radius:10px}
+#hw-root .cs-panel{margin-top:22px;padding:14px;background:var(--card);border:1px solid var(--line);border-radius:10px}
 #hw-root .cs-h{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:4px}
 #hw-root .cs-h b{font-size:14px;color:var(--main);border-left:4px solid var(--accent);padding-left:8px}
 #hw-root .cs-ctl{display:flex;gap:6px}
@@ -309,8 +309,8 @@ button.p:disabled { background: #ccc; border-color: #ccc; cursor: not-allowed; }
 #hw-root .cs-l{text-align:right}
 #hw-root .cs-b{display:flex;gap:2px}
 #hw-root .cs-b i{flex:1;max-width:18px;aspect-ratio:1;border:1.5px solid var(--mut);border-radius:2px;background:var(--card);display:block}
-#hw-root .cs.ed .cs-b i{cursor:pointer}
-@media(hover:hover){#hw-root .cs.ed .cs-b i:hover{background:var(--hover)}}
+#hw-root .cs-panel.ed .cs-b i{cursor:pointer}
+@media(hover:hover){#hw-root .cs-panel.ed .cs-b i:hover{background:var(--hover)}}
 #hw-root .cs-b[data-v="1"] i:nth-child(1){background:var(--main);border-color:var(--main)}
 #hw-root .cs-b[data-v="2"] i:nth-child(2){background:var(--main);border-color:var(--main)}
 #hw-root .cs-b[data-v="3"] i:nth-child(3){background:var(--main);border-color:var(--main)}
@@ -325,7 +325,7 @@ button.p:disabled { background: #ccc; border-color: #ccc; cursor: not-allowed; }
 
 /* ===== 複数シート(プルダウン切替・シート追加) ===== */
 #hw-root .csw{margin-top:22px;padding:14px;background:var(--card);border:1px solid var(--line);border-radius:10px}
-#hw-root .csw .cs{margin:0;padding:0;border:0;border-radius:0;background:none}
+#hw-root .csw .cs-panel{margin:0;padding:0;border:0;border-radius:0;background:none}
 #hw-root .csw-bar{display:flex;align-items:center;gap:8px;margin:6px 0 8px;font-size:13px;color:var(--mut)}
 #hw-root .csw-sel{max-width:100%;min-width:0;padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--fg);font:inherit;font-size:13px}
 #hw-root .cs-ctl{flex-wrap:wrap;justify-content:flex-end}
@@ -341,8 +341,8 @@ button.p:disabled { background: #ccc; border-color: #ccc; cursor: not-allowed; }
 #hw-root .cs-tbl{width:100%;border-collapse:collapse;margin-top:6px;table-layout:fixed}
 #hw-root .cs-tbl th,#hw-root .cs-tbl td{border:1px solid var(--line);padding:0;vertical-align:middle}
 #hw-root .cs-tbl th{width:34%;max-width:11em;padding:8px 8px;background:var(--bg);color:var(--fg);font-size:13px;font-weight:600;text-align:center;line-height:1.4}
-#hw-root .cs .cs-tx{display:block;width:100%;height:auto;margin:0;border-radius:0;box-sizing:border-box;min-height:2.4em;padding:8px 10px;border:0;background:transparent;color:var(--fg);font:inherit;font-size:14px;line-height:1.5;resize:none;field-sizing:content;overflow:hidden;outline:none}
-#hw-root .cs.ed .cs-tx{background:var(--card);box-shadow:inset 0 0 0 1px var(--line)}
+#hw-root .cs-panel .cs-tx{display:block;width:100%;height:auto;margin:0;border-radius:0;box-sizing:border-box;min-height:2.4em;padding:8px 10px;border:0;background:transparent;color:var(--fg);font:inherit;font-size:14px;line-height:1.5;resize:none;field-sizing:content;overflow:hidden;outline:none}
+#hw-root .cs-panel.ed .cs-tx{background:var(--card);box-shadow:inset 0 0 0 1px var(--line)}
 
 /* ===== デザイン統一(ボタン・プルダウン)/ タップ時の色は即時 ===== */
 #hw-root{-webkit-tap-highlight-color:transparent}
@@ -362,15 +362,15 @@ button.p:disabled { background: #ccc; border-color: #ccc; cursor: not-allowed; }
 #hw-root .cs-tbl th{width:min(calc(var(--thd,6) * 1em + 1em + 16px),34%);white-space:pre-line;word-break:normal;overflow-wrap:anywhere}
 
 /* 選択中(フォーカス時)の囲み枠を出さない */
-#hw-root .cs :focus,#hw-root .cs :focus-visible,#hw-root .csw :focus,#hw-root .csw :focus-visible{outline:none}
-#hw-root .cs .cs-tx:focus{box-shadow:inset 0 0 0 1px var(--line)}
+#hw-root .cs-panel :focus,#hw-root .cs-panel :focus-visible,#hw-root .csw :focus,#hw-root .csw :focus-visible{outline:none}
+#hw-root .cs-panel .cs-tx:focus{box-shadow:inset 0 0 0 1px var(--line)}
 
 /* スマホ: 編集中のボタン(鍵〜キャンセル)を1行に */
 @media(max-width:600px){
   #hw-root br.sp{display:inline}
   #hw-root .cs-line{grid-template-columns:var(--wl,4em) 1fr var(--wr,4em)}
   #hw-root .cs-tbl th{font-size:12px;padding:6px 4px;width:min(calc(var(--thw,6) * 1em + 1em + 8px),30%)}
-  #hw-root .cs .cs-tx{padding:8px}
+  #hw-root .cs-panel .cs-tx{padding:8px}
   #hw-root .csw.ed .cs-ctl{flex:1 1 100%;flex-wrap:nowrap;justify-content:space-between;gap:4px}
   #hw-root .csw.ed .cs-ctl button{flex:0 0 auto;min-height:30px;padding:4px 6px;font-size:11.5px}
   #hw-root .csw.ed .cs-ctl .cs-key{padding:4px 8px}
@@ -393,18 +393,18 @@ button.p:disabled { background: #ccc; border-color: #ccc; cursor: not-allowed; }
 }
 /* 表: 見出し列を狭く / 本文の文字サイズは見出しと同じ */
 #hw-root .cs-tbl th{width:min(calc(var(--thd,6) * 1em + 4px),34%);padding:8px 6px}
-#hw-root .cs .cs-tx{font-size:13px}
+#hw-root .cs-panel .cs-tx{font-size:13px}
 @media(max-width:600px){
   #hw-root .cs-tbl th{width:min(calc(var(--thw,6) * 1em + 2px),30%);padding:6px 3px;font-size:12px}
-  #hw-root .cs .cs-tx{font-size:12px}
+  #hw-root .cs-panel .cs-tx{font-size:12px}
 }
 /* 表の編集中: 入力欄をマスいっぱいに(隙間・二重線をなくす) */
 #hw-root .cs-tbl td{height:1px}
 #hw-root .cs-tbl .cs-tx{min-height:2.4em}
 #hw-root .cs-tbl td{vertical-align:middle}
-#hw-root .cs.ed .cs-tbl td{cursor:text}
-#hw-root .cs.ed .cs-tbl td{background:#fffaf0}
-#hw-root .cs.ed .cs-tx,#hw-root .cs.ed .cs-tx:focus{background:transparent;box-shadow:none}
+#hw-root .cs-panel.ed .cs-tbl td{cursor:text}
+#hw-root .cs-panel.ed .cs-tbl td{background:#fffaf0}
+#hw-root .cs-panel.ed .cs-tx,#hw-root .cs-panel.ed .cs-tx:focus{background:transparent;box-shadow:none}
 /* スマホでもボタンはPCと同じ大きさ・間隔(入りきらなければ折り返す) */
 @media(max-width:600px){
   #hw-root .csw.ed .cs-ctl,#hw-root .csw .cs-ctl{flex-wrap:wrap;gap:6px;justify-content:flex-start}
@@ -426,8 +426,8 @@ button.p:disabled { background: #ccc; border-color: #ccc; cursor: not-allowed; }
 
 /* メッセージ欄が空のときは場所を取らない / セクション間を広く、先頭セクションの上の隙間はなくす */
 #hw-root .cs-msg:empty{display:none}
-#hw-root .cs .cs-s{margin-top:28px}
-#hw-root .cs .cs-s:first-child{margin-top:4px}
+#hw-root .cs-panel .cs-s{margin-top:28px}
+#hw-root .cs-panel .cs-s:first-child{margin-top:4px}
 /* グループ間を広く / 項目名は中央揃え(先頭の「・」は表示しない) / 奇数マスの真ん中だけ薄いクリーム色 */
 #hw-root .cs-cols{gap:0 36px}
 @media(max-width:600px){#hw-root .cs-col+.cs-col{margin-top:22px}}
@@ -471,7 +471,7 @@ button.p:disabled { background: #ccc; border-color: #ccc; cursor: not-allowed; }
 /* ===== 説明文(✎編集中だけ表示) / 見出し(中央揃え・見出しごとに表を分離) / 縦並び / 年表 / 余白 ===== */
 #hw-root .cs-tx::placeholder,#hw-root .cs-evt::placeholder{color:#b9ad9c;opacity:1}
 #hw-root .cs-desc,#hw-root .cs-hdd,#hw-root .cs-sd,#hw-root .cs-tbl th .cs-d{display:none}
-#hw-root .cs.ed .cs-desc,#hw-root .cs.ed .cs-hdd,#hw-root .cs.ed .cs-sd,#hw-root .cs.ed .cs-tbl th .cs-d{display:block}
+#hw-root .cs-panel.ed .cs-desc,#hw-root .cs-panel.ed .cs-hdd,#hw-root .cs-panel.ed .cs-sd,#hw-root .cs-panel.ed .cs-tbl th .cs-d{display:block}
 #hw-root .cs-desc{margin:6px 0 14px;font-size:12px;line-height:1.7;color:var(--mut)}
 #hw-root .cs-hdd{margin-top:4px;font-size:11px;line-height:1.6;color:var(--mut);text-align:center}
 #hw-root .cs-sd{margin-top:2px;font-size:11px;color:var(--mut);line-height:1.6}
@@ -481,10 +481,10 @@ button.p:disabled { background: #ccc; border-color: #ccc; cursor: not-allowed; }
 #hw-root .cs-hh .cs-t{justify-content:center;gap:14px}
 #hw-root .cs-hh .cs-t::before{content:"";flex:1;height:1px;background:var(--line)}
 /* 見出しごとのまとまりの間隔 */
-#hw-root .cs .cs-g{margin-top:36px}
-#hw-root .cs .cs-g:first-child{margin-top:6px}
-#hw-root .cs:not(.ed) .cs-desc + .cs-g{margin-top:6px}
-#hw-root .cs.ed .cs-desc + .cs-g{margin-top:20px}
+#hw-root .cs-panel .cs-g{margin-top:36px}
+#hw-root .cs-panel .cs-g:first-child{margin-top:6px}
+#hw-root .cs-panel:not(.ed) .cs-desc + .cs-g{margin-top:6px}
+#hw-root .cs-panel.ed .cs-desc + .cs-g{margin-top:20px}
 /* 表の余白 */
 #hw-root .cs-tbl{margin-top:0}
 #hw-root .cs-tbl th{padding:16px 10px;width:min(calc(var(--thd,6) * 1em + 24px),36%)}
@@ -500,7 +500,7 @@ button.p:disabled { background: #ccc; border-color: #ccc; cursor: not-allowed; }
 #hw-root .cs-hh + .cs-sr{margin-top:0}
 #hw-root .cs-sl{font-size:13px;font-weight:600;color:var(--fg);line-height:1.5;white-space:pre-line}
 #hw-root .cs-sr .cs-tx{margin-top:6px;border:1px solid var(--line);border-radius:6px;padding:12px 14px;min-height:3.6em}
-#hw-root .cs.ed .cs-sr .cs-tx,#hw-root .cs.ed .cs-sr .cs-tx:focus{background:#fffaf0}
+#hw-root .cs-panel.ed .cs-sr .cs-tx,#hw-root .cs-panel.ed .cs-sr .cs-tx:focus{background:#fffaf0}
 /* 年表(縦線タイムライン・出来事は自由に追加) */
 #hw-root .cs-tl{margin-top:16px;padding:0 2px}
 #hw-root .cs-ev{position:relative;display:grid;grid-template-columns:16px minmax(0,1fr);column-gap:12px;padding-bottom:28px}
@@ -511,23 +511,23 @@ button.p:disabled { background: #ccc; border-color: #ccc; cursor: not-allowed; }
 #hw-root .cs-evb{position:relative;min-width:0}
 #hw-root .cs-evt{display:block;width:100%;margin:0;padding:2px 0;border:0;border-radius:0;background:transparent;color:var(--main-deep);font:inherit;font-size:14px;font-weight:700;line-height:1.6;outline:none}
 #hw-root .cs-evb .cs-tx{margin-top:2px;padding:2px 0 0;min-height:1.8em;font-size:13px;line-height:1.7}
-#hw-root .cs.ed .cs-evt{padding:4px 34px 4px 10px;border:1px solid var(--line);border-radius:6px;background:#fffaf0}
-#hw-root .cs.ed .cs-evb .cs-tx,#hw-root .cs.ed .cs-evb .cs-tx:focus{margin-top:6px;padding:10px 12px;min-height:3.6em;border:1px solid var(--line);border-radius:6px;background:#fffaf0;box-shadow:none}
+#hw-root .cs-panel.ed .cs-evt{padding:4px 34px 4px 10px;border:1px solid var(--line);border-radius:6px;background:#fffaf0}
+#hw-root .cs-panel.ed .cs-evb .cs-tx,#hw-root .cs-panel.ed .cs-evb .cs-tx:focus{margin-top:6px;padding:10px 12px;min-height:3.6em;border:1px solid var(--line);border-radius:6px;background:#fffaf0;box-shadow:none}
 #hw-root .cs-evdel,#hw-root .cs-tladd{display:none}
-#hw-root .cs.ed .cs-evdel{display:block;position:absolute;top:3px;right:4px;width:26px;height:26px;padding:0;border:0;border-radius:50%;background:transparent;color:var(--mut);font:inherit;font-size:18px;line-height:1;cursor:pointer}
-#hw-root .cs.ed .cs-tladd{display:inline-block;margin:10px 0 0 28px;min-height:32px;padding:5px 14px;border:1px solid var(--main);border-radius:99px;background:var(--card);color:var(--main);font:inherit;font-size:13px;cursor:pointer}
+#hw-root .cs-panel.ed .cs-evdel{display:block;position:absolute;top:3px;right:4px;width:26px;height:26px;padding:0;border:0;border-radius:50%;background:transparent;color:var(--mut);font:inherit;font-size:18px;line-height:1;cursor:pointer}
+#hw-root .cs-panel.ed .cs-tladd{display:inline-block;margin:10px 0 0 28px;min-height:32px;padding:5px 14px;border:1px solid var(--main);border-radius:99px;background:var(--card);color:var(--main);font:inherit;font-size:13px;cursor:pointer}
 
 /* グループ追加式(セクション → グループ → 項目) */
 #hw-root .cs-gp + .cs-gp{margin-top:30px;padding-top:24px;border-top:1px dashed var(--line)}
 #hw-root .cs-gph{position:relative}
 #hw-root .cs-gpl{display:block;width:100%;margin:0;padding:3px 8px;border:0;border-left:3px solid var(--accent);border-radius:0;background:transparent;color:var(--main);font:inherit;font-size:14px;font-weight:700;line-height:1.6;outline:none}
 #hw-root .cs-gpl::placeholder{color:#b9ad9c;opacity:1}
-#hw-root .cs.ed .cs-gpl{padding:6px 34px 6px 10px;border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:0 6px 6px 0;background:#fffaf0}
+#hw-root .cs-panel.ed .cs-gpl{padding:6px 34px 6px 10px;border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:0 6px 6px 0;background:#fffaf0}
 #hw-root .cs-gph + .cs-sr{margin-top:14px}
 #hw-root .cs-gph + .cs-tbl{margin-top:14px}
 #hw-root .cs-gpdel,#hw-root .cs-gadd{display:none}
-#hw-root .cs.ed .cs-gpdel{display:block;position:absolute;top:50%;right:5px;transform:translateY(-50%);width:26px;height:26px;padding:0;border:0;border-radius:50%;background:transparent;color:var(--mut);font:inherit;font-size:18px;line-height:1;cursor:pointer}
-#hw-root .cs.ed .cs-gadd{display:inline-block;margin-top:24px;min-height:32px;padding:5px 14px;border:1px solid var(--main);border-radius:99px;background:var(--card);color:var(--main);font:inherit;font-size:13px;cursor:pointer}
+#hw-root .cs-panel.ed .cs-gpdel{display:block;position:absolute;top:50%;right:5px;transform:translateY(-50%);width:26px;height:26px;padding:0;border:0;border-radius:50%;background:transparent;color:var(--mut);font:inherit;font-size:18px;line-height:1;cursor:pointer}
+#hw-root .cs-panel.ed .cs-gadd{display:inline-block;margin-top:24px;min-height:32px;padding:5px 14px;border:1px solid var(--main);border-radius:99px;background:var(--card);color:var(--main);font:inherit;font-size:13px;cursor:pointer}
 /* 表の見出し列の幅: ブロックごとに --thd(PC)/--thw(スマホ) で計算。
    %を含む min() は固定レイアウトの表で無効になる(列が等分される)ので、絶対値だけで上限をかける */
 #hw-root .cs-tbl th{width:min(calc(var(--thd,6) * 1em + 48px),16em);padding-left:14px;padding-right:14px}
@@ -542,18 +542,18 @@ button.p:disabled { background: #ccc; border-color: #ccc; cursor: not-allowed; }
 #hw-root .csw-head .psw .swb{display:block;padding:5px 14px;border:1px solid var(--line);border-radius:99px;background:var(--card);color:var(--fg);font-size:13px;white-space:nowrap}
 #hw-root .csw-head .psw .swb::after{content:" ▾"}
 /* 中身が全部空のカテゴリは、編集中以外はカテゴリ名を出さない(行がなければまるごと非表示) */
-#hw-root .cs:not(.ed) .cs-g.cs-empty .cs-hh{display:none}
-#hw-root .cs:not(.ed) .cs-g.cs-empty.cs-norows{display:none}
+#hw-root .cs-panel:not(.ed) .cs-g.cs-empty .cs-hh{display:none}
+#hw-root .cs-panel:not(.ed) .cs-g.cs-empty.cs-norows{display:none}
 
 /* 表見出しの改行はPCでも効かせる / 例表示(placeholder)の改行ぶんの高さを確保 */
 #hw-root .cs-tbl th br.sp{display:inline}
-#hw-root .cs .cs-tx[style*="--pl"]{min-height:calc(var(--pl) * 1.5em + 16px)}
-#hw-root .cs .cs-tbl .cs-tx[style*="--pl"]{min-height:max(3.4em,calc(var(--pl) * 1.5em + 28px))}
-#hw-root .cs .cs-sr .cs-tx[style*="--pl"]{min-height:calc(var(--pl) * 1.5em + 26px)}
-#hw-root .cs .cs-evb .cs-tx[style*="--pl"]{min-height:calc(var(--pl) * 1.7em + 4px)}
-#hw-root .cs.ed .cs-evb .cs-tx[style*="--pl"]{min-height:calc(var(--pl) * 1.7em + 22px)}
+#hw-root .cs-panel .cs-tx[style*="--pl"]{min-height:calc(var(--pl) * 1.5em + 16px)}
+#hw-root .cs-panel .cs-tbl .cs-tx[style*="--pl"]{min-height:max(3.4em,calc(var(--pl) * 1.5em + 28px))}
+#hw-root .cs-panel .cs-sr .cs-tx[style*="--pl"]{min-height:calc(var(--pl) * 1.5em + 26px)}
+#hw-root .cs-panel .cs-evb .cs-tx[style*="--pl"]{min-height:calc(var(--pl) * 1.7em + 4px)}
+#hw-root .cs-panel.ed .cs-evb .cs-tx[style*="--pl"]{min-height:calc(var(--pl) * 1.7em + 22px)}
 @media(max-width:600px){
-  #hw-root .cs .cs-tbl .cs-tx[style*="--pl"]{min-height:max(3.4em,calc(var(--pl) * 1.5em + 24px))}
+  #hw-root .cs-panel .cs-tbl .cs-tx[style*="--pl"]{min-height:max(3.4em,calc(var(--pl) * 1.5em + 24px))}
 }
 </style>
 </head>
@@ -1101,7 +1101,7 @@ function pubSheet(preset) {
     h += '</div></div>';
   });
   const dsc = preset.desc ? '<div class="cs-desc">' + pubLb(preset.desc) + '</div>' : '';
-  return `<div class="cs" style="--wl:${ml + 0.4}em;--wr:${mr + 0.4}em;--thw:${mt};--wld:${mld + 0.4}em;--wrd:${mrd + 0.4}em;--thd:${mtd}">${dsc}${h}</div>`;
+  return `<div class="cs-panel" style="--wl:${ml + 0.4}em;--wr:${mr + 0.4}em;--thw:${mt};--wld:${mld + 0.4}em;--wrd:${mrd + 0.4}em;--thd:${mtd}">${dsc}${h}</div>`;
 }
 function preview() {
   const p = pubPreset();
@@ -1122,7 +1122,7 @@ function markEmpty(root) {
 function pvMode(on) {
   const w = $('#pvw'); if (!w) return;
   w.classList.toggle('ed', on);
-  const sh = w.querySelector('.cs'); sh.classList.toggle('ed', on);
+  const sh = w.querySelector('.cs-panel'); sh.classList.toggle('ed', on);
   sh.querySelectorAll('.cs-tx,.cs-evt,.cs-gpl').forEach(t => { t.readOnly = !on; });
   w.querySelector('.cs-edit').hidden = on;
   ['cs-addsheet', 'cs-del', 'cs-save', 'cs-cancel'].forEach(k => { w.querySelector('.' + k).hidden = !on; });
