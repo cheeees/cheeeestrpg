@@ -544,6 +544,11 @@ button.p:disabled { background: #ccc; border-color: #ccc; cursor: not-allowed; }
 /* 中身が全部空のカテゴリは、編集中以外はカテゴリ名を出さない(行がなければまるごと非表示) */
 #hw-root .cs-panel:not(.ed) .cs-g.cs-empty .cs-hh{display:none}
 #hw-root .cs-panel:not(.ed) .cs-g.cs-empty.cs-norows{display:none}
+/* 見た目(編集中でないとき)の隙間: 最初に見えているカテゴリの上は詰める / 入力済みの欄は、例(placeholder)の行数ぶんの高さを確保しない */
+#hw-root .cs-panel:not(.ed) .cs-g.cs-first{margin-top:6px}
+#hw-root .cs-panel:not(.ed) .cs-sr .cs-tx[style*="--pl"]:not(:placeholder-shown){min-height:3.6em}
+#hw-root .cs-panel:not(.ed) .cs-tbl .cs-tx[style*="--pl"]:not(:placeholder-shown){min-height:3.4em}
+#hw-root .cs-panel:not(.ed) .cs-evb .cs-tx[style*="--pl"]:not(:placeholder-shown){min-height:1.8em}
 
 /* 表見出しの改行はPCでも効かせる / 例表示(placeholder)の改行ぶんの高さを確保 */
 #hw-root .cs-tbl th br.sp{display:inline}
@@ -1113,10 +1118,15 @@ function preview() {
 <div class="cs-msg"></div>${pubSheet(p)}</div></main></div>`;
 }
 function markEmpty(root) {
+  let first = true;
   root.querySelectorAll('.cs-g').forEach(g => {
     const e = ![...g.querySelectorAll('.cs-tx,.cs-gpl')].some(t => String(t.value || '').trim() !== '');
+    const nr = !g.querySelector('.cs-tbl,.cs-sr,.cs-gl'), pn = g.closest('.cs-panel');
     g.classList.toggle('cs-empty', e);
-    g.classList.toggle('cs-norows', !g.querySelector('.cs-tbl,.cs-sr,.cs-gl'));
+    g.classList.toggle('cs-norows', nr);
+    const hidden = !(pn && pn.classList.contains('ed')) && e && nr;
+    g.classList.toggle('cs-first', !hidden && first);
+    if (!hidden) first = false;
   });
 }
 function pvMode(on) {
