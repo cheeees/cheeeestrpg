@@ -436,6 +436,11 @@
 /* 中身が全部空のカテゴリは、編集中以外はカテゴリ名を出さない */
 #hw-root .cs-panel:not(.ed) .cs-g.cs-empty .cs-hh{display:none}
 #hw-root .cs-panel:not(.ed) .cs-g.cs-empty.cs-norows{display:none}
+/* 見た目(編集中でないとき)の隙間: 最初に見えているカテゴリの上は詰める / 入力済みの欄は、例(placeholder)の行数ぶんの高さを確保しない */
+#hw-root .cs-panel:not(.ed) .cs-g.cs-first{margin-top:6px}
+#hw-root .cs-panel:not(.ed) .cs-sr .cs-tx[style*="--pl"]:not(:placeholder-shown){min-height:3.6em}
+#hw-root .cs-panel:not(.ed) .cs-tbl .cs-tx[style*="--pl"]:not(:placeholder-shown){min-height:3.4em}
+#hw-root .cs-panel:not(.ed) .cs-evb .cs-tx[style*="--pl"]:not(:placeholder-shown){min-height:1.8em}
 
 /* 表見出しの改行はPCでも効かせる / 例表示(placeholder)の改行ぶんの高さを確保 */
 #hw-root .cs-tbl th br.sp{display:inline}
@@ -728,11 +733,16 @@ function hwInit(){
     return v.querySelector('.cs-b')?'マスをクリックで塗りつぶし（もう一度押すと解除）':'各項目に自由に入力できます';
   }
   function markEmpty(sheet){
+    var ed=sheet.classList.contains('ed'), first=true;
     q(sheet,'.cs-g').forEach(function(g){
       var e=true;
       q(g,'.cs-tx,.cs-gpl').forEach(function(t){ if(String(t.value||'').trim()!=='') e=false; });
+      var nr=!g.querySelector('.cs-tbl,.cs-sr,.cs-gl');
       g.classList.toggle('cs-empty',e);
-      g.classList.toggle('cs-norows',!g.querySelector('.cs-tbl,.cs-sr,.cs-gl'));
+      g.classList.toggle('cs-norows',nr);
+      var hidden=!ed&&e&&nr;   // 見た目では非表示になるカテゴリ
+      g.classList.toggle('cs-first',!hidden&&first);
+      if(!hidden) first=false;
     });
   }
   function setMode(wrap,on){
