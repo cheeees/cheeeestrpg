@@ -37,6 +37,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#8e632b">
+<!-- PWA / ホーム画面アイコン(img/icon-192.png・icon-512.png・apple-touch-icon.png を用意) -->
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="img/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="TRPGいろいろ">
 <title>TRPGいろいろ</title>
 <meta name="description" content="TRPGのキャラクターや武器などをまとめたページです。">
 <meta property="og:type" content="website">
@@ -148,5 +154,13 @@
 </button>
 
 <script src="main.js" defer></script>
+<script>
+// PWA: Service Worker 登録(http/https のときだけ)
+if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+  window.addEventListener("load", function () {
+    navigator.serviceWorker.register("sw.js").catch(function () {});
+  });
+}
+</script>
 </body>
 </html>
