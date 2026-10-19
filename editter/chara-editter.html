@@ -1387,7 +1387,7 @@ ${G.length?`<div class="tabs lsort">${SORTS.map(([m,n])=>`<label for="hw-o-${m}"
       const dtx=(la?fmtRange(la.date,la.end):"")||fmtRange(x.date,x.end);
       const mm=la&&la.memo;return `<li>${t}${dtx?`<span class="dt">${esc(dtx)}</span>`:""}${mm?`<span>${esc(mm)}</span>`:""}</li>`;
     }).join("")}</ul></div>`);
-    return `<div class="prof prof-${i}">${radios}${head}${stg}${parts.length?`<section class="card">${parts.join("")}</section>`:""}</div>`;
+    return `<div class="prof prof-${i}">${radios}${head}${stg}${parts.length?`<section class="card">${parts.join("")}</section>`:""}<div class="csw" data-c="${i}"></div></div>`;
   }).join("");
 
   return shortUrl('<style>'+miniCss(css.join("\n"))+'</style>\n<div id="hw-root">'+miniHtml(R.join("")+'<main>'+pnav+home+profs+'</main>')+'</div>');
