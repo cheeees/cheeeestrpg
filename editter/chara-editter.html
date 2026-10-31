@@ -232,6 +232,9 @@ a.lt::after{content:" ›"}
  <h2>公開用コード</h2>
  <div class="row" style="margin-top:8px"><button class="b p" id="out">コードを書き出す</button><button class="b" id="out2">バックアップ用データ</button><button class="b" id="outs">サンプルを書き出す(動作確認用)</button></div>
  <textarea id="ta" readonly style="display:none"></textarea>
+ <h2>GitHubへ直接公開(貼り替え不要)</h2>
+ <div class="row" style="margin-top:8px"><button class="b p ghpub" type="button">GitHubへ公開</button><button class="b ghload" type="button">GitHubから読み込む</button><button class="b ghkey" type="button">🔑 トークン</button></div>
+ <p class="n">「GitHubへ公開」を押すと、編集データ(<b>data/chara-data.js</b>)と公開ページ用のデータ(<b>data/wheel.html</b>)を、リポジトリへ直接書き込みます。公開用ファイル(hue_wheel.html)は <b>data/wheel.html</b> を自動で読み込むので、コードの貼り替えは要りません(反映まで1〜2分かかることがあります)。<br>別の端末で続きから編集するときは「GitHubから読み込む」で、公開中のデータをこの端末の下書きにします。<br>初回は「🔑 トークン」で、GitHubのトークン(このリポジトリの Contents を Read and write にしたもの)を入れてください。トークンはこの端末のブラウザの中だけに保存されます。</p>
  <p class="n">追加した内容はこの端末の下書きです。「コードを書き出す」で出たコード(&lt;script&gt;なしのHTML)を、「HTMLのみ」ファイルの <b>「ここに貼り付けてね」</b> の印の間に丸ごと貼り替えて公開すると、全員に反映されます。<br>「バックアップ用データ」は、このファイルの <b>「更新データの挿入場所 ①②」</b>(CHARACTERS と LOGS)に貼り替えておくと、次回もこの内容から編集できます。<br>「サンプルを書き出す」は、動作確認用の見本キャラ・見本ログで公開用コードを作ります(いまの下書きや保存データは変わりません)。「HTMLのみ」ファイルのコピーに貼って試すと、本番のデータに触らず見た目や動きを確認できます。</p>
 </div>
 <!-- ▲▲▲ 【公開用で消す場所 ①】ここまで ▲▲▲ -->
@@ -319,6 +322,9 @@ a.lt::after{content:" ›"}
  <h2>保存・公開用コード</h2>
  <div class="row" style="margin-top:8px"><button class="b p" id="pe_save">この内容で保存</button><button class="b" id="pe_out">コードを書き出す</button><button class="b" id="pe_out2">バックアップ用データ</button><button class="b" id="pe_outs">サンプルを書き出す(動作確認用)</button></div>
  <textarea id="pe_ta" readonly style="display:none"></textarea>
+ <h2>GitHubへ直接公開(貼り替え不要)</h2>
+ <div class="row" style="margin-top:8px"><button class="b p ghpub" type="button">GitHubへ公開</button><button class="b ghload" type="button">GitHubから読み込む</button><button class="b ghkey" type="button">🔑 トークン</button></div>
+ <p class="n">「GitHubへ公開」を押すと、編集データ(<b>data/chara-data.js</b>)と公開ページ用のデータ(<b>data/wheel.html</b>)を、リポジトリへ直接書き込みます。公開用ファイル(hue_wheel.html)は <b>data/wheel.html</b> を自動で読み込むので、コードの貼り替えは要りません(反映まで1〜2分かかることがあります)。<br>別の端末で続きから編集するときは「GitHubから読み込む」で、公開中のデータをこの端末の下書きにします。<br>初回は「🔑 トークン」で、GitHubのトークン(このリポジトリの Contents を Read and write にしたもの)を入れてください。トークンはこの端末のブラウザの中だけに保存されます。</p>
  </div>
 <!-- ▲▲▲ 【公開用で消す場所 ②】ここまで ▲▲▲ -->
 </div>
@@ -1095,6 +1101,73 @@ function exportSample(ta){
 }
 $("outs").onclick=()=>exportSample($("ta"));
 $("pe_outs").onclick=()=>exportSample($("pe_ta"));
+
+// ================= GitHubへ直接公開(貼り替え不要) =================
+// 「GitHubへ公開」: 編集データ(data/chara-data.js)と公開ページ用データ(data/wheel.html)をリポジトリへ直接書き込みます。
+// 公開ページ(hue_wheel.html)は data/wheel.html を読み込んで表示します。保存先を変えたいときは、下の GH を書き換えてください。
+const GH={owner:"cheeees",repo:"cheeeestrpg",branch:"main",dataPath:"data/chara-data.js",pagePath:"data/wheel.html",tokenKey:"chara_gh_token"};
+const ghTok=()=>{try{return localStorage.getItem(GH.tokenKey)||""}catch(e){return ""}};
+const ghUrl=p=>"https://api.github.com/repos/"+encodeURIComponent(GH.owner)+"/"+encodeURIComponent(GH.repo)+"/contents/"+p.split("/").map(encodeURIComponent).join("/");
+const ghAuth=()=>ghTok()?{Authorization:"Bearer "+ghTok()}:{};
+const ghErr=s=>s===401||s===403?"トークンが無効か、権限がありません ("+s+")。「🔑 トークン」から入れ直してください":s===404?"保存先が見つかりません (404)。トークンがこのリポジトリに届いているか確認してください":"失敗しました ("+s+")";
+const b64=t=>{const u=new TextEncoder().encode(t);let s="";for(let i=0;i<u.length;i+=0x8000)s+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000));return btoa(s)};
+function ghKey(){
+  const t=prompt("GitHubのトークンを入力してください(空欄でOKを押すと削除します)。\n\n・Fine-grained token で、リポジトリ「"+GH.repo+"」の Contents を Read and write にしたもの\n・この端末のブラウザの中だけに保存されます",ghTok());
+  if(t===null)return;
+  try{if(t.trim())localStorage.setItem(GH.tokenKey,t.trim());else localStorage.removeItem(GH.tokenKey)}catch(e){toast("トークンを保存できませんでした");return}
+  toast(t.trim()?"トークンを保存しました":"トークンを削除しました");
+}
+// 読み込み → 書き込み。同時に誰かが更新して競合したら、最新を取り直してやり直す
+async function ghPut(path,text,msg){
+  for(let n=0;n<3;n++){
+    const g=await fetch(ghUrl(path)+"?ref="+encodeURIComponent(GH.branch),{headers:Object.assign({Accept:"application/vnd.github+json"},ghAuth()),cache:"no-store"});
+    let sha;
+    if(g.status===200)sha=(await g.json()).sha;else if(g.status!==404)throw new Error(ghErr(g.status));
+    const body={message:msg,content:b64(text),branch:GH.branch};if(sha)body.sha=sha;
+    const p=await fetch(ghUrl(path),{method:"PUT",headers:Object.assign({Accept:"application/vnd.github+json","Content-Type":"application/json"},ghAuth()),body:JSON.stringify(body)});
+    if(p.ok)return;
+    if((p.status===409||p.status===422)&&n<2)continue;
+    throw new Error(ghErr(p.status));
+  }
+}
+const dataText=()=>"const CHARACTERS = [\n"+list.map(code).join(",\n")+"\n];\nconst LOGS = [\n"+logs.map(logCode).join(",\n")+"\n];\n";
+let ghBusy=false;
+async function ghPublish(){
+  if(ghBusy)return;
+  if(!ghTok()){ghKey();if(!ghTok())return}
+  const emb=logs.filter(l=>!String(l.url||"").trim()&&l.z).length;
+  if(!confirm("GitHubに書き込んで公開します。\n\nキャラ "+list.length+"人 / ログ "+logs.length+"件\n・"+GH.dataPath+"(編集データ)\n・"+GH.pagePath+"(公開ページ用)\n\n公開中のデータは上書きされます。実行しますか?"+(emb?"\n\n※ログ"+emb+"件は埋め込み型のため、公開ページでは開けません(「ログの場所」にURLを入れると開けます)":"")))return;
+  ghBusy=true;toast("GitHubへ書き込み中…",60000);
+  try{
+    const page=buildStatic(),data=dataText();
+    await ghPut(GH.dataPath,data,"キャラ・ログ更新(編集データ)");
+    await ghPut(GH.pagePath,page,"キャラ・ログ更新(公開ページ)");
+    toast("GitHubに書き込みました。公開ページへの反映まで1〜2分かかることがあります",7000);
+  }catch(err){toast("書き込めませんでした: "+err.message,9000)}
+  ghBusy=false;
+}
+// 公開中の編集データを、この端末の下書きに読み込む(いまの下書きは退避してから置き換える)
+async function ghLoad(){
+  if(ghBusy)return;
+  if(!confirm("GitHubの編集データ("+GH.dataPath+")で、この端末の下書きを置き換えます。\n(いまの下書きは、念のためこの端末に1つだけ退避します)\n\n実行しますか?"))return;
+  ghBusy=true;toast("GitHubから読み込み中…",60000);
+  try{
+    const r=await fetch(ghUrl(GH.dataPath)+"?ref="+encodeURIComponent(GH.branch),{headers:Object.assign({Accept:"application/vnd.github.raw+json"},ghAuth()),cache:"no-store"});
+    if(!r.ok)throw new Error(ghErr(r.status));
+    const d=new Function((await r.text())+"\n;return {C:CHARACTERS,L:LOGS}")();
+    if(!Array.isArray(d.C)||!Array.isArray(d.L))throw new Error("データの形が違います");
+    d.C.forEach((c,i)=>{d.C[i]=Object.assign({image:"",tags:[],memo:"",link:"",height:"",birthday:"",age:"",sil:"normal",stats:[],skills:[],artifacts:[],spells:[],sequelae:[],scenarios:[],stands:[],faces:[]},c)});
+    d.C.forEach(c=>c.scenarios.forEach(x=>{delete x.memo}));
+    d.L.forEach((l,i)=>{d.L[i]=Object.assign({title:"",scenario:"",url:"",date:"",end:"",players:[],memo:""},l)});
+    try{localStorage.setItem(KEY+"-bak-gh",JSON.stringify(list))}catch(e){}
+    list=d.C;logs=d.L;sel=-1;save();await saveLogs();route(true);
+    toast("GitHubのデータを読み込みました(キャラ "+list.length+"人 / ログ "+logs.length+"件)",6000);
+  }catch(err){toast("読み込めませんでした: "+err.message,9000)}
+  ghBusy=false;
+}
+document.querySelectorAll(".ghpub").forEach(b=>b.onclick=ghPublish);
+document.querySelectorAll(".ghload").forEach(b=>b.onclick=ghLoad);
+document.querySelectorAll(".ghkey").forEach(b=>b.onclick=ghKey);
 
 // ================= 公開用コード(<script>なし)の書き出し =================
 // 編集内容から、JavaScriptを使わない(CSSだけで動く)HTMLを作ります。
