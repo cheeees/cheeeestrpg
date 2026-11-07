@@ -78,7 +78,6 @@
   </div>
   <div class="card" id="gearMenu" hidden>
     <div class="bar" style="margin:0"><button class="b s" id="renameMap" type="button">マップの名前を変更</button><button class="b s" id="del" type="button">このマップを削除</button></div>
-    <p class="hint" id="gearHint" style="margin:8px 0 0" hidden>名前の変更と削除は、編集モードにすると使えます。</p>
   </div>
   <section id="listView">
     <div id="edAdd" class="card" hidden>
@@ -90,7 +89,6 @@
         <button class="b p" id="addGo" type="button">追加</button>
         <button class="b" id="addCancel" type="button">やめる</button>
       </div>
-      <p class="hint" style="margin:8px 0 0">webpに変換して data/bunpu/map に保存します。</p>
     </div>
     <div class="msg" id="listMsg">読み込み中…</div>
     <div class="grid" id="grid"></div>
@@ -196,7 +194,7 @@ var TOKEN_KEY="hw_gh_token", MAP_DIR="data/bunpu/map", PIC_DIR="data/bunpu/pic";
       var tp=document.createElement("span");tp.className="tp";fillTip(tp,p.name,(state.memo[p.key]||"").trim());el.appendChild(tp)
       b.appendChild(el)
     });
-    document.querySelectorAll("#bp-root .edonly").forEach(function(x){x.hidden=!editable()});$("gear").hidden=false;$("renameMap").disabled=!editable();$("del").disabled=!editable();$("gearHint").hidden=editable();renderNotes();renderSelBar();renderAddSelect();
+    document.querySelectorAll("#bp-root .edonly").forEach(function(x){x.hidden=!editable()});$("gear").hidden=!editable();if(!editable()){$("gearMenu").hidden=true;$("gear").setAttribute("aria-expanded","false")}renderNotes();renderSelBar();renderAddSelect();
   }
   function cleanMemo(){var o={};Object.keys(state.memo).forEach(function(k){if(state.pos[k]&&state.memo[k].trim())o[k]=state.memo[k]});return o}
   /* アイコンは余白も含めて元の画像のまま表示する */
