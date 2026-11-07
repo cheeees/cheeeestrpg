@@ -1,0 +1,338 @@
+<!-- キャラ分布マップ(GitHub保存版・サイト埋め込み用)
+  ■ このファイルの中身を全部、埋め込み先に貼り付けてください。
+  ■ データの置き場所(GitHub):
+      data/bunpu/map/マップ名.webp   … マップ画像(アップロードすると自動でwebpにして保存)
+      data/bunpu/map/マップ名.json   … アイコンの配置(「保存」で自動作成)
+      data/bunpu/pic/00_キャラ名.png … アイコン画像(自分でGitHubに追加。00_ の数字は並び順。png/webp/jpg/gif)
+  ■ 見るだけなら誰でもOK。編集(アップロード・配置・保存)は、🔒ボタンでトークンを入れた端末だけです。
+  ■ 下の GH_OWNER / GH_REPO / GH_BRANCH を、保存先のリポジトリに合わせてください。 -->
+<style>
+#bp-root{--bg:#fff;--fg:#333;--card:#fff;--mut:#7a6f62;--line:#e6dccb;--main:#8e632b;--main-deep:#5c3c0f;--accent:#ffd60a;--soft:#fff8d6;--img-bg:#faf6ee;--size:11%}
+#bp-root,#bp-root *{box-sizing:border-box}
+#bp-root{margin:0;padding:18px 14px 40px;background:var(--bg);color:var(--fg);text-align:left;font-family:"Hiragino Maru Gothic ProN","Hiragino Sans","Yu Gothic",sans-serif}
+#bp-root main{max-width:760px;margin:0 auto}
+#bp-root h1{font-size:20px;margin:0 0 12px;color:var(--main-deep);padding-left:10px;border-left:6px solid var(--accent)}
+#bp-root .bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+#bp-root .b{padding:8px 14px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg);font:inherit;font-size:14px;cursor:pointer}
+#bp-root .b.p{background:var(--main);border-color:var(--main);color:#fff}
+#bp-root .b.s{padding:4px 10px;font-size:12px}
+#bp-root .b:disabled{opacity:.5;cursor:default}
+#bp-root .b:focus-visible,#bp-root .pin:focus-visible,#bp-root .mc:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+#bp-root .hint{font-size:13px;color:var(--mut);margin:0 0 10px}
+#bp-root .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+#bp-root .mc{display:block;padding:0;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--fg);font:inherit;text-align:left;cursor:pointer;overflow:hidden}
+#bp-root .mc .th{aspect-ratio:1;background:var(--img-bg) center/cover no-repeat}
+#bp-root .mc span{display:block;padding:8px 10px;font-size:14px;font-weight:700}
+@media(hover:hover){#bp-root .mc:hover{border-color:var(--main)}}
+#bp-root .board{position:relative;width:100%;background:var(--img-bg);border:1px solid var(--line);border-radius:10px;overflow:hidden;user-select:none;-webkit-user-select:none}
+#bp-root .board img.map{display:block;width:100%;height:auto;pointer-events:none}
+#bp-root .pin{position:absolute;width:var(--size);aspect-ratio:1;transform:translate(-50%,-50%);background:transparent center/contain no-repeat;border:0;padding:0;cursor:default;display:block}
+#bp-root.edit .pin{cursor:pointer}
+#bp-root.edit .pin.sel{cursor:grab;touch-action:none;outline:2px dashed var(--main-deep);outline-offset:3px;z-index:4}
+#bp-root .selbar{position:sticky;top:0;z-index:20;display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px;padding:8px 10px;border:1px solid var(--soft-line,#f1e3a0);border-radius:10px;background:var(--soft);font-size:13px}
+#bp-root .selbar b{font-size:14px}
+#bp-root .pin.drag{cursor:grabbing;z-index:5;transform:translate(-50%,-50%) scale(1.15);filter:drop-shadow(0 4px 6px #0006)}
+#bp-root .pin .nm{position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:2px;max-width:420%;white-space:nowrap;font-size:10px;line-height:1.2;color:var(--fg);background:#fffd;border-radius:99px;padding:1px 6px;pointer-events:none}
+#bp-root .pin:hover{z-index:6}
+#bp-root .pin.open{z-index:6}
+#bp-root .pin:focus-visible{outline:3px solid var(--accent)}
+#bp-root .tp{display:none;position:absolute;bottom:100%;left:50%;transform:translateX(-50%);margin-bottom:6px;width:max-content;max-width:min(220px,60vw);padding:7px 10px;border-radius:8px;background:var(--fg);color:var(--bg);font-size:12px;line-height:1.5;font-weight:400;text-align:left;white-space:pre-wrap;word-break:break-word;pointer-events:none;box-shadow:0 2px 8px #0004}
+#bp-root .tp b{display:block;font-size:12px}
+#bp-root .pin:hover .tp,#bp-root .pin:focus-visible .tp,#bp-root .pin.open .tp{display:block}
+#bp-root .pin.drag .tp{display:none}
+#bp-root .pin.tl .tp{left:0;transform:none}
+#bp-root .pin.tr .tp{left:auto;right:0;transform:none}
+#bp-root .pin.tb .tp{bottom:auto;top:100%;margin:22px 0 0}
+#bp-root .notes{margin-top:14px;display:grid;gap:8px}
+#bp-root .note{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--card)}
+#bp-root .note i{width:40px;height:40px;background:transparent center/contain no-repeat;flex:none}
+#bp-root .note b{display:block;font-size:14px}
+#bp-root .note p{margin:2px 0 0;font-size:13px;color:var(--mut);white-space:pre-wrap;word-break:break-word}
+#bp-root .mrow{margin-top:10px}
+#bp-root .mrow label{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;margin-bottom:4px}
+#bp-root .mrow label i{width:24px;height:24px;border-radius:50%;border:1px solid var(--line);background:var(--img-bg) center/cover}
+#bp-root textarea{width:100%;min-height:56px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg);font:inherit;font-size:13px;resize:vertical}
+#bp-root .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin-top:14px}
+#bp-root .card h2{font-size:14px;margin:0 0 10px;color:var(--main-deep)}
+#bp-root .tray{display:flex;flex-wrap:wrap;gap:8px}
+#bp-root .tr{display:flex;flex-direction:column;align-items:center;gap:3px;width:64px;padding:0;border:0;background:none;font:inherit;font-size:11px;color:var(--fg);cursor:pointer}
+#bp-root .tr i{width:48px;height:48px;border-radius:6px;background:var(--img-bg) center/contain no-repeat}
+#bp-root .tr span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#bp-root .tr.on{opacity:.35}
+#bp-root input[type=text]{flex:1;min-width:140px;padding:8px 12px;border:1px solid var(--line);border-radius:99px;background:var(--bg);color:var(--fg);font:inherit;font-size:14px}
+#bp-root label.opt{font-size:13px;color:var(--mut);display:flex;align-items:center;gap:6px}
+#bp-root input[type=range]{width:120px}
+#bp-root .msg{font-size:13px;color:var(--mut);padding:20px 0;text-align:center}
+#bp-root #toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:99px;font-size:13px;z-index:40;max-width:90vw;text-align:center}
+#bp-root [hidden]{display:none!important}
+</style>
+
+<div id="bp-root">
+<main>
+  <h1 id="ttl">キャラ分布マップ</h1>
+  <div class="bar" id="topbar">
+    <button class="b" id="back" type="button" hidden>‹ 一覧に戻る</button>
+    <button class="b s" id="lock" type="button" aria-label="編集用トークン">🔒</button>
+  </div>
+  <section id="listView">
+    <div id="edAdd" class="card" hidden>
+      <h2>マップを追加</h2>
+      <div class="bar" style="margin:0">
+        <input type="text" id="newName" placeholder="マップの名前" maxlength="40" aria-label="マップの名前">
+        <button class="b" id="pickMap" type="button">画像を選んで追加</button>
+      </div>
+      <p class="hint" style="margin:8px 0 0">webpに変換して data/bunpu/map に保存します。</p>
+    </div>
+    <div class="msg" id="listMsg">読み込み中…</div>
+    <div class="grid" id="grid"></div>
+  </section>
+  <section id="mapView" hidden>
+    <div class="bar" id="jumpBar" hidden><button class="b s" id="jump" type="button">✎ 編集ゾーンへ</button></div>
+    <div class="selbar" id="selBar" hidden></div>
+    <div class="board" id="board"></div>
+    <div class="notes" id="notes"></div>
+    <div class="card" id="edBar" hidden>
+      <h2>編集</h2>
+      <div class="bar" style="margin:0 0 10px"><button class="b s" id="toTop" type="button">↑ マップへ戻る</button></div>
+      <div class="bar" style="margin:0 0 10px">
+        <button class="b p" id="save" type="button">保存</button>
+        <button class="b" id="del" type="button">このマップを削除</button>
+        <label class="opt">アイコンの大きさ<input type="range" id="size" min="6" max="20" value="11"></label>
+      </div>
+      <p class="hint">下のキャラをタップすると、マップの中央に置かれて選択されます。マップ上のアイコンをタップして選択すると、そのキャラだけドラッグで動かせます(外すのは上の選択バーから)。</p>
+      <div class="tray" id="tray"></div>
+    </div>
+  </section>
+</main>
+<input type="file" id="fMap" accept="image/*" hidden>
+<div id="toast" hidden></div>
+</div>
+
+<script>
+var GH_OWNER="cheeees", GH_REPO="cheeeestrpg", GH_BRANCH="main";
+var TOKEN_KEY="hw_gh_token", MAP_DIR="data/bunpu/map", PIC_DIR="data/bunpu/pic";
+(function(){
+  var root=document.getElementById("bp-root"), $=function(i){return document.getElementById(i)};
+  var memToken="", maps=[], pics=[], cur=null, state={size:11,pos:{},memo:{}}, curSha=null, dirty=false, base=null, memoEdit=false, sel=null;
+  function getToken(){try{var t=localStorage.getItem(TOKEN_KEY);if(t)return t}catch(e){}return memToken}
+  function setToken(t){memToken=t;try{t?localStorage.setItem(TOKEN_KEY,t):localStorage.removeItem(TOKEN_KEY)}catch(e){}}
+  function toast(t){var e=$("toast");e.textContent=t;e.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(function(){e.hidden=true},2600)}
+  function api(path){return "https://api.github.com/repos/"+encodeURIComponent(GH_OWNER)+"/"+encodeURIComponent(GH_REPO)+"/contents/"+path.split("/").map(encodeURIComponent).join("/")}
+  function hd(auth){var h={Accept:"application/vnd.github+json"},t=getToken();if(auth&&t)h.Authorization="Bearer "+t;return h}
+  function editable(){return !!getToken()}
+  function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
+  async function listDir(dir){
+    var r=await fetch(api(dir)+"?ref="+encodeURIComponent(GH_BRANCH),{headers:hd(!!getToken()),cache:"no-store"});
+    if(r.status===404)return [];
+    if(!r.ok)throw new Error("一覧を取得できません ("+r.status+")");
+    var a=await r.json();return Array.isArray(a)?a:[]
+  }
+  function b64text(s){var bin=atob(s.replace(/\s/g,"")),b=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)b[i]=bin.charCodeAt(i);return new TextDecoder().decode(b)}
+  function toB64(bytes){var bin="",st=0x8000;for(var i=0;i<bytes.length;i+=st)bin+=String.fromCharCode.apply(null,bytes.subarray(i,i+st));return btoa(bin)}
+  async function getFile(path){
+    var r=await fetch(api(path)+"?ref="+encodeURIComponent(GH_BRANCH),{headers:hd(!!getToken()),cache:"no-store"});
+    if(r.status===404)return null;if(!r.ok)throw new Error("取得に失敗 ("+r.status+")");
+    var j=await r.json();return {sha:j.sha,text:j.content?b64text(j.content):""}
+  }
+  async function putFile(path,b64,msg,sha){
+    var body={message:msg,content:b64,branch:GH_BRANCH};if(sha)body.sha=sha;
+    var r=await fetch(api(path),{method:"PUT",headers:Object.assign({"Content-Type":"application/json"},hd(true)),body:JSON.stringify(body)});
+    if(r.status===401||r.status===403)throw new Error("トークンが無効か権限がありません。🔒から入れ直してください");
+    if(r.status===409||r.status===422){var ce=new Error("他の人と同時に保存しました。もう一度お試しください");ce.conflict=true;throw ce}
+    if(!r.ok)throw new Error("保存に失敗 ("+r.status+")");
+    return (await r.json()).content.sha
+  }
+  /* アイコン名: 00_キャラ名.png → {key:"00_キャラ名", name:"キャラ名"} */
+  function parsePics(arr){
+    return arr.filter(function(f){return f.type==="file"&&/\.(png|webp|jpe?g|gif)$/i.test(f.name)}).map(function(f){
+      var stem=f.name.replace(/\.[^.]+$/,""),m=/^(\d+)[_＿](.+)$/.exec(stem);
+      return {key:stem,name:m?m[2]:stem,no:m?+m[1]:9999,url:f.download_url+"?v="+f.sha.slice(0,7)}
+    }).sort(function(a,b){return a.no-b.no||a.key.localeCompare(b.key,"ja")})
+  }
+  async function loadList(){
+    $("listMsg").hidden=false;$("listMsg").textContent="読み込み中…";
+    try{
+      var r=await Promise.all([listDir(MAP_DIR),listDir(PIC_DIR)]);
+      maps=r[0].filter(function(f){return f.type==="file"&&/\.webp$/i.test(f.name)}).map(function(f){return {name:f.name.replace(/\.webp$/i,""),url:f.download_url+"?v="+f.sha.slice(0,7),sha:f.sha}});
+      pics=parsePics(r[1]);renderList()
+    }catch(e){$("listMsg").textContent=e.message}
+  }
+  function renderList(){
+    var g=$("grid");g.innerHTML="";
+    $("listMsg").hidden=maps.length>0;$("listMsg").textContent="マップはまだありません。";
+    maps.forEach(function(m){
+      var b=document.createElement("button");b.type="button";b.className="mc";
+      b.innerHTML='<div class="th"></div><span>'+esc(m.name)+'</span>';
+      b.firstChild.style.backgroundImage="url('"+m.url+"')";
+      b.onclick=function(){openMap(m)};g.appendChild(b)
+    })
+  }
+  async function openMap(m){
+    cur=m;state={size:11,pos:{},memo:{}};curSha=null;dirty=false;memoEdit=false;sel=null;
+    $("listView").hidden=true;$("mapView").hidden=false;$("back").hidden=false;$("ttl").textContent=m.name;
+    $("board").innerHTML='<div class="msg">読み込み中…</div>';
+    try{var f=await getFile(MAP_DIR+"/"+m.name+".json");if(f){curSha=f.sha;var d=JSON.parse(f.text);state.size=d.size||11;state.pos=d.pos||{};state.memo=d.memo||{}}}catch(e){toast(e.message)}
+    base=snap();$("size").value=state.size;renderMap()
+  }
+  function renderMap(){if(sel&&!state.pos[sel])sel=null;
+    var b=$("board");root.style.setProperty("--size",state.size+"%");root.classList.toggle("edit",editable());
+    b.innerHTML="";var im=document.createElement("img");im.className="map";im.src=cur.url;im.alt=cur.name;b.appendChild(im);
+    pics.forEach(function(p){
+      var s=state.pos[p.key];if(!s)return;
+      var el=document.createElement("div");el.className="pin";el.dataset.key=p.key;el.style.left=s.x+"%";el.style.top=s.y+"%";
+      el.style.backgroundImage="url('"+p.url+"')";el.setAttribute("role","img");el.setAttribute("aria-label",p.name);
+      el.tabIndex=0;if(sel===p.key)el.classList.add("sel");
+      var tp=document.createElement("span");tp.className="tp";fillTip(tp,p.name,(state.memo[p.key]||"").trim());el.appendChild(tp)
+      if(s.x<22)el.classList.add("tl");else if(s.x>78)el.classList.add("tr");if(s.y<28)el.classList.add("tb");b.appendChild(el)
+    });
+    $("edBar").hidden=!editable();$("jumpBar").hidden=!editable();renderNotes();renderSelBar();
+    var t=$("tray");t.innerHTML="";
+    pics.forEach(function(p){
+      var b2=document.createElement("button");b2.type="button";b2.className="tr"+(state.pos[p.key]?" on":"");
+      b2.innerHTML='<i style="background-image:url(\''+p.url+'\')"></i><span>'+esc(p.name)+'</span>';
+      b2.onclick=function(){if(!state.pos[p.key]){state.pos[p.key]={x:50,y:50};dirty=true}sel=p.key;renderMap()};
+      t.appendChild(b2)
+    })
+  }
+  function cleanMemo(){var o={};Object.keys(state.memo).forEach(function(k){if(state.pos[k]&&state.memo[k].trim())o[k]=state.memo[k]});return o}
+  function setSel(k){sel=k;document.querySelectorAll("#bp-root .pin").forEach(function(x){x.classList.toggle("sel",x.dataset.key===sel)});renderSelBar()}
+  function renderSelBar(){
+    var bar=$("selBar"),p=sel?pics.filter(function(x){return x.key===sel})[0]:null;
+    if(!editable()||!p){bar.hidden=true;return}
+    bar.hidden=false;bar.innerHTML="";
+    var l=document.createElement("span");l.appendChild(document.createTextNode("選択中: "));var nb=document.createElement("b");nb.textContent=p.name;l.appendChild(nb);l.appendChild(document.createTextNode("(ドラッグで移動)"));
+    var rm=document.createElement("button");rm.type="button";rm.className="b s";rm.textContent="マップから外す";
+    rm.onclick=function(){delete state.pos[sel];dirty=true;sel=null;renderMap()};
+    var cl=document.createElement("button");cl.type="button";cl.className="b s";cl.textContent="選択解除";cl.onclick=function(){setSel(null)};
+    bar.appendChild(l);bar.appendChild(rm);bar.appendChild(cl)
+  }
+  function snap(){return JSON.parse(JSON.stringify({size:state.size,pos:state.pos,memo:cleanMemo()}))}
+  function renderNotes(){
+    var n=$("notes");n.innerHTML="";var ed=editable();
+    function row(p,withArea){
+      var d=document.createElement("div");d.className="note";
+      var i=document.createElement("i");i.style.backgroundImage="url('"+p.url+"')";
+      var w=document.createElement("div");w.style.cssText="flex:1;min-width:0";var b=document.createElement("b");b.textContent=p.name;w.appendChild(b);
+      if(withArea){
+        var t=document.createElement("textarea");t.value=state.memo[p.key]||"";t.placeholder="メモ";t.setAttribute("aria-label",p.name+"のメモ");
+        t.oninput=function(){state.memo[p.key]=t.value;dirty=true};w.appendChild(t)
+      }else{var mt=(state.memo[p.key]||"").trim();if(mt){var pp=document.createElement("p");pp.textContent=mt;w.appendChild(pp)}}
+      d.appendChild(i);d.appendChild(w);n.appendChild(d)
+    }
+    var placed=pics.filter(function(p){return state.pos[p.key]});
+    if(ed&&memoEdit){
+      placed.forEach(function(p){row(p,true)});
+      var bar=document.createElement("div");bar.className="bar";bar.style.margin="0";
+      var sv=document.createElement("button");sv.type="button";sv.className="b p";sv.textContent="保存";sv.onclick=function(){$("save").click()};
+      var cl=document.createElement("button");cl.type="button";cl.className="b";cl.textContent="メモの編集を閉じる";cl.onclick=function(){memoEdit=false;renderMap()};
+      bar.appendChild(sv);bar.appendChild(cl);n.appendChild(bar)
+    }else{
+      placed.forEach(function(p){row(p,false)});
+      if(ed){var eb=document.createElement("button");eb.type="button";eb.className="b s";eb.textContent="✎ メモを編集";eb.style.justifySelf="start";eb.onclick=function(){memoEdit=true;renderMap()};n.appendChild(eb)}
+    }
+  }
+  function fillTip(tp,name,memo){tp.innerHTML="";var b=document.createElement("b");b.textContent=name;tp.appendChild(b);if(memo&&memo.trim())tp.appendChild(document.createTextNode(memo.trim()))}
+  $("jump").onclick=function(){$("edBar").scrollIntoView({behavior:"smooth",block:"start"})};
+  $("toTop").onclick=function(){$("board").scrollIntoView({behavior:"smooth",block:"start"})};
+  var drag=null, moved=false;
+  $("board").addEventListener("pointerdown",function(e){
+    if(!editable())return;var p=e.target.closest(".pin");if(!p||p.dataset.key!==sel)return;
+    moved=false;drag={el:p,k:p.dataset.key};p.classList.add("drag");p.setPointerCapture(e.pointerId);e.preventDefault()
+  });
+  $("board").addEventListener("pointermove",function(e){
+    if(!drag)return;var r=$("board").getBoundingClientRect();
+    var x=Math.max(0,Math.min(100,(e.clientX-r.left)/r.width*100)),y=Math.max(0,Math.min(100,(e.clientY-r.top)/r.height*100));
+    moved=true;state.pos[drag.k]={x:+x.toFixed(2),y:+y.toFixed(2)};drag.el.style.left=x+"%";drag.el.style.top=y+"%";dirty=true
+  });
+  function end(){if(drag){drag.el.classList.remove("drag");drag=null}}
+  $("board").addEventListener("click",function(e){
+    var p=e.target.closest(".pin");if(editable()&&!moved)setSel(p?p.dataset.key:null);var was=p&&p.classList.contains("open");
+    document.querySelectorAll("#bp-root .pin.open").forEach(function(x){x.classList.remove("open")});
+    if(p&&!was&&!moved)p.classList.add("open");moved=false
+  });
+  $("board").addEventListener("pointerup",end);$("board").addEventListener("pointercancel",end);
+  $("size").oninput=function(){state.size=+this.value;root.style.setProperty("--size",state.size+"%");dirty=true};
+  /* 同時編集: 保存の直前に最新を取り直し、自分が変えた分だけを重ねて保存する(他の人の変更は消さない) */
+  function merge(remote,base,mine){
+    var out={size:remote.size||11,pos:Object.assign({},remote.pos),memo:Object.assign({},remote.memo)};
+    if(mine.size!==base.size)out.size=mine.size;
+    ["pos","memo"].forEach(function(f){
+      Object.keys(mine[f]).forEach(function(k){if(JSON.stringify(mine[f][k])!==JSON.stringify(base[f][k]))out[f][k]=mine[f][k]});
+      Object.keys(base[f]).forEach(function(k){if(!(k in mine[f]))delete out[f][k]})
+    });
+    Object.keys(out.memo).forEach(function(k){if(!out.pos[k]||!String(out.memo[k]).trim())delete out.memo[k]});
+    return out
+  }
+  $("save").onclick=async function(){
+    var b=this;b.disabled=true;var path=MAP_DIR+"/"+cur.name+".json";
+    try{
+      for(var i=0;i<4;i++){
+        var f=await getFile(path),rm=f?JSON.parse(f.text):{};
+        var out=merge({size:rm.size,pos:rm.pos||{},memo:rm.memo||{}},base,snap());
+        var json=JSON.stringify(out,null,1)+"\n";
+        try{
+          curSha=await putFile(path,toB64(new TextEncoder().encode(json)),"分布マップ配置を更新 ("+cur.name+")",f&&f.sha);
+          state.size=out.size;state.pos=out.pos;state.memo=out.memo;base=snap();dirty=false;$("size").value=state.size;renderMap();toast("保存しました");break
+        }catch(e){if(e.conflict&&i<3)continue;throw e}
+      }
+    }catch(e){toast(e.message)}b.disabled=false
+  };
+  /* 他の人の変更を取り込む(編集できる端末だけ、未保存の変更がないときに45秒ごと) */
+  setInterval(async function(){
+    if(!cur||!editable()||dirty||memoEdit||drag||document.hidden)return;
+    try{
+      var f=await getFile(MAP_DIR+"/"+cur.name+".json"),d=f?JSON.parse(f.text):{};
+      state={size:d.size||11,pos:d.pos||{},memo:d.memo||{}};curSha=f&&f.sha;
+      var ns=snap();if(JSON.stringify(ns)!==JSON.stringify(base)){base=ns;$("size").value=state.size;renderMap();toast("他の人の変更を反映しました")}
+    }catch(e){}
+  },45000);
+  $("del").onclick=async function(){
+    if(!confirm("「"+cur.name+"」を削除しますか?(GitHub上のファイルも消えます)"))return;
+    try{
+      for(var ext of [".webp",".json"]){
+        var f=await fetch(api(MAP_DIR+"/"+cur.name+ext)+"?ref="+GH_BRANCH,{headers:hd(true),cache:"no-store"});
+        if(!f.ok)continue;var j=await f.json();
+        var d=await fetch(api(MAP_DIR+"/"+cur.name+ext),{method:"DELETE",headers:Object.assign({"Content-Type":"application/json"},hd(true)),body:JSON.stringify({message:"分布マップを削除 ("+cur.name+")",sha:j.sha,branch:GH_BRANCH})});
+        if(!d.ok)throw new Error("削除に失敗 ("+d.status+")")
+      }
+      dirty=false;toast("削除しました");goList()
+    }catch(e){toast(e.message)}
+  };
+  function goList(){
+    if(dirty&&!confirm("保存していない変更があります。破棄して戻りますか?"))return;
+    dirty=false;memoEdit=false;sel=null;cur=null;$("mapView").hidden=true;$("listView").hidden=false;$("back").hidden=true;$("ttl").textContent="キャラ分布マップ";loadList()
+  }
+  $("back").onclick=goList;
+  /* マップ追加(webp変換) */
+  $("pickMap").onclick=function(){
+    if(!$("newName").value.trim()){toast("先にマップの名前を入れてください");return}
+    $("fMap").click()
+  };
+  $("fMap").onchange=function(){
+    var f=this.files[0];this.value="";if(!f)return;
+    var name=$("newName").value.trim().replace(/[\\\/?#%:*"<>|.]/g,"");if(!name){toast("名前に使えない文字だけです");return}
+    var r=new FileReader();r.onload=function(){var im=new Image();im.onload=function(){
+      var k=Math.min(1,1600/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);
+      c.getContext("2d").drawImage(im,0,0,c.width,c.height);
+      c.toBlob(async function(bl){
+        if(!bl||bl.type!=="image/webp"){toast("このブラウザはwebp変換に対応していません");return}
+        try{
+          var old=await getFile(MAP_DIR+"/"+name+".webp");
+          if(old&&!confirm("「"+name+"」は既にあります。画像を差し替えますか?"))return;
+          toast("アップロード中…");
+          await putFile(MAP_DIR+"/"+name+".webp",toB64(new Uint8Array(await bl.arrayBuffer())),"分布マップを追加 ("+name+")",old&&old.sha);
+          $("newName").value="";toast("追加しました");loadList()
+        }catch(e){toast(e.message)}
+      },"image/webp",.9)
+    };im.onerror=function(){toast("画像を読み込めませんでした")};im.src=r.result};r.readAsDataURL(f)
+  };
+  /* トークン */
+  $("lock").onclick=function(){
+    var t=prompt("GitHubのトークンを入れてください(この端末のブラウザにだけ保存されます)。空で決定すると外れます。",getToken()?"(設定済み)":"");
+    if(t===null)return;if(t==="(設定済み)")return;setToken(t.trim());toast(t.trim()?"編集できるようにしました":"トークンを外しました");sync()
+  };
+  function sync(){$("lock").textContent=editable()?"🔓":"🔒";$("edAdd").hidden=!editable()||!!cur;if(cur)renderMap()}
+  window.addEventListener("beforeunload",function(e){if(dirty){e.preventDefault();e.returnValue=""}});
+  sync();loadList();
+})();
+</script>
