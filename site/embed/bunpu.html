@@ -53,6 +53,7 @@
 #bp-root .mrow label{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;margin-bottom:4px}
 #bp-root .mrow label i{width:24px;height:24px;border-radius:50%;border:1px solid var(--line);background:var(--img-bg) center/cover}
 #bp-root textarea{width:100%;min-height:56px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg);font:inherit;font-size:13px;resize:vertical}
+#bp-root #edAdd{margin:0 0 14px}
 #bp-root .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin-top:14px}
 #bp-root .card h2{font-size:14px;margin:0 0 10px;color:var(--main-deep)}
 #bp-root .tray{display:flex;flex-wrap:wrap;gap:8px}
@@ -73,6 +74,7 @@
   <h1 id="ttl">キャラ分布マップ</h1>
   <div class="bar" id="topbar">
     <button class="b" id="back" type="button" hidden>‹ 一覧に戻る</button>
+    <button class="b s" id="editToggle" type="button" hidden>✎ 編集モードにする</button>
     <button class="b s" id="lock" type="button" aria-label="編集用トークン">🔒</button>
   </div>
   <section id="listView">
@@ -123,7 +125,9 @@ var TOKEN_KEY="hw_gh_token", MAP_DIR="data/bunpu/map", PIC_DIR="data/bunpu/pic";
   function toast(t){var e=$("toast");e.textContent=t;e.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(function(){e.hidden=true},2600)}
   function api(path){return "https://api.github.com/repos/"+encodeURIComponent(GH_OWNER)+"/"+encodeURIComponent(GH_REPO)+"/contents/"+path.split("/").map(encodeURIComponent).join("/")}
   function hd(auth){var h={Accept:"application/vnd.github+json"},t=getToken();if(auth&&t)h.Authorization="Bearer "+t;return h}
-  function editable(){return !!getToken()}
+  var editMode=false;
+  function hasToken(){return !!getToken()}
+  function editable(){return hasToken()&&editMode}
   function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
   async function listDir(dir){
     var r=await fetch(api(dir)+"?ref="+encodeURIComponent(GH_BRANCH)+"&_t="+Date.now(),{headers:hd(!!getToken()),cache:"no-store"});
@@ -235,16 +239,10 @@ var TOKEN_KEY="hw_gh_token", MAP_DIR="data/bunpu/map", PIC_DIR="data/bunpu/pic";
       d.appendChild(i);d.appendChild(w);n.appendChild(d)
     }
     var placed=pics.filter(function(p){return state.pos[p.key]});
-    if(ed&&memoEdit){
+    if(ed){
       placed.forEach(function(p){row(p,true)});
-      var bar=document.createElement("div");bar.className="bar";bar.style.margin="0";
-      var sv=document.createElement("button");sv.type="button";sv.className="b p";sv.textContent="保存";sv.onclick=function(){$("save").click()};
-      var cl=document.createElement("button");cl.type="button";cl.className="b";cl.textContent="メモの編集を閉じる";cl.onclick=function(){memoEdit=false;renderMap()};
-      bar.appendChild(sv);bar.appendChild(cl);n.appendChild(bar)
-    }else{
-      placed.forEach(function(p){row(p,false)});
-      if(ed){var eb=document.createElement("button");eb.type="button";eb.className="b s";eb.textContent="✎ メモを編集";eb.style.justifySelf="start";eb.onclick=function(){memoEdit=true;renderMap()};n.appendChild(eb)}
-    }
+      if(placed.length){var sv=document.createElement("button");sv.type="button";sv.className="b p";sv.textContent="保存";sv.style.justifySelf="start";sv.onclick=function(){$("save").click()};n.appendChild(sv)}
+    }else{placed.forEach(function(p){row(p,false)})}
   }
   function fillTip(tp,name,memo){tp.innerHTML="";var b=document.createElement("b");b.textContent=name;tp.appendChild(b);if(memo&&memo.trim())tp.appendChild(document.createTextNode(memo.trim()))}
   $("jump").onclick=function(){$("edBar").scrollIntoView({behavior:"smooth",block:"start"})};
@@ -354,7 +352,19 @@ var TOKEN_KEY="hw_gh_token", MAP_DIR="data/bunpu/map", PIC_DIR="data/bunpu/pic";
     var t=prompt("GitHubのトークンを入れてください(この端末のブラウザにだけ保存されます)。空で決定すると外れます。",getToken()?"(設定済み)":"");
     if(t===null)return;if(t==="(設定済み)")return;setToken(t.trim());toast(t.trim()?"編集できるようにしました":"トークンを外しました");sync()
   };
-  function sync(){$("lock").textContent=editable()?"🔓":"🔒";$("edAdd").hidden=!editable()||!!cur;if(cur)renderMap()}
+  function sync(){
+    if(!hasToken())editMode=false;
+    $("lock").textContent=hasToken()?"🔓":"🔒";
+    var t=$("editToggle");t.hidden=!hasToken();t.classList.toggle("p",editMode);t.setAttribute("aria-pressed",editMode?"true":"false");
+    t.textContent=editMode?"✔ 編集モード中(押すと終了)":"✎ 編集モードにする";
+    $("edAdd").hidden=!editable()||!!cur;if(cur)renderMap()
+  }
+  $("editToggle").onclick=function(){
+    if(!editMode){editMode=true;sync();return}
+    if(dirty&&!confirm("保存していない変更があります。破棄して編集モードを終えますか?"))return;
+    editMode=false;dirty=false;sel=null;memoEdit=false;
+    if(cur)openMap(cur);else sync()
+  };
   window.addEventListener("beforeunload",function(e){if(dirty){e.preventDefault();e.returnValue=""}});
   sync();loadList();
 })();
