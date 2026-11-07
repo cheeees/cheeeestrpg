@@ -46,9 +46,6 @@
 #bp-root .tp b{display:block;font-size:12px}
 #bp-root .pin:hover .tp,#bp-root .pin:focus-visible .tp,#bp-root .pin.open .tp{display:block}
 #bp-root .pin.drag .tp{display:none}
-#bp-root .pin.e-l .tp{left:0;transform:none}
-#bp-root .pin.e-r .tp{left:auto;right:0;transform:none}
-#bp-root .pin.e-b .tp{bottom:auto;top:100%;margin:22px 0 0}
 #bp-root .notes{margin-top:14px;display:grid;gap:8px}
 #bp-root .note{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--card)}
 #bp-root .note i{width:40px;height:40px;background:transparent center/contain no-repeat;flex:none}
@@ -93,6 +90,7 @@
         <button class="b p" id="addGo" type="button">追加</button>
         <button class="b" id="addCancel" type="button">やめる</button>
       </div>
+      <p class="hint" style="margin:8px 0 0">webpに変換して data/bunpu/map に保存します。</p>
     </div>
     <div class="msg" id="listMsg">読み込み中…</div>
     <div class="grid" id="grid"></div>
@@ -196,7 +194,7 @@ var TOKEN_KEY="hw_gh_token", MAP_DIR="data/bunpu/map", PIC_DIR="data/bunpu/pic";
       el.setAttribute("aria-label",p.name);
       el.tabIndex=0;if(sel===p.key)el.classList.add("sel");if(p.bad){el.classList.add("bad");el.appendChild(document.createTextNode(p.name.charAt(0)))}
       var tp=document.createElement("span");tp.className="tp";fillTip(tp,p.name,(state.memo[p.key]||"").trim());el.appendChild(tp)
-      if(s.x<22)el.classList.add("e-l");else if(s.x>78)el.classList.add("e-r");if(s.y<28)el.classList.add("e-b");b.appendChild(el)
+      b.appendChild(el)
     });
     document.querySelectorAll("#bp-root .edonly").forEach(function(x){x.hidden=!editable()});$("gear").hidden=false;$("renameMap").disabled=!editable();$("del").disabled=!editable();$("gearHint").hidden=editable();renderNotes();renderSelBar();renderAddSelect();
   }
@@ -266,11 +264,25 @@ var TOKEN_KEY="hw_gh_token", MAP_DIR="data/bunpu/map", PIC_DIR="data/bunpu/pic";
     document.querySelectorAll("#bp-root .pin.open").forEach(function(x){x.classList.remove("open")});
     if(p&&!was&&!moved){p.classList.add("open");fitTip(p)}moved=false
   });
-  /* 吹き出しがマップの外にはみ出さないよう、表示のたびに位置をずらす */
-  function fitTip(p){var tp=p.querySelector(".tp");if(!tp)return;tp.style.marginLeft="0";
-    var b=$("board").getBoundingClientRect(),r=tp.getBoundingClientRect(),dx=0;
-    if(r.right>b.right-4)dx=b.right-4-r.right;if(r.left+dx<b.left+4)dx=b.left+4-r.left;
-    tp.style.marginLeft=dx?dx+"px":""}
+  /* 吹き出しは、上下左右どこにキャラがいてもマップの枠の内側に収まるように置く */
+  function fitTip(p){
+    var tp=p.querySelector(".tp");if(!tp)return;
+    var bd=$("board").getBoundingClientRect();
+    tp.style.cssText="max-width:"+Math.max(80,Math.min(220,bd.width-8))+"px;display:block";
+    var pr=p.getBoundingClientRect(),tw=tp.offsetWidth,th=tp.offsetHeight,gap=6,m=4;
+    var ax=pr.left+(pr.width-tw)/2;
+    if(ax+tw>bd.right-m)ax=bd.right-m-tw;
+    if(ax<bd.left+m)ax=bd.left+m;
+    var above=pr.top-bd.top,below=bd.bottom-pr.bottom,ay;
+    if(above>=th+gap+m)ay=pr.top-gap-th;
+    else if(below>=th+gap+m)ay=pr.bottom+gap;
+    else ay=above>=below?pr.top-gap-th:pr.bottom+gap;
+    if(ay+th>bd.bottom-m)ay=bd.bottom-m-th;
+    if(ay<bd.top+m)ay=bd.top+m;
+    tp.style.display="";
+    tp.style.left=(ax-pr.left)+"px";tp.style.top=(ay-pr.top)+"px";
+    tp.style.right="auto";tp.style.bottom="auto";tp.style.transform="none";tp.style.margin="0"
+  }
   $("board").addEventListener("mouseover",function(e){var p=e.target.closest(".pin");if(p)fitTip(p)});
   $("board").addEventListener("focusin",function(e){var p=e.target.closest(".pin");if(p)fitTip(p)});
   $("board").addEventListener("pointerup",end);$("board").addEventListener("pointercancel",end);
@@ -407,7 +419,8 @@ var TOKEN_KEY="hw_gh_token", MAP_DIR="data/bunpu/map", PIC_DIR="data/bunpu/pic";
     if(!editMode){editMode=true;sync();return}
     if(dirty&&!confirm("保存していない変更があります。破棄して編集モードを終えますか?"))return;
     editMode=false;dirty=false;sel=null;memoEdit=false;
-    if(cur)openMap(cur);else sync()
+    if(cur&&base){state=JSON.parse(JSON.stringify(base));$("size").value=state.size}
+    sync()
   };
   window.addEventListener("beforeunload",function(e){if(dirty){e.preventDefault();e.returnValue=""}});
   sync();loadList();
