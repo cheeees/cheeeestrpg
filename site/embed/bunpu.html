@@ -78,9 +78,12 @@
   <section id="listView">
     <div id="edAdd" class="card" hidden>
       <h2>マップを追加</h2>
-      <div class="bar" style="margin:0">
+      <div class="bar" style="margin:0"><button class="b p" id="pickMap" type="button">画像を選ぶ</button></div>
+      <div id="addRow" class="bar" style="margin:10px 0 0" hidden>
+        <img id="addPrev" alt="" style="width:64px;height:64px;object-fit:cover;border-radius:6px;border:1px solid var(--line)">
         <input type="text" id="newName" placeholder="マップの名前" maxlength="40" aria-label="マップの名前">
-        <button class="b" id="pickMap" type="button">画像を選んで追加</button>
+        <button class="b p" id="addGo" type="button">追加</button>
+        <button class="b" id="addCancel" type="button">やめる</button>
       </div>
       <p class="hint" style="margin:8px 0 0">webpに変換して data/bunpu/map に保存します。</p>
     </div>
@@ -315,28 +318,36 @@ var TOKEN_KEY="hw_gh_token", MAP_DIR="data/bunpu/map", PIC_DIR="data/bunpu/pic";
     dirty=false;memoEdit=false;sel=null;cur=null;$("mapView").hidden=true;$("listView").hidden=false;$("back").hidden=true;$("ttl").textContent="キャラ分布マップ";loadList()
   }
   $("back").onclick=goList;
-  /* マップ追加(webp変換) */
-  $("pickMap").onclick=function(){
-    if(!$("newName").value.trim()){toast("先にマップの名前を入れてください");return}
-    $("fMap").click()
-  };
+  /* マップ追加: 画像を選ぶ → 名前を確認(ファイル名が初期値) → 追加 */
+  var pend=null;
+  function cleanName(n){return n.trim().replace(/[\\\/?#%:*"<>|.]/g,"").slice(0,40)}
+  $("pickMap").onclick=function(){$("fMap").click()};
   $("fMap").onchange=function(){
     var f=this.files[0];this.value="";if(!f)return;
-    var name=$("newName").value.trim().replace(/[\\\/?#%:*"<>|.]/g,"");if(!name){toast("名前に使えない文字だけです");return}
     var r=new FileReader();r.onload=function(){var im=new Image();im.onload=function(){
       var k=Math.min(1,1600/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);
       c.getContext("2d").drawImage(im,0,0,c.width,c.height);
-      c.toBlob(async function(bl){
+      c.toBlob(function(bl){
         if(!bl||bl.type!=="image/webp"){toast("このブラウザはwebp変換に対応していません");return}
-        try{
-          var old=await getFile(MAP_DIR+"/"+name+".webp");
-          if(old&&!confirm("「"+name+"」は既にあります。画像を差し替えますか?"))return;
-          toast("アップロード中…");
-          await putFile(MAP_DIR+"/"+name+".webp",toB64(new Uint8Array(await bl.arrayBuffer())),"分布マップを追加 ("+name+")",old&&old.sha);
-          $("newName").value="";toast("追加しました");loadList()
-        }catch(e){toast(e.message)}
+        pend=bl;$("addPrev").src=URL.createObjectURL(bl);
+        $("newName").value=cleanName(f.name.replace(/\.[^.]+$/,""));
+        $("addRow").hidden=false;$("newName").focus();$("newName").select()
       },"image/webp",.9)
     };im.onerror=function(){toast("画像を読み込めませんでした")};im.src=r.result};r.readAsDataURL(f)
+  };
+  $("addCancel").onclick=function(){pend=null;$("addRow").hidden=true};
+  $("newName").addEventListener("keydown",function(e){if(e.key==="Enter"&&!e.isComposing)$("addGo").click()});
+  $("addGo").onclick=async function(){
+    var name=cleanName($("newName").value);if(!name){toast("マップの名前を入れてください");return}
+    if(!pend){toast("先に画像を選んでください");return}
+    var b=this;b.disabled=true;
+    try{
+      var old=await getFile(MAP_DIR+"/"+name+".webp");
+      if(old&&!confirm("「"+name+"」は既にあります。画像を差し替えますか?")){b.disabled=false;return}
+      toast("アップロード中…");
+      await putFile(MAP_DIR+"/"+name+".webp",toB64(new Uint8Array(await pend.arrayBuffer())),"分布マップを追加 ("+name+")",old&&old.sha);
+      pend=null;$("addRow").hidden=true;toast("追加しました");loadList()
+    }catch(e){toast(e.message)}b.disabled=false
   };
   /* トークン */
   $("lock").onclick=function(){
