@@ -33,6 +33,7 @@
 #bp-root .selbar b{font-size:14px}
 #bp-root .pin.drag{cursor:grabbing;z-index:5;transform:translate(-50%,-50%) scale(1.15);filter:drop-shadow(0 4px 6px #0006)}
 #bp-root .pin .nm{position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:2px;max-width:420%;white-space:nowrap;font-size:10px;line-height:1.2;color:var(--fg);background:#fffd;border-radius:99px;padding:1px 6px;pointer-events:none}
+#bp-root .pin.bad{background:#fff;border:2px dashed var(--line);border-radius:50%;display:grid;place-items:center;font-weight:700;color:var(--mut)}
 #bp-root .pin:hover{z-index:6}
 #bp-root .pin.open{z-index:6}
 #bp-root .pin:focus-visible{outline:3px solid var(--accent)}
@@ -93,7 +94,7 @@
     <div class="notes" id="notes"></div>
     <div class="card" id="edBar" hidden>
       <h2>編集</h2>
-      <div class="bar" style="margin:0 0 10px"><button class="b s" id="toTop" type="button">↑ マップへ戻る</button></div>
+      <div class="bar" style="margin:0 0 10px"><button class="b s" id="toTop" type="button">↑ マップへ戻る</button><button class="b s" id="reload" type="button">アイコン一覧を更新</button></div>
       <div class="bar" style="margin:0 0 10px">
         <button class="b p" id="save" type="button">保存</button>
         <button class="b" id="del" type="button">このマップを削除</button>
@@ -122,7 +123,7 @@ var TOKEN_KEY="hw_gh_token", MAP_DIR="data/bunpu/map", PIC_DIR="data/bunpu/pic";
   function editable(){return !!getToken()}
   function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
   async function listDir(dir){
-    var r=await fetch(api(dir)+"?ref="+encodeURIComponent(GH_BRANCH),{headers:hd(!!getToken()),cache:"no-store"});
+    var r=await fetch(api(dir)+"?ref="+encodeURIComponent(GH_BRANCH)+"&_t="+Date.now(),{headers:hd(!!getToken()),cache:"no-store"});
     if(r.status===404)return [];
     if(!r.ok)throw new Error("一覧を取得できません ("+r.status+")");
     var a=await r.json();return Array.isArray(a)?a:[]
@@ -154,7 +155,7 @@ var TOKEN_KEY="hw_gh_token", MAP_DIR="data/bunpu/map", PIC_DIR="data/bunpu/pic";
     try{
       var r=await Promise.all([listDir(MAP_DIR),listDir(PIC_DIR)]);
       maps=r[0].filter(function(f){return f.type==="file"&&/\.webp$/i.test(f.name)}).map(function(f){return {name:f.name.replace(/\.webp$/i,""),url:f.download_url+"?v="+f.sha.slice(0,7),sha:f.sha}});
-      pics=parsePics(r[1]);renderList()
+      pics=parsePics(r[1]);probe();renderList()
     }catch(e){$("listMsg").textContent=e.message}
   }
   function renderList(){
@@ -180,8 +181,13 @@ var TOKEN_KEY="hw_gh_token", MAP_DIR="data/bunpu/map", PIC_DIR="data/bunpu/pic";
     pics.forEach(function(p){
       var s=state.pos[p.key];if(!s)return;
       var el=document.createElement("div");el.className="pin";el.dataset.key=p.key;el.style.left=s.x+"%";el.style.top=s.y+"%";
-      el.style.backgroundImage="url('"+p.url+"')";el.setAttribute("role","img");el.setAttribute("aria-label",p.name);
-      el.tabIndex=0;if(sel===p.key)el.classList.add("sel");
+      el.setAttribute("role","img");
+      if(!p.bad){var im=document.createElement("img");im.alt="";im.draggable=false;im.style.cssText="display:block;width:100%;height:100%;object-fit:contain;pointer-events:none";
+        im.onerror=function(){if(!p.bad){p.bad=true;toast("アイコンを読み込めません: "+p.name);renderMap()}};
+        im.onload=function(){p.nw=im.naturalWidth;p.nh=im.naturalHeight;if(sel===p.key)renderSelBar()};
+        im.src=p.url;el.appendChild(im)}
+      el.setAttribute("aria-label",p.name);
+      el.tabIndex=0;if(sel===p.key)el.classList.add("sel");if(p.bad){el.classList.add("bad");el.appendChild(document.createTextNode(p.name.charAt(0)))}
       var tp=document.createElement("span");tp.className="tp";fillTip(tp,p.name,(state.memo[p.key]||"").trim());el.appendChild(tp)
       if(s.x<22)el.classList.add("tl");else if(s.x>78)el.classList.add("tr");if(s.y<28)el.classList.add("tb");b.appendChild(el)
     });
@@ -190,17 +196,23 @@ var TOKEN_KEY="hw_gh_token", MAP_DIR="data/bunpu/map", PIC_DIR="data/bunpu/pic";
     pics.forEach(function(p){
       var b2=document.createElement("button");b2.type="button";b2.className="tr"+(state.pos[p.key]?" on":"");
       b2.innerHTML='<i style="background-image:url(\''+p.url+'\')"></i><span>'+esc(p.name)+'</span>';
-      b2.onclick=function(){if(!state.pos[p.key]){state.pos[p.key]={x:50,y:50};dirty=true}sel=p.key;renderMap()};
+      b2.onclick=function(){if(!state.pos[p.key]){var n=Object.keys(state.pos).length;state.pos[p.key]={x:Math.min(88,35+(n%7)*8),y:Math.min(88,35+(n%7)*8)};dirty=true}sel=p.key;renderMap()};
       t.appendChild(b2)
     })
   }
   function cleanMemo(){var o={};Object.keys(state.memo).forEach(function(k){if(state.pos[k]&&state.memo[k].trim())o[k]=state.memo[k]});return o}
+  /* アイコン画像が読めないときは、名前の頭文字の丸に置き換えて知らせる */
+  function probe(){pics.forEach(function(p){if(p.chk)return;p.chk=1;var im=new Image();im.onload=function(){p.nw=im.naturalWidth;p.nh=im.naturalHeight};im.onerror=function(){p.bad=true;toast("アイコンを読み込めません: "+p.name);if(cur)renderMap()};im.src=p.url})}
+  $("reload").onclick=async function(){
+    try{pics=parsePics(await listDir(PIC_DIR));probe();if(sel&&!pics.some(function(x){return x.key===sel}))sel=null;renderMap();toast("アイコン一覧を更新しました("+pics.length+"人)")}catch(e){toast(e.message)}
+  };
   function setSel(k){sel=k;document.querySelectorAll("#bp-root .pin").forEach(function(x){x.classList.toggle("sel",x.dataset.key===sel)});renderSelBar()}
   function renderSelBar(){
     var bar=$("selBar"),p=sel?pics.filter(function(x){return x.key===sel})[0]:null;
     if(!editable()||!p){bar.hidden=true;return}
     bar.hidden=false;bar.innerHTML="";
     var l=document.createElement("span");l.appendChild(document.createTextNode("選択中: "));var nb=document.createElement("b");nb.textContent=p.name;l.appendChild(nb);l.appendChild(document.createTextNode("(ドラッグで移動)"));
+    var inf=document.createElement("span");inf.style.cssText="color:var(--mut);font-size:12px";inf.appendChild(document.createTextNode(p.nw?"画像 "+p.nw+"×"+p.nh+" ":"画像サイズ不明 "));var la=document.createElement("a");la.href=p.url;la.target="_blank";la.rel="noopener";la.textContent="画像を開く";la.style.color="inherit";inf.appendChild(la);l.appendChild(document.createTextNode(" "));l.appendChild(inf);
     var rm=document.createElement("button");rm.type="button";rm.className="b s";rm.textContent="マップから外す";
     rm.onclick=function(){delete state.pos[sel];dirty=true;sel=null;renderMap()};
     var cl=document.createElement("button");cl.type="button";cl.className="b s";cl.textContent="選択解除";cl.onclick=function(){setSel(null)};
