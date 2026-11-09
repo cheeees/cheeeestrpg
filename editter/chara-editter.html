@@ -330,8 +330,8 @@ a.lt::after{content:" ›"}
 </div>
 </main>
 <!-- ▼▼▼ 【公開用で消す場所 ③】ここから ▼▼▼
-     編集モード中だけ画面の端に出る「保存」「編集欄の先頭へ」ボタンです。①②と一緒に、この行から「③ここまで」までを消してください。 -->
-<div id="fab"><button class="b p" id="fab_save" type="button">保存</button><button class="b" id="fab_top" type="button">↑ 編集欄の先頭へ</button></div>
+     編集モード中だけ画面の端に出る「公開」「保存」「編集欄の先頭へ」ボタンです。①②と一緒に、この行から「③ここまで」までを消してください。 -->
+<div id="fab"><button class="b p" id="fab_pub" type="button">公開</button><button class="b p" id="fab_save" type="button">保存</button><button class="b" id="fab_top" type="button">↑ 編集欄の先頭へ</button></div>
 <!-- ▲▲▲ 【公開用で消す場所 ③】ここまで ▲▲▲ -->
 <div id="toast" hidden></div>
 <script>
@@ -627,8 +627,24 @@ function ageHTML(L,o){
   return `<div class="bdg bda">${h}</div>${miss?`<p class="n mdn">未登録のキャラ${miss}人は表示されていません。</p>`:""}`;
 }
 
+// 通過シナリオ一覧: キャラに入力した通過シナリオ + ログの参加者に入っているのにキャラ側に無いシナリオ(日付の位置に差し込む)
+const scAll=c=>{
+  const own=((c&&c.scenarios)||[]).slice();
+  if(!c||!c.name)return own;
+  const have=new Set(own.map(x=>String((x&&x.title)||"").trim()));
+  (logs||[]).forEach(l=>{
+    if(!(l.players||[]).includes(c.name))return;
+    const t=String(l.scenario||l.title||"").trim();
+    if(!t||have.has(t))return;
+    have.add(t);
+    const x={title:t,date:l.date||"",end:l.end||""};
+    const k=x.date?own.findIndex(y=>y.date&&y.date>x.date):-1;
+    if(k<0)own.push(x);else own.splice(k,0,x);
+  });
+  return own;
+};
 // 通過数: 通過シナリオの数(同じ名前は1本と数える)
-const scN=c=>new Set(((c&&c.scenarios)||[]).map(x=>String((x&&x.title)||"").trim()).filter(Boolean)).size;
+const scN=c=>new Set(scAll(c).map(x=>String((x&&x.title)||"").trim()).filter(Boolean)).size;
 // 通過数表示: 通過数ごとのグループ(少ない順)に分けて、年齢と同じ表の形で並べる。各マスの左上に「N本」
 function scnHTML(L,o){
   const esc=o.esc,N=L.map(scN),vis=L.map((c,i)=>i).filter(i=>!o.show||o.show(i));
@@ -943,7 +959,12 @@ async function setEdit(on){
   list=edit?load():CHARACTERS;logs=edit?await loadLogs():LOGS;route(true);
 }
 $("tg").onclick=$("ptg").onclick=()=>setEdit(!edit);
-// 画面の端のボタン: 保存(いま開いているページの保存ボタンを押す)/ 編集欄の先頭へ戻る
+// 画面の端のボタン: 公開 / 保存(いま開いているページの保存ボタンを押す)/ 編集欄の先頭へ戻る
+// 公開: 開いているキャラの編集内容を保存してから、GitHubへ公開する(「GitHubへ公開」と同じ処理)
+$("fab_pub").onclick=()=>{
+  if(!$("prof").hidden||(sel>=0&&list[sel]))$("fab_save").onclick();
+  ghPublish();
+};
 $("fab_top").onclick=()=>($("prof").hidden?$("ed"):$("ped")).scrollIntoView({behavior:"smooth",block:"start"});
 $("fab_save").onclick=()=>{
   if(!$("prof").hidden)$("pe_save").click();
@@ -1428,7 +1449,7 @@ ${G.length?`<div class="tabs lsort">${SORTS.map(([m,n])=>`<label for="hw-o-${m}"
   const item=(cls,k,v)=>`<div${cls?` class="${cls}"`:""}><span${cls?"":` style="--len:${skLen(k)}"`}>${esc(k)}</span><b>${esc(v)}</b></div>`;
   const pnav=`<div class="pnav"><label for="hw-v-home" class="back">← 色相環にもどる</label>${L.length<2?"":`<div class="psw">${L.map((c,i)=>`<label for="hw-sw-${i}" class="swb sb-${i}">キャラを切り替え</label>`).join("")}<div class="pswl">${L.map((c,j)=>`<label for="hw-v-${j}" class="psi psi-${j}"><i class="cg-${j}"></i>${esc(c.name)}</label>`).join("")}</div></div>`}</div>`;
   const profs=L.map((c,i)=>{
-    const a=SA[i],st=c.stats||[],sk=c.skills||[],sc=c.scenarios||[],ar=c.artifacts||[],sp=c.spells||[],sq=c.sequelae||[];
+    const a=SA[i],st=c.stats||[],sk=c.skills||[],sc=scAll(c),ar=c.artifacts||[],sp=c.spells||[],sq=c.sequelae||[];
     const nlist=(h,a)=>a.length?`<div><h4>${h}</h4><ul class="scl">${a.map(x=>`<li><b>${esc(x.name)}</b>${x.memo?`<span>${esc(x.memo)}</span>`:""}</li>`).join("")}</ul></div>`:"";
     const head=`<div class="phead"><div class="pface${cimg[i]?" ic-"+i:" cg-"+i} cc-${i}">${ini1(i)}</div><div><div class="pname">${esc(c.name)}</div><div class="tags"><span>${cols[i]}</span>${ctags[i].map(t=>`<span>#${esc(t)}</span>`).join("")}</div>${c.memo?`<small>${esc(c.memo)}</small>`:""}</div></div>`;
     // 立ち絵・表情差分
@@ -1544,7 +1565,7 @@ function renderGal(){
   editList($("el_faces"),fs?(fs.faces||[]):[],x=>{const st=a.slice();st[fi]=Object.assign({},fs,{faces:x});upd({stands:st});renderProfile()});
 }
 function renderSheet(){
-  const c=cur(),st=c.stats||[],sk=c.skills||[],sc=c.scenarios||[],ar=c.artifacts||[],sp=c.spells||[],sq=c.sequelae||[];
+  const c=cur(),st=c.stats||[],sk=c.skills||[],sc=scAll(c),ar=c.artifacts||[],sp=c.spells||[],sq=c.sequelae||[];
   const lk=$("i_link");lk.innerHTML="";
   if(isUrl(c.link)){const a=document.createElement("a");a.href=c.link;a.target="_blank";a.rel="noopener";a.textContent="キャラクターシート(いあきゃら) ↗";lk.appendChild(a)}
   const vit=st.filter(x=>VITAL.test(x[0])),kk=[],seen=new Set();
@@ -1819,6 +1840,24 @@ $("lgf").onchange=async ev=>{
   toast("ログ名・日付・参加者を読み込みました(ログ本体は保存しません)");
   $("lhint").textContent=(auto?"ログの場所を「"+url+"」に自動入力しました(違うときは直してください)。":"")+(d1?"日付: "+fmtRange(d1,d2)+"(自動検出)。":"日付は見つかりませんでした。")+"検出した発言者: "+ns.map(([n,c])=>n+"("+c+")").join("、")+"(KPなど不要な名前は消してください)";
 };
+// ログの参加者に入っているキャラへ、そのシナリオを通過シナリオとして自動で追加する(すでにあれば何もしない。日付の順に差し込む)
+function syncLogToChars(o){
+  const t=String(o.scenario||o.title||"").trim();
+  if(!t)return 0;
+  let n=0;
+  (o.players||[]).forEach(name=>{
+    const i=list.findIndex(c=>c.name===name);if(i<0)return;
+    const own=(list[i].scenarios||[]).slice();
+    if(own.some(x=>String((x&&x.title)||"").trim()===t))return;
+    const x={title:t,date:o.date||""};if(o.end)x.end=o.end;
+    const k=x.date?own.findIndex(y=>y.date&&y.date>x.date):-1;
+    if(k<0)own.push(x);else own.splice(k,0,x);
+    list[i]=Object.assign({},list[i],{scenarios:own});n++;
+    if(i===pi)scRow(x);   // いま編集欄を開いているキャラなら、入力欄にも足す
+  });
+  if(n)save();
+  return n;
+}
 $("lreg").onclick=()=>{
   const title=$("lt").value.trim();if(!title){toast("ログ名を入れてね");return}
   const o={title,scenario:$("lsc").value.trim()||title,url:$("lu").value.trim(),date:$("ld").value,end:$("lde").value,
@@ -1826,8 +1865,10 @@ $("lreg").onclick=()=>{
   const i=le>=0?le:logs.findIndex(x=>x.title===title);
   if(!o.url&&i>=0&&logs[i].z)o.z=logs[i].z;   // URLがない旧データだけ、埋め込みを残す
   if(i>=0)logs[i]=o;else logs.push(o);
+  const added=syncLogToChars(o);
   saveLogs();le=-1;fillLog({});$("lgf").value="";renderLogs();refreshScSel();
-  toast(o.url||o.z?"ログを登録しました":"ログを登録しました(ログの場所のURLが空なので、リンクは付きません)",o.url||o.z?3500:6000);
+  const ad=added?"。参加キャラ"+added+"人の通過シナリオに追加しました":"";
+  toast(o.url||o.z?"ログを登録しました"+ad:"ログを登録しました(ログの場所のURLが空なので、リンクは付きません)"+ad,o.url||o.z?3500:6000);
 };
 
 setEdit(true);   // このファイルは常に編集モード(ON/OFFの切り替えなし)
