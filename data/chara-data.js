@@ -61,5 +61,6 @@ const LOGS = [
   {title:"結び合いは街歩きとともに 2陣",scenario:"結び合いは街歩きとともに 2陣",url:"https://cheeees.github.io/cheeeestrpg/38.html",date:"2026-10-07",end:"2026-10-19",memo:"▍シナリオクリア",players:["幸坂 将太郎","古都 力"]},
   {title:"こちらコズミックレストラン○○店",scenario:"こちらコズミックレストラン○○店",url:"https://cheeees.github.io/cheeeestrpg/39.html",date:"2026-10-20",end:"2026-10-26",memo:"▍END-B《Birthday》 \n「こちらコズミックファミリーレストラン コスモ店」",players:["酒寄 葆","巳崎 零也"]},
   {title:"泡沫の幸福論",scenario:"泡沫の幸福論",url:"https://cheeees.github.io/cheeeestrpg/40.html",date:"2026-10-29",end:"2026-11-01",memo:"▍END1　泡沫の幸福論",players:["春夏冬 若桜","千秋 一樹"]},
-  {title:"モブおじ OF THE DEAD",scenario:"モブおじ OF THE DEAD",url:"https://cheeees.github.io/cheeeestrpg/41.html",date:"2026-11-02",end:"2026-11-05",memo:"▍エンドA　愛と嫉妬のロマンティックコメディ",players:["高科 洋一","大庭 レイン"]}
+  {title:"モブおじ OF THE DEAD",scenario:"モブおじ OF THE DEAD",url:"https://cheeees.github.io/cheeeestrpg/41.html",date:"2026-11-02",end:"2026-11-05",memo:"▍エンドA　愛と嫉妬のロマンティックコメディ",players:["高科 洋一","大庭 レイン"]},
+  {title:"まどろみとカモミール",scenario:"まどろみとカモミール",url:"https://cheeees.github.io/cheeeestrpg/42.html",date:"2026-11-06",end:"2026-11-10",memo:"▍シナリオクリア",players:["春夏冬 若桜","千秋 一樹"]}
 ];
