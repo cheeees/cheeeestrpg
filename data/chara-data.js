@@ -42,7 +42,7 @@ const LOGS = [
   {title:"お届け物はPCです",scenario:"お届け物はPCです",url:"https://cheeees.github.io/cheeeestrpg/19.html",date:"2026-07-22",end:"2026-07-23",players:["高科 洋一","大庭 レイン"],memo:"▍END1 　開封済み"},
   {title:"出られない部屋に知らん奴と閉じ込められてる",scenario:"出られない部屋に知らん奴と閉じ込められてる",url:"https://cheeees.github.io/cheeeestrpg/20.html",date:"2026-07-23",end:"2026-07-24",players:["乃本 朔","梨渡宮 誠","春夏冬 若桜","千秋 一樹"],memo:"▍END-A 『あの人を知ってる』"},
   {title:"灰雪のcarol",scenario:"灰雪のcarol",url:"https://cheeees.github.io/cheeeestrpg/21.html",date:"2026-07-25",end:"2026-07-30",players:["酒寄 葆","巳崎 零也"],memo:"▍Merry Christmas"},
-  {title:"すぐ行け〜温泉編〜",scenario:"すぐ行け〜温泉編〜",url:"https://cheeees.github.io/cheeeestrpg/22.html",date:"2026-08-02",end:"2026-08-13",memo:"▍シナリオクリア",players:["春夏冬 若桜","千秋 一樹"]},
+  {title:"すぐ行け〜温泉編〜",scenario:"すぐ行け〜温泉編〜",url:"https://cheeees.github.io/cheeeestrpg/22.html",date:"2026-08-02",end:"2026-08-13",players:["春夏冬 若桜","千秋 一樹"],memo:"▍シナリオクリア"},
   {title:"男爵の花嫁",scenario:"男爵の花嫁",url:"https://cheeees.github.io/cheeeestrpg/23.html",date:"2026-08-18",end:"2026-08-19",players:["青宮 想太","朝野 椎奈"],memo:"▍エンドXXI「The World（世界）」"},
   {title:"メイフラワーの咲く森で",scenario:"メイフラワーの咲く森で",url:"https://cheeees.github.io/cheeeestrpg/24.html",date:"2026-08-20",end:"2026-08-22",players:["イシュタル=ノア=テオフィル","アルス・トーヴァ"],memo:"▍END1"},
   {title:"どこ見てやがる。",scenario:"どこ見てやがる。",url:"https://cheeees.github.io/cheeeestrpg/25.html",date:"2026-08-23",end:"2026-08-24",players:["紫乃原 悠翔","浅倉 桂"]},
@@ -57,10 +57,10 @@ const LOGS = [
   {title:"結び合いは街歩きとともに",scenario:"結び合いは街歩きとともに",url:"https://cheeees.github.io/cheeeestrpg/34.html",date:"2026-09-18",end:"2026-09-23",players:["仁志暢 熊岑","立川 翠葉"],memo:"▍シナリオクリア"},
   {title:"ニトロとレモン",scenario:"ニトロとレモン",url:"https://cheeees.github.io/cheeeestrpg/35.html",date:"2026-09-24",end:"2026-09-27",players:["荒良木 牙煌","橘 柴太"],memo:"▍エンド1-C「ニトロとレモン」"},
   {title:"すぐ行け〜海水浴編〜",scenario:"すぐ行け〜海水浴編〜",url:"https://cheeees.github.io/cheeeestrpg/36.html",date:"2026-09-28",end:"2026-10-04",players:["春夏冬 若桜","千秋 一樹"],memo:"▍シナリオクリア"},
-  {title:"君と永遠解けぬ花結び",scenario:"君と永遠解けぬ花結び",url:"https://cheeees.github.io/cheeeestrpg/37.html",date:"2026-10-05",end:"2026-10-07",memo:"▍エンドB",players:["幸坂 将太郎","古都 力"]},
-  {title:"結び合いは街歩きとともに 2陣",scenario:"結び合いは街歩きとともに 2陣",url:"https://cheeees.github.io/cheeeestrpg/38.html",date:"2026-10-07",end:"2026-10-19",memo:"▍シナリオクリア",players:["幸坂 将太郎","古都 力"]},
-  {title:"こちらコズミックレストラン○○店",scenario:"こちらコズミックレストラン○○店",url:"https://cheeees.github.io/cheeeestrpg/39.html",date:"2026-10-20",end:"2026-10-26",memo:"▍END-B《Birthday》 \n「こちらコズミックファミリーレストラン コスモ店」",players:["酒寄 葆","巳崎 零也"]},
-  {title:"泡沫の幸福論",scenario:"泡沫の幸福論",url:"https://cheeees.github.io/cheeeestrpg/40.html",date:"2026-10-29",end:"2026-11-01",memo:"▍END1　泡沫の幸福論",players:["春夏冬 若桜","千秋 一樹"]},
-  {title:"モブおじ OF THE DEAD",scenario:"モブおじ OF THE DEAD",url:"https://cheeees.github.io/cheeeestrpg/41.html",date:"2026-11-02",end:"2026-11-05",memo:"▍エンドA　愛と嫉妬のロマンティックコメディ",players:["高科 洋一","大庭 レイン"]},
-  {title:"まどろみとカモミール",scenario:"まどろみとカモミール",url:"https://cheeees.github.io/cheeeestrpg/42.html",date:"2026-11-06",end:"2026-11-10",memo:"▍シナリオクリア",players:["春夏冬 若桜","千秋 一樹"]}
+  {title:"君と永遠解けぬ花結び",scenario:"君と永遠解けぬ花結び",url:"https://cheeees.github.io/cheeeestrpg/37.html",date:"2026-10-05",end:"2026-10-07",players:["幸坂 将太郎","古都 力"],memo:"▍エンドB"},
+  {title:"結び合いは街歩きとともに 2陣",scenario:"結び合いは街歩きとともに 2陣",url:"https://cheeees.github.io/cheeeestrpg/38.html",date:"2026-10-07",end:"2026-10-19",players:["幸坂 将太郎","古都 力"],memo:"▍シナリオクリア"},
+  {title:"こちらコズミックレストラン○○店",scenario:"こちらコズミックレストラン○○店",url:"https://cheeees.github.io/cheeeestrpg/39.html",date:"2026-10-20",end:"2026-10-26",players:["酒寄 葆","巳崎 零也"],memo:"▍END-B《Birthday》 \n「こちらコズミックファミリーレストラン コスモ店」"},
+  {title:"泡沫の幸福論",scenario:"泡沫の幸福論",url:"https://cheeees.github.io/cheeeestrpg/40.html",date:"2026-10-29",end:"2026-11-01",players:["春夏冬 若桜","千秋 一樹"],memo:"▍END1　泡沫の幸福論"},
+  {title:"モブおじ OF THE DEAD",scenario:"モブおじ OF THE DEAD",url:"https://cheeees.github.io/cheeeestrpg/41.html",date:"2026-11-02",end:"2026-11-05",players:["高科 洋一","大庭 レイン"],memo:"▍エンドA　愛と嫉妬のロマンティックコメディ"},
+  {title:"まどろみとカモミール",scenario:"まどろみとカモミール",url:"https://cheeees.github.io/cheeeestrpg/42.html",date:"2026-11-06",end:"2026-11-10",players:["春夏冬 若桜","千秋 一樹"],memo:"▍シナリオクリア"}
 ];
