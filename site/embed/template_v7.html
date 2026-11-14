@@ -105,6 +105,15 @@
 #pg-root p.mut2.inline::after { content: ""; display: block; margin-bottom: 0px; }
 
 /* ================================================================
+   ■ パーツ【リンク】 <a href="URL">文字</a>
+   ・別タブで開く場合は target="_blank" rel="noopener noreferrer" を付ける(↗が自動で付く)
+   ================================================================ */
+#pg-root a { color: var(--main); text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 2px; text-underline-offset: 2px; border-radius: 2px; transition: .15s ease; }
+#pg-root a:hover { background: var(--hover); }
+#pg-root a:focus-visible { outline: 2px solid var(--main); outline-offset: 2px; }
+#pg-root a[target="_blank"]::after { content: "↗"; font-size: .8em; margin-left: .15em; text-decoration: none; display: inline-block; }  /* 不要ならこの1行を消す */
+
+/* ================================================================
    ■ パーツ【カード】 .card(枠つきの囲み) / .cols(カードを横に並べる。狭い画面では自動で縦並び)
    ================================================================ */
 #pg-root .card { background: var(--white); border: 1px solid var(--line); border-radius: 16px; padding: 12px 14px; margin: 0 0 16px; box-shadow: 0 4px 18px #00000012; }
@@ -390,6 +399,8 @@
       <p>通常のテキストです。<strong>太字</strong>も使えます。段落ごとに &lt;p&gt; で囲みます。</p>
 　　  <p>ここは普通の文字で、<span class="c-red">この部分だけ赤</span>になります。</p>
       <p><span class="c-blue" style="font-weight:700">青い太字</span></p>
+      <p>リンクは<a href="https://example.com/">同じタブで開く</a>こともできるし、<a href="https://example.com/" target="_blank" rel="noopener noreferrer">別タブで開く</a>こともできます。</p>
+      <p class="mut">※補足の中でも<a href="https://example.com/" target="_blank" rel="noopener noreferrer">リンク</a>が使えます。</p>
       <p>小空白↓</p>
        <div class="spacer s"></div>      <!-- 8px の空白 -->
       <p>空白↓</p>
