@@ -21,6 +21,8 @@
    囲みボックス .. <div class="box"> お知らせ / <div class="box alert"> 警告
    開閉 .......... <details class="fold"> 〜 <summary>題名</summary><div class="fold-body">中身</div>
                    (open を付けると最初から開く / class="fold pill" でボタン風)
+   一斉開閉・検索 .. 開閉(<details class="fold">)を <div class="foldset"> で囲むと、先頭に「全部ひらく / 全部たたむ / 検索」のバーが自動で付く
+                   ※ JavaScript を使います。検索なしにしたいときは <div class="foldset" data-nosearch>
    タブ .......... <div class="tabset"> 〜 <div class="tabs">(タブのボタン) + <div class="tabpanels">(中身)
                    ※ 最大12個 / グループごとに name="..." を変える / 最初に開くタブだけ checked
    表 ............ <div class="table-wrap"><table> / td class="name"(名前列) / class="left"(左寄せ)
@@ -152,6 +154,18 @@
 #pg-root details.fold.pill > summary { width: fit-content; border-radius: 999px; padding: 6px 16px; }
 #pg-root details.fold.pill[open] > summary { border-radius: 999px; }
 #pg-root details.fold.pill > .fold-body { margin-top: 6px; border-top: 1px solid var(--line); border-radius: 12px; }
+
+/* ================================================================
+   ■ パーツ【一斉開閉・検索バー】 <div class="foldset"> 〜 </div>(JavaScript が先頭にバーを自動で入れる)
+   ================================================================ */
+#pg-root .foldbar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 12px; }
+#pg-root .foldbar button { font: inherit; font-size: 13px; line-height: 1.2; padding: 6px 15px; border: 1px solid var(--line); border-radius: 999px; background: var(--white); color: var(--main); font-weight: 700; cursor: pointer; transition: .15s ease; }
+#pg-root .foldbar button:hover { background: var(--soft); border-color: var(--accent); }
+#pg-root .foldbar button:focus-visible { outline: 2px solid var(--main); outline-offset: 2px; }
+#pg-root .foldbar input { -webkit-appearance: none; appearance: none; flex: 1; min-width: 10em; max-width: 280px; font: inherit; font-size: 13px; padding: 6px 14px; border: 1px solid var(--line); border-radius: 999px; background: var(--white); color: var(--ink); outline: 0; }
+#pg-root .foldbar input:focus { border-color: var(--main); }
+#pg-root .foldbar .cnt { font-size: 12px; color: var(--mut); }
+#pg-root .foldempty { font-size: 13px; color: var(--mut); margin: 0 0 12px; }
 
 /* ================================================================
    ■ パーツ【タブ】 .tabset(最大12タブ。入れ子もOK)
@@ -710,6 +724,7 @@
             <div class="spacer"></div>
             
       <h2>職業サンプル</h2>
+      <div class="foldset">
            <details class="fold" open="">
               <summary>医師</summary>
               <div class="fold-body">
@@ -735,10 +750,74 @@
               <summary>教授</summary>
               <div class="fold-body">
                 <h3>6版 基本ルルブ</h3>
-                <p>＜言いくるめ＞、＜回避＞、＜聞き耳＞、＜芸術＞、＜信用＞、＜心理学＞、＜変装＞、自由に1つ</p>
+                <p>＜信用＞、＜心理学＞、＜説得＞、＜図書館＞、＜値切り＞、＜ほかの言語＞</p>
+                <p>次から2つを個人的な技能として選択：<br>
+                ＜医学＞、＜化学＞、＜考古学＞、＜人類学＞、＜生物学＞、＜地質学＞、＜電子工学＞、＜天文学＞、＜博物学＞、＜物理学＞、＜法律学＞、＜歴史＞</p>
               </div>
            </details>
+      </div>
+<script>
+(function () {
+  function norm(t) {
+    t = t.normalize ? t.normalize("NFKC") : t;
+    return t.toLowerCase().replace(/[\u30A1-\u30F6]/g, function (c) { return String.fromCharCode(c.charCodeAt(0) - 0x60); });
+  }
+  function build() {
+    var root = document.getElementById("pg-root");
+    if (!root) return;
+    [].slice.call(root.querySelectorAll(".foldset")).forEach(function (set) {
+      if (set.getAttribute("data-built")) return;
+      set.setAttribute("data-built", "1");
+      var bar = document.createElement("div");
+      bar.className = "foldbar";
+      function btn(label, fn) {
+        var b = document.createElement("button");
+        b.type = "button"; b.textContent = label;
+        b.addEventListener("click", fn);
+        bar.appendChild(b);
+      }
+      function setAll(v) {
+        [].forEach.call(set.querySelectorAll("details"), function (d) { d.open = v; });
+      }
+      btn("⊞ 全部ひらく", function () { setAll(true); });
+      btn("⊟ 全部たたむ", function () { setAll(false); });
+      set.insertBefore(bar, set.firstChild);
+      if (set.hasAttribute("data-nosearch")) return;
+      var items = [].filter.call(set.children, function (el) { return el.tagName === "DETAILS"; }),
+          texts = items.map(function (d) { return norm(d.textContent); }),
+          q = document.createElement("input"),
+          cnt = document.createElement("span"),
+          empty = document.createElement("div"),
+          before = null;
+      q.type = "search"; q.placeholder = "職業名・技能名で検索"; q.setAttribute("aria-label", "検索");
+      cnt.className = "cnt";
+      empty.className = "foldempty"; empty.textContent = "見つかりませんでした"; empty.style.display = "none";
+      bar.appendChild(q); bar.appendChild(cnt);
+      set.insertBefore(empty, bar.nextSibling);
+      q.addEventListener("input", function () {
+        var w = norm(q.value).split(/\s+/).filter(Boolean), n = 0;
+        if (w.length && !before) before = items.map(function (d) { return d.open; });
+        items.forEach(function (d, i) {
+          var ok = w.every(function (x) { return texts[i].indexOf(x) >= 0; });
+          d.style.display = ok ? "" : "none";
+          if (ok) { n++; if (w.length) d.open = true; }
+        });
+        if (!w.length && before) {
+          items.forEach(function (d, i) { d.open = before[i]; });
+          before = null;
+        }
+        cnt.textContent = w.length ? n + "件" : "";
+        empty.style.display = (w.length && !n) ? "" : "none";
+      });
+    });
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", build);
+  else build();
+})();
+</script>
 
+            <div class="spacer"></div>
+            
       <h2>カラーピッカー</h2>
 
         <div class="spacer s"></div>
