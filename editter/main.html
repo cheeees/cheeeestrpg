@@ -118,7 +118,7 @@ iframe{border:0;background:#fff;height:100%;width:100%}
   <button id="w-pc" class="on">PC</button>
   <button id="w-tab">タブレット</button>
   <button id="w-sp">スマホ</button>
-  <button id="inspect" title="ONにして、右のプレビューの要素をクリックすると、その要素が書かれている場所へ移動します(Escで終了)">🔍 要素を選ぶ</button>
+  <button id="inspect" title="ONにして、右のプレビューの要素をクリックすると、その要素が書かれている場所へ移動します(Escで終了)。タブ・折りたたみ(label / summary)は普通に操作でき、Shift+クリックでそれ自体の記述へ移動します">🔍 要素を選ぶ</button>
   <button id="foldall" title="折りたためる所をすべて折りたたむ">⊟ 全部たたむ</button>
   <button id="unfoldall" title="折りたたみをすべて開く">⊞ 全部ひらく</button>
   <button id="assist">入力補助</button>
@@ -1386,7 +1386,7 @@ function setInspect(on){
   if(on&&!opened()){status("先にsiteフォルダか、GitHubを開いてください");return}
   inspecting=!!on;labelCache={};
   $("inspect").classList.toggle("on",inspecting);
-  status(inspecting?"要素選択モード: プレビューの要素をクリックすると、その記述へ移動します(Escで終了)":"要素選択モードを終了しました");
+  status(inspecting?"要素選択モード: 要素をクリックでその記述へ移動(Escで終了)。タブ・折りたたみはそのまま操作でき、Shift+クリックでその記述へ移動":"要素選択モードを終了しました");
   build();
 }
 $("inspect").onclick=function(){setInspect(!inspecting)};
@@ -1404,6 +1404,8 @@ function attachInspect(){
   hl.appendChild(lb);root.appendChild(stl);root.appendChild(hl);
   root.classList.toggle("__ed_on",inspecting);
   function target(e){var t=e.target;return t&&t.closest?t.closest("[data-ed]"):null}
+  /* タブ・折りたたみ・サイドなど(label / summary)は、そのまま操作できる。Shift を押しながらならその記述へジャンプ */
+  function pass(e){var t=e.target;return !e.shiftKey&&!!(t&&t.closest&&t.closest("label,summary"))}
   function hide(){hl.style.display="none"}
   doc.addEventListener("mousemove",function(e){
     if(!inspecting)return;
@@ -1411,16 +1413,16 @@ function attachInspect(){
     var r=a.getBoundingClientRect(),cl=(typeof a.className==="string"&&a.className.trim())?"."+a.className.trim().split(/\s+/)[0]:"";
     hl.style.display="block";
     hl.style.left=r.left+"px";hl.style.top=r.top+"px";hl.style.width=r.width+"px";hl.style.height=r.height+"px";
-    lb.textContent=a.tagName.toLowerCase()+(a.id?"#"+a.id:"")+cl+"  →  "+inspLabel(a.getAttribute("data-ed"));
+    lb.textContent=a.tagName.toLowerCase()+(a.id?"#"+a.id:"")+cl+"  →  "+inspLabel(a.getAttribute("data-ed"))+(pass(e)?"  (クリック=開閉・切替 / Shift+クリック=記述へ)":"");
     if(r.top<24){lb.style.top="100%";lb.style.bottom="auto"}else{lb.style.bottom="100%";lb.style.top="auto"}
   },true);
   doc.addEventListener("scroll",hide,true);
   root.addEventListener("mouseleave",hide);
   ["mousedown","mouseup","dblclick","auxclick","contextmenu"].forEach(function(n){
-    doc.addEventListener(n,function(e){if(!inspecting)return;e.preventDefault();e.stopPropagation()},true);
+    doc.addEventListener(n,function(e){if(!inspecting||pass(e))return;e.preventDefault();e.stopPropagation()},true);
   });
   doc.addEventListener("click",function(e){
-    if(!inspecting)return;
+    if(!inspecting||pass(e))return;
     e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
     var a=target(e);
     if(a)jumpToSource(a.getAttribute("data-ed"));
@@ -1429,6 +1431,43 @@ function attachInspect(){
   doc.addEventListener("keydown",function(e){if(e.key==="Escape"&&inspecting)setInspect(false)},true);
 }
 fr.addEventListener("load",attachInspect);
+
+/* ---------- プレビューのタブ・折りたたみの状態を、再読み込みをまたいで保持する ----------
+   プレビューは編集のたびに作り直される。そのたびに、開いていたタブ(radio/checkbox)と折りたたみ(details)を元に戻す。
+   状態はファイルごとに覚える(順番で対応づけるので、タブや折りたたみを途中に足すと対応がずれることがある) */
+var uiAll={};
+function uiEach(doc,fn){
+  var cnt={},n=0;
+  doc.querySelectorAll("input[type=radio],input[type=checkbox]").forEach(function(el){
+    var k=el.type+":"+(el.name||"");cnt[k]=(cnt[k]||0)+1;fn("i",k+"#"+cnt[k],el);
+  });
+  doc.querySelectorAll("details").forEach(function(el){fn("d",String(++n),el)});
+}
+function attachUI(){
+  var doc;try{doc=fr.contentDocument}catch(e){return}
+  if(!doc||!doc.documentElement||doc.__edU)return;
+  doc.__edU=1;
+  var key=cur,S=uiAll[key]||(uiAll[key]={i:{},d:{}}),stop=false;
+  function snap(){uiEach(doc,function(t,k,el){S[t][k]=t==="i"?el.checked:el.open})}
+  function apply(){
+    if(stop)return;
+    uiEach(doc,function(t,k,el){
+      var v=S[t][k];if(v==null)return;
+      if(t==="i"){if(el.type==="radio"){if(v&&!el.checked)el.checked=true}else if(el.checked!==v)el.checked=v}
+      else if(el.open!==v)el.open=v;
+    });
+  }
+  /* 読み込み直後に人が操作したら、そこから先は元に戻さない */
+  ["click","keydown"].forEach(function(n){doc.addEventListener(n,function(e){if(e.isTrusted)stop=true},true)});
+  doc.addEventListener("change",snap,true);
+  doc.addEventListener("toggle",snap,true);
+  apply();
+  /* embed の中身は読み込み後に差し込まれるので、差し込まれるたびに戻す(3秒だけ) */
+  var mo=new MutationObserver(apply);
+  mo.observe(doc.documentElement,{childList:true,subtree:true});
+  setTimeout(function(){mo.disconnect()},3000);
+}
+fr.addEventListener("load",attachUI);
 
 /* 前回 GitHub で開いていたら、自動でつなぐ(トークンを記憶している場合は保存もすぐ使える) */
 if(localStorage.getItem("ghAuto")==="1"){
