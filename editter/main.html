@@ -31,6 +31,8 @@
     "               タグの中で " を押すと "" を自動挿入
     Ctrl+/          選択行(なければ現在行)のコメントアウト切り替え
   ・画像は site フォルダの中(img など、どの階層でも)を自動で読み込む
+  ・「📋 テンプレ」: 右のプレビューがテンプレ(template_v〇.html)の表示に変わる。要素をクリックすると、その要素のコードを
+    「カーソル位置に挿入」または「コピー」できる(下の切り替えで選ぶ)。タブ・折りたたみは普通にクリックで開閉、Shift+クリックでそれ自体を取る
   ■ GitHub につないで編集する場合(フォルダを開く代わり。読み込み〜保存まで GitHub だけで完結)
   1.「🐙 GitHubを開く」→ リポジトリ(例: cheeees/cheeeestrpg)・ブランチ(main)・アクセストークンを入れて「開く」
      ・siteの場所は、サイト本体の main.html があるフォルダ(このサイトでは site)。空欄にすると自動で探す(editter/ の中は除く)
@@ -101,7 +103,14 @@ html,body{height:100%;margin:0;font:14px/1.4 system-ui,"Noto Sans JP",sans-serif
 #fcnt{font-size:12px;opacity:.85;min-width:4.5em;text-align:center}
 .drag{width:6px;cursor:col-resize;background:#8e632b}
 .drag:hover{background:#ffd60a}
-.right{flex:1;display:flex;justify-content:center;background:#555;overflow:auto;min-width:0}
+.right{flex:1;display:flex;justify-content:center;background:#555;overflow:auto;min-width:0;position:relative}
+#tfr{position:absolute;top:0;left:50%;transform:translateX(-50%);height:100%;display:none}
+#tbar{position:absolute;left:8px;right:8px;bottom:8px;z-index:5;display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:6px 8px;background:rgba(58,50,43,.96);border:1px solid #ffd60a;border-radius:8px;font-size:12px;line-height:1.4}
+#tbar[hidden]{display:none}
+#tbar button{font:inherit;padding:3px 10px;border-radius:6px;border:1px solid #8e632b;background:#fff;color:#222;cursor:pointer}
+#tbar button.on{background:#8e632b;color:#fff}
+#tbar button:hover{background:#ffd60a;color:#222}
+#tbar .hint{opacity:.75;flex:1;min-width:12em}
 iframe{border:0;background:#fff;height:100%;width:100%}
 .right.sp-mode iframe{width:390px;flex:none;box-shadow:0 0 0 3px #000}
 .right.tab-mode iframe{width:768px;flex:none}
@@ -119,6 +128,7 @@ iframe{border:0;background:#fff;height:100%;width:100%}
   <button id="w-tab">タブレット</button>
   <button id="w-sp">スマホ</button>
   <button id="inspect" title="ONにして、右のプレビューの要素をクリックすると、その要素が書かれている場所へ移動します(Escで終了)。タブ・折りたたみ(label / summary)は普通に操作でき、Shift+クリックでそれ自体の記述へ移動します">🔍 要素を選ぶ</button>
+  <button id="tplbtn" title="右のプレビューをテンプレート(template_v〇.html)の表示に切り替えて、クリックした要素を、いま編集中のファイルに挿入 / コピーします">📋 テンプレ</button>
   <button id="foldall" title="折りたためる所をすべて折りたたむ">⊟ 全部たたむ</button>
   <button id="unfoldall" title="折りたたみをすべて開く">⊞ 全部ひらく</button>
   <button id="assist">入力補助</button>
@@ -168,7 +178,12 @@ iframe{border:0;background:#fff;height:100%;width:100%}
   </div>
 </div>
   <div class="drag" id="drag"></div>
-  <div class="right" id="right"><iframe id="fr"></iframe></div>
+  <div class="right" id="right"><iframe id="fr"></iframe><iframe id="tfr"></iframe>
+    <div id="tbar" hidden><b>📋 テンプレ</b><span>要素をクリックで</span>
+      <button data-a="ins" title="編集中のファイルの、カーソルのある位置に入れる">カーソル位置に挿入</button>
+      <button data-a="copy" title="クリップボードにコピーする(あとで Ctrl+V で貼り付け)">コピー</button>
+      <span class="hint">タブ・折りたたみは普通にクリックで開閉できます。Shift+クリックでそのボタン自体を取れます。Escで閉じる</span>
+      <button id="tclose">✕ 閉じる</button></div></div>
 </div>
 <script>
 var $=function(i){return document.getElementById(i)};
@@ -1384,6 +1399,7 @@ function jumpToSource(v){
 }
 function setInspect(on){
   if(on&&!opened()){status("先にsiteフォルダか、GitHubを開いてください");return}
+  if(on&&tplOn)setTpl(false);
   inspecting=!!on;labelCache={};
   $("inspect").classList.toggle("on",inspecting);
   status(inspecting?"要素選択モード: 要素をクリックでその記述へ移動(Escで終了)。タブ・折りたたみはそのまま操作でき、Shift+クリックでその記述へ移動":"要素選択モードを終了しました");
@@ -1468,6 +1484,141 @@ function attachUI(){
   setTimeout(function(){mo.disconnect()},3000);
 }
 fr.addEventListener("load",attachUI);
+
+/* ---------- テンプレ表示モード(テンプレを見ながら、要素のコードを挿入 / コピーする) ----------
+   右のプレビューをテンプレの表示に切り替える。各タグに data-ed="テンプレ内の位置" を付けて表示し、クリックされた要素の
+   「開始タグ〜対応する閉じタグ」をテンプレ本文から切り出して、編集中のファイルに入れる(テンプレのファイル自体は変わらない) */
+var tplOn=false,tplText="",tplCache={},tplAct=localStorage.getItem("tplAct")==="copy"?"copy":"ins";
+var tfr=$("tfr"),tbar=$("tbar");
+/* 開始タグ(off の位置の <)に対応する閉じタグの直後の位置。見つからなければ -1 */
+function elEnd(t,off){
+  var re=/<!--[\s\S]*?-->|<(\/?)([a-zA-Z][\w:-]*)((?:"[^"]*"|'[^']*'|[^'">])*)>/g,m,depth=0,lo=t.toLowerCase();
+  re.lastIndex=off;
+  while((m=re.exec(t))){
+    if(m[0].charAt(1)==="!")continue;
+    var name=m[2].toLowerCase();
+    if(!m[1]){
+      if(VOID.test(name)||/\/\s*$/.test(m[3])){if(depth===0)return re.lastIndex;continue}
+      if(/^(script|style|textarea|title)$/.test(name)){var ce=lo.indexOf("</"+name,re.lastIndex);if(ce>=0)re.lastIndex=ce}
+      depth++;
+    }else{
+      depth--;
+      if(depth<=0)return re.lastIndex;
+    }
+  }
+  return -1;
+}
+/* data-ed から、入れるコード({text, n行, head})を作る。2行目以降は、開始タグの行のインデント分だけ左に詰める */
+function tplSnip(v){
+  if(tplCache[v]!==undefined)return tplCache[v];
+  var r=null,m=/^t:(\d+)$/.exec(v||"");
+  if(m){
+    var off=+m[1],end=tplText.charAt(off)==="<"?elEnd(tplText,off):-1;
+    if(end>off){
+      var ls=tplText.lastIndexOf("\n",off-1)+1,base=/^[ \t]*/.exec(tplText.slice(ls))[0],
+        lines=tplText.slice(off,end).split("\n");
+      for(var i=1;i<lines.length;i++){var l=lines[i];lines[i]=l.indexOf(base)===0?l.slice(base.length):l.replace(/^[ \t]+/,"")}
+      r={text:lines.join("\n"),n:lines.length,head:lines[0].replace(/\s+/g," ").slice(0,40)};
+    }
+  }
+  return tplCache[v]=r;
+}
+/* 編集中のファイルの、カーソル位置に入れる(インデントはカーソルの行に合わせる。元に戻す Ctrl+Z も効く) */
+function tplInsert(text){
+  ed.focus();
+  var v=ed.value,p=ed.selectionStart,ls=p>0?v.lastIndexOf("\n",p-1)+1:0,
+    before=v.slice(ls,p),ind=/^[ \t]*/.exec(v.slice(ls))[0];
+  if(ind.length>before.length)ind=before;
+  var t=text.split("\n").map(function(l,i){return i&&l?ind+l:l}).join("\n");
+  if(/\S/.test(before))t="\n"+ind+t;
+  ins(t);
+}
+function tplCopy(doc,text){
+  function fb(){
+    var ta=doc.createElement("textarea"),ok=false;
+    ta.value=text;ta.style.cssText="position:fixed;top:0;left:0;opacity:0";doc.body.appendChild(ta);ta.select();
+    try{ok=doc.execCommand("copy")}catch(e){}
+    ta.remove();return ok;
+  }
+  var nav=doc.defaultView.navigator;
+  var pr=nav.clipboard&&nav.clipboard.writeText?nav.clipboard.writeText(text):Promise.reject();
+  return pr.then(function(){return true},function(){return fb()});
+}
+function tplPick(doc,a){
+  var s=tplSnip(a.getAttribute("data-ed"));
+  if(!s){status("この要素の範囲が見つかりません");return}
+  if(tplAct==="ins"){
+    if(!cur){status("先に編集するファイルを選んでください");return}
+    tplInsert(s.text);
+    status("挿入しました("+s.n+"行): "+s.head);
+  }else{
+    tplCopy(doc,s.text).then(function(ok){status(ok?"コピーしました("+s.n+"行): "+s.head+"  ※貼り付けは Ctrl+V":"コピーできませんでした")});
+  }
+}
+function setTplAct(a){
+  tplAct=a==="copy"?"copy":"ins";localStorage.setItem("tplAct",tplAct);
+  tbar.querySelectorAll("[data-a]").forEach(function(b){b.classList.toggle("on",b.getAttribute("data-a")===tplAct)});
+}
+async function setTpl(on){
+  if(on){
+    if(!opened()){status("先にsiteフォルダか、GitHubを開いてください");return}
+    var t=await findTemplate();
+    if(t==null)return;
+    if(!String(t).trim()){status("テンプレートが空です");return}
+    if(inspecting)setInspect(false);
+    tplText=t;tplCache={};tplOn=true;
+    tfr.srcdoc='<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>html.__ed_on,html.__ed_on *{cursor:copy!important}</style></head><body style="margin:0">'+annotate(tplText,"t:")+'</body></html>';
+    tfr.style.display="block";tbar.hidden=false;setTplAct(tplAct);
+    status("テンプレ表示中: 要素をクリックで"+(tplAct==="ins"?"カーソル位置に挿入":"コピー")+"(Escで終了)");
+  }else{
+    tplOn=false;tfr.style.display="none";tbar.hidden=true;tfr.removeAttribute("srcdoc");
+    status("テンプレ表示を終了しました");
+  }
+  $("tplbtn").classList.toggle("on",tplOn);
+}
+$("tplbtn").onclick=function(){setTpl(!tplOn)};
+$("tclose").onclick=function(){setTpl(false)};
+tbar.querySelectorAll("[data-a]").forEach(function(b){b.onclick=function(){setTplAct(b.getAttribute("data-a"))}});
+document.addEventListener("keydown",function(e){
+  if(e.key==="Escape"&&tplOn&&fbar.hidden)setTpl(false);
+},true);
+function attachTpl(){
+  if(!tplOn)return;
+  var doc;try{doc=tfr.contentDocument}catch(e){return}
+  if(!doc||!doc.body||doc.__edT||!doc.querySelector("[data-ed]"))return;
+  doc.__edT=1;
+  var root=doc.documentElement,hl=doc.createElement("div"),lb=doc.createElement("div");
+  root.classList.add("__ed_on");
+  hl.style.cssText="position:fixed;z-index:2147483647;pointer-events:none;display:none;border:2px solid #ffd60a;background:rgba(255,214,10,.18);box-sizing:border-box";
+  lb.style.cssText="position:absolute;left:-2px;background:#5b2e0a;color:#fff;font:11px/1.5 ui-monospace,Menlo,Consolas,monospace;padding:1px 6px;white-space:nowrap;border-radius:3px;max-width:90vw;overflow:hidden;text-overflow:ellipsis";
+  hl.appendChild(lb);doc.body.appendChild(hl);
+  function target(e){var t=e.target;return t&&t.closest?t.closest("[data-ed]"):null}
+  /* タブ・折りたたみ・サイドなど(label / summary)はそのまま操作できる。Shift を押しながらなら、それ自体を取る */
+  function pass(e){var t=e.target;return !e.shiftKey&&!!(t&&t.closest&&t.closest("label,summary"))}
+  function hide(){hl.style.display="none"}
+  doc.addEventListener("mousemove",function(e){
+    var a=target(e);if(!a||a===doc.body){hide();return}
+    var r=a.getBoundingClientRect(),s=tplSnip(a.getAttribute("data-ed")),
+      cl=(typeof a.className==="string"&&a.className.trim())?"."+a.className.trim().split(/\s+/)[0]:"";
+    hl.style.display="block";
+    hl.style.left=r.left+"px";hl.style.top=r.top+"px";hl.style.width=r.width+"px";hl.style.height=r.height+"px";
+    lb.textContent=a.tagName.toLowerCase()+(a.id?"#"+a.id:"")+cl+"  →  "+(s?s.n+"行を"+(tplAct==="ins"?"挿入":"コピー"):"範囲が見つかりません")+(pass(e)?"  (クリック=開閉・切替 / Shift+クリック=これを取る)":"");
+    if(r.top<24){lb.style.top="100%";lb.style.bottom="auto"}else{lb.style.bottom="100%";lb.style.top="auto"}
+  },true);
+  doc.addEventListener("scroll",hide,true);
+  root.addEventListener("mouseleave",hide);
+  ["mousedown","mouseup","dblclick","auxclick","contextmenu"].forEach(function(n){
+    doc.addEventListener(n,function(e){if(pass(e))return;e.preventDefault();e.stopPropagation()},true);
+  });
+  doc.addEventListener("click",function(e){
+    if(pass(e))return;
+    e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
+    var a=target(e);
+    if(a&&a!==doc.body)tplPick(doc,a);
+  },true);
+  doc.addEventListener("keydown",function(e){if(e.key==="Escape")setTpl(false)},true);
+}
+tfr.addEventListener("load",attachTpl);
 
 /* 前回 GitHub で開いていたら、自動でつなぐ(トークンを記憶している場合は保存もすぐ使える) */
 if(localStorage.getItem("ghAuto")==="1"){
