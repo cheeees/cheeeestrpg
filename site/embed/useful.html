@@ -327,6 +327,9 @@
 #pg-root .side-body dl.kv { font-size: 11px; line-height: 1.5; }
 #pg-root .side-body ul.legend { font-size: 11px; line-height: 1.5; }
 #pg-root .side-body ul.legend { --symw: 3em; --barw: 1.2em; }
+/* 折りたたみバーを2行にする: 1行目=ボタン / 2行目=検索窓 */
+#pg-root .foldbar input { flex: 1 0 100%; max-width: none; min-width: 0; order: 1; }
+#pg-root .foldbar .cnt { order: 2; }
 }
 
 /* ================================================================
@@ -1069,6 +1072,18 @@
          </details>
 
          <details class="fold" open="">
+           <summary>評論家 (2015)</summary>
+           <div class="fold-body">
+             <h3>サプリ 2015</h3>
+             <p>＜信用＞、＜心理学＞、＜説得＞、<br class="sp-only">＜図書館＞、＜値切り＞、＜母国語＞、<br class="sp-only">＋専門技能を2つ(オカルト、博物学、歴史など)</p>
+             <div class="cols">
+               <div class="card"><h3>職業ポイント</h3><p>[EDU×20]</p></div>
+               <div class="card t2"><h3>特記</h3><p>専門分野における＜説得＞+10％</p></div>
+             </div>
+           </div>
+         </details>
+
+         <details class="fold" open="">
            <summary>私立探偵</summary>
            <div class="fold-body">
              <h3>6版 基本ルルブ</h3>
@@ -1148,6 +1163,67 @@
            <div class="fold-body">
              <h3>6版 基本ルルブ</h3>
              <p>＜言いくるめ＞、＜聞き耳＞、＜芸術＞、<br class="sp-only">＜製作＞、＜説得＞、＜心理学＞、<br class="sp-only">＜値切り＞、＋自由に1つ</p>
+           </div>
+         </details>
+
+         <details class="fold" open="">
+           <summary>アイドル、音楽タレント (2015)</summary>
+           <div class="fold-body">
+             <h3>サプリ 2015</h3>
+             <p>＜言いくるめ＞、＜芸術(歌唱)＞、<br class="sp-only">＜芸術(ダンス)＞、＜心理学＞、＜説得＞、<br class="sp-only">＜変装＞、＋自由に2つ</p>
+             <div class="cols">
+               <div class="card"><h3>職業ポイント</h3><p>[EDU×10 + APP×10]</p></div>
+               <div class="card t2"><h3>特記</h3><p>ファンに対しての＜説得＞+20％</p></div>
+             </div>
+           </div>
+         </details>
+
+         <details class="fold" open="">
+           <summary>アナウンサー (2015)</summary>
+           <div class="fold-body">
+             <h3>サプリ 2015</h3>
+             <p>＜言いくるめ＞、＜信用＞、＜心理学＞、<br class="sp-only">＜説得＞、＜芸術(アナウンス)＞、<br class="sp-only">＜図書館＞、＜母国語＞、＋自由に1つ</p>
+             <div class="cols">
+               <div class="card"><h3>職業ポイント</h3><p>[EDU×20] <br class="sp-only">または [EDU×10 + APP×10]</p></div>
+               <div class="card t2"><h3>特記</h3><p>本心を隠すのが上手い<br>相手の＜心理学＞-10％</p></div>
+             </div>
+           </div>
+         </details>
+
+         <details class="fold" open="">
+           <summary>テレビ・コメンテーター (2015)</summary>
+           <div class="fold-body">
+             <h3>サプリ 2015</h3>
+             <p>＜言いくるめ＞、＜信用＞、＜心理学＞、<br class="sp-only">＜説得＞、＜芸術(アナウンス)＞、<br class="sp-only">＜図書館＞、＜母国語＞、＋自由に1つ</p>
+             <div class="cols">
+               <div class="card"><h3>職業ポイント</h3><p>[EDU×20] <br class="sp-only">または [EDU×10 + APP×10]</p></div>
+               <div class="card t2"><h3>特記</h3><p>本心を隠すのが上手い<br>相手の＜心理学＞-10％</p></div>
+             </div>
+           </div>
+         </details>
+
+         <details class="fold" open="">
+           <summary>コメディアン (2015)</summary>
+           <div class="fold-body">
+             <h3>サプリ 2015</h3>
+             <p>＜言いくるめ＞、＜聞き耳＞、＜心理学＞、<br class="sp-only">＜芸術(物語)＞、＜芸術(演劇)＞、<br class="sp-only">＜変装＞、＋自由に2つ</p>
+             <div class="cols">
+               <div class="card"><h3>職業ポイント</h3><p>[EDU×10 + DEX×10]</p></div>
+               <div class="card t2"><h3>特記</h3><p>＜言いくるめ＞+10％</p></div>
+             </div>
+           </div>
+         </details>
+
+         <details class="fold" open="">
+           <summary>スポーツタレント (2015)</summary>
+           <div class="fold-body">
+             <p class="mut ">※体を張った芸をするコメディアンなど</p>
+             <h3>サプリ 2015</h3>
+             <p>＜言いくるめ＞、＜聞き耳＞、＜心理学＞、<br class="sp-only">＜芸術(演劇)＞、＜跳躍＞または＜登攀＞、<br class="sp-only">＜変装＞、任意の素手の近接戦闘技能、<br class="sp-only">＋自由に2つ</p>
+             <div class="cols">
+               <div class="card"><h3>職業ポイント</h3><p>[EDU×10 + CON×10] <br class="sp-only">または [EDU×10 + STR×10]</p></div>
+               <div class="card t2"><h3>特記</h3><p>CON+1または＜回避＞+10％<br class="sp-only">EDU-1</p></div>
+             </div>
            </div>
          </details>
 
