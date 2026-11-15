@@ -445,6 +445,70 @@
 })();
 </script>
 
+<style>
+#pg-root h2 { scroll-margin-top: 12px; }
+#fab-list { max-height: 70vh; overflow-y: auto; }
+#fab-list [data-jump][hidden] { display: none; }
+#fab-list .jump-label { margin-top: 6px; padding: 6px 12px 2px; border-top: 1px solid #00000022; font-size: 11px; opacity: .7; list-style: none; }
+#fab-list .jump-mid { padding-left: 1.2em; }
+#fab-list .jump-mid a { font-weight: 400; }
+</style>
+<script>
+(function () {
+  function build() {
+    var root = document.getElementById("pg-root");
+    var fabBtn = document.getElementById("fab-btn");
+    var fabList = document.getElementById("fab-list");
+    if (!root || !fabBtn || !fabList || root.getAttribute("data-jump-built")) return;
+    root.setAttribute("data-jump-built", "1");
+
+    var cp = document.getElementById("cp-root");
+    var hs = [].slice.call(root.querySelectorAll("h2")).filter(function (h) {
+      return !(cp && cp.contains(h)) && !h.closest(".side-body");
+    });
+    if (!hs.length) return;
+
+    var items = [];
+    function add(li) { li.setAttribute("data-jump", ""); fabList.appendChild(li); items.push(li); }
+
+    var label = document.createElement("li");
+    label.className = "jump-label";
+    label.textContent = "このページの見出し";
+    add(label);
+
+    hs.forEach(function (h) {
+      var li = document.createElement("li"), a = document.createElement("a");
+      a.href = "#"; a.setAttribute("role", "button");
+      a.textContent = h.textContent.trim();
+      if (h.classList.contains("mid")) li.className = "jump-mid";
+      a.addEventListener("click", function (e) {
+        e.preventDefault();
+        // 閉じている開閉(details)の中の見出しなら、先に開く
+        for (var el = h.parentElement; el && el !== root; el = el.parentElement) {
+          if (el.tagName === "DETAILS") el.open = true;
+        }
+        if (fabBtn.getAttribute("aria-expanded") === "true") fabBtn.click();
+        var calm = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+        h.scrollIntoView({ behavior: calm ? "auto" : "smooth", block: "start" });
+      });
+      li.appendChild(a);
+      add(li);
+    });
+
+    // このページが表示されているときだけ、見出しを出す(別ページに移ったら隠す)
+    function sync() {
+      var vis = root.getClientRects().length > 0;
+      items.forEach(function (li) { li.hidden = !vis; });
+    }
+    window.addEventListener("hashchange", sync);
+    fabBtn.addEventListener("click", sync);
+    sync();
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", build);
+  else build();
+})();
+</script>
+
 <div class="spacer"></div>
 
       <h2>狂気表</h2>
