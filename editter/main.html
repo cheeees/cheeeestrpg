@@ -100,6 +100,7 @@ html,body{height:100%;margin:0;font:14px/1.4 system-ui,"Noto Sans JP",sans-serif
 #fbar button{font:inherit;padding:3px 8px;border-radius:5px;border:1px solid #8e632b;background:#fff;color:#222;cursor:pointer;white-space:nowrap}
 #fbar button.on{background:#8e632b;color:#fff}
 #fbar button:hover{background:#ffd60a;color:#222}
+#fbar button[hidden]{display:none}
 #fcnt{font-size:12px;opacity:.85;min-width:4.5em;text-align:center}
 .drag{width:6px;cursor:col-resize;background:#8e632b}
 .drag:hover{background:#ffd60a}
@@ -164,6 +165,7 @@ iframe{border:0;background:#fff;height:100%;width:100%}
       <input id="ri" placeholder="置換後 (正規表現ONなら $1 \n \t が使えます)" spellcheck="false">
       <button id="rone" title="今の1件を置換して次へ (Enter)">置換</button>
       <button id="rall" title="すべて置換">すべて置換</button>
+      <button id="rundo" title="直前の「すべて置換」を元に戻す / やり直す" hidden>↶ 置換を戻す</button>
     </div>
   </div>
   <div class="edwrap">
@@ -508,6 +510,7 @@ window.addEventListener("message",function(e){
   status("画像が見つかりません: "+l.slice(0,2).join(", ")+(l.length>2?" 他"+(l.length-2)+"件":""));
   st.title=l.join("\n");
 });
+var fixMemo={};
 async function build(){
   if(!site["main.html"])return;
   var y=0;try{y=fr.contentWindow.scrollY}catch(e){}
@@ -520,7 +523,14 @@ async function build(){
     html=html.replace("</main>",function(){return sec+"\n</main>"});
   }
   var map={};
-  Object.keys(embeds).forEach(function(n){map["embed/"+n]=fixImg(inspecting?annotate(embeds[n],"e:"+n+":"):embeds[n])});
+  var iuc=Object.keys(imgUrls).length;
+  Object.keys(embeds).forEach(function(n){
+    var src=embeds[n],mm=fixMemo[n];
+    if(!mm||mm.src!==src||mm.insp!==inspecting||mm.iu!==imgUrls||mm.ic!==iuc){
+      mm=fixMemo[n]={src:src,insp:inspecting,iu:imgUrls,ic:iuc,out:fixImg(inspecting?annotate(src,"e:"+n+":"):src)};
+    }
+    map["embed/"+n]=mm.out;
+  });
   /* CSS: main.html の <link> を、読み込んだ中身に置き換える */
   html=html.replace(/<link\b[^>]*>/gi,function(tag){
     var p=cssHref(tag);if(!p||site["a:"+p]==null)return tag;
@@ -595,7 +605,7 @@ async function preview(){
 ed.addEventListener("input",function(){
   if(!cur)return;
   dirtySet[cur]=true;setText(cur,ed.value);updateSaveBtn();status("未保存の変更あり");
-  clearTimeout(timer);timer=setTimeout(preview,400);
+  clearTimeout(timer);timer=setTimeout(preview,Math.max(400,Math.min(2500,ed.value.length/400)));
 });
 window.addEventListener("beforeunload",function(e){if(anyDirty()){e.preventDefault();e.returnValue=""}});
 /* ---------- 入力補助(自動で閉じタグ・インデント・略語展開) ---------- */
@@ -1130,6 +1140,8 @@ function drawGuides(){
   }
 }
 function syncScroll(){gutBox.scrollTop=ed.scrollTop;bd.scrollTop=ed.scrollTop;bd.scrollLeft=ed.scrollLeft;
+  if(bdFirst>=0&&!fbar.hidden){var vf=Math.floor((ed.scrollTop-PAD)/LH),vl=Math.ceil((ed.scrollTop+ed.clientHeight)/LH);
+    if((vf<bdFirst+10&&bdFirst>0)||vl>bdLast-10&&bdLast<lsArr.length-1)renderMarks()}
   gfl.style.transform="translate("+(-ed.scrollLeft)+"px,"+(-ed.scrollTop)+"px)";drawGuides();placeCur()}
 if(window.ResizeObserver)new ResizeObserver(drawGuides).observe(stackEl);
 /* 折りたたみの矢印は、各行の先頭のタグの真左(v<p> の位置)に置く */
@@ -1183,7 +1195,7 @@ function refreshEd(){
     gutBox.style.width="calc("+Math.max(2,String(mp.total).length)+"ch + 16px)";
   }
   renderFind();updateCur();syncScroll();
-  clearTimeout(arrowTimer);arrowTimer=setTimeout(renderArrows,150);
+  clearTimeout(arrowTimer);arrowTimer=setTimeout(renderArrows,dispVal().length>200000?700:150);
 }
 ed.addEventListener("input",refreshEd);
 ed.addEventListener("scroll",syncScroll);
@@ -1215,14 +1227,35 @@ function pickNear(){
   for(var i=0;i<M.length;i++){if(M[i].s>=p){mi=i;break}}
   if(mi<0)mi=0;
 }
+var bdFirst=-1,bdLast=-1,lsText=null,lsArr=null;
+function lineStarts(v){
+  if(v===lsText)return lsArr;
+  var a=[0],i=-1;while((i=v.indexOf("\n",i+1))>=0)a.push(i+1);
+  lsText=v;lsArr=a;return a;
+}
+/* 検索のハイライトは「いま見えている行の前後」だけ作る(全文を作ると、大きいデータで重くなる) */
 function renderMarks(){
-  if(fbar.hidden){bdt.textContent="";fcnt.textContent="";return}
-  var v=ed.value,h="",last=0,lim=Math.min(M.length,3000);
-  for(var i=0;i<lim;i++){
-    h+=escH(v.slice(last,M[i].s))+'<mark'+(i===mi?' class="cur"':'')+'>'+escH(v.slice(M[i].s,M[i].e))+'</mark>';
-    last=M[i].e;
+  if(fbar.hidden){bdt.textContent="";fcnt.textContent="";bdFirst=bdLast=-1;return}
+  var v=ed.value,ls=lineStarts(v),n=ls.length,
+    first=Math.max(0,Math.floor((ed.scrollTop-PAD)/LH)-40),
+    last=Math.min(n-1,Math.ceil((ed.scrollTop+ed.clientHeight)/LH)+40);
+  if(first>n-1)first=Math.max(0,n-1);
+  var a=ls[first],b=last+1<n?ls[last+1]-1:v.length;
+  /* a より後ろで終わる最初の一致を二分探索 */
+  var lo=0,hi=M.length;
+  while(lo<hi){var md=(lo+hi)>>1;if(M[md].e<=a)lo=md+1;else hi=md}
+  var h="",pos=a;
+  for(var i=lo;i<M.length&&M[i].s<b;i++){
+    var ms=Math.max(M[i].s,a),me=Math.min(M[i].e,b);
+    if(ms<pos)ms=pos;if(me<=ms)continue;
+    h+=escH(v.slice(pos,ms))+'<mark'+(i===mi?' class="cur"':'')+'>'+escH(v.slice(ms,me))+'</mark>';
+    pos=me;
   }
-  bdt.innerHTML=h+escH(v.slice(last))+"\n";
+  h+=escH(v.slice(pos,b))+(last>=n-1?"\n":"");
+  bdt.style.paddingTop=(PAD+first*LH)+"px";
+  bdt.style.paddingBottom=(Math.max(0,n-1-last)*LH+30)+"px";
+  bdt.innerHTML=h;
+  bdFirst=first;bdLast=last;
   fcnt.textContent=M.length?(mi+1)+" / "+M.length+(M.length>=5000?"+":""):(fi.value?"0件":"");
   bd.scrollTop=ed.scrollTop;bd.scrollLeft=ed.scrollLeft;
 }
@@ -1271,20 +1304,58 @@ function replOne(){
   if(M.length)show(mi);
   if(act&&act!==ed)act.focus();
 }
+/* 「すべて置換」: 変わる範囲だけを置き換える。範囲が大きいときは、ブラウザ標準の入力(execCommand)が
+   とても遅いので setRangeText で一気に差し替え、そのかわり専用の「戻す」ボタン(Ctrl+Z)を用意する */
+var BULK_LIMIT=40000,editVer=0,BU=null;
+ed.addEventListener("input",function(){editVer++;$("rundo").hidden=true});
+function bulkLabel(){var b=$("rundo");b.hidden=!BU||BU.ver!==editVer;b.textContent=BU&&BU.applied?"↶ 置換を戻す":"↷ やり直す"}
+function bulkSwap(toOld){
+  if(!BU||BU.ver!==editVer||BU.applied!==toOld)return false;
+  var from=toOld?BU.b:BU.a,to=toOld?BU.a:BU.b,v=ed.value;
+  if(v.substr(BU.s,from.length)!==from)return false;
+  var top=ed.scrollTop,left=ed.scrollLeft;
+  ed.setRangeText(to,BU.s,BU.s+from.length,"end");
+  ed.dispatchEvent(new Event("input"));
+  ed.scrollTop=top;ed.scrollLeft=left;syncScroll();
+  BU.applied=!toOld;BU.ver=editVer;bulkLabel();
+  status(toOld?"「すべて置換」を元に戻しました":"「すべて置換」をやり直しました");
+  return true;
+}
+ed.addEventListener("keydown",function(e){
+  if(!BU||!(e.ctrlKey||e.metaKey)||e.altKey)return;
+  var k=e.key.toLowerCase(),undo=k==="z"&&!e.shiftKey,redo=(k==="z"&&e.shiftKey)||k==="y";
+  if((undo||redo)&&bulkSwap(undo))e.preventDefault();
+},true);
+ed.addEventListener("beforeinput",function(e){
+  if(!BU)return;
+  if((e.inputType==="historyUndo"||e.inputType==="historyRedo")&&bulkSwap(e.inputType==="historyUndo"))e.preventDefault();
+},true);
+$("rundo").onclick=function(){bulkSwap(BU&&BU.applied)};
 function replAll(){
   var re=buildRe();if(!re||!M.length)return;
-  var v=ed.value,rv=ri.value,res="",last=0,cnt=0,m;
+  var v=ed.value,rv=ri.value,parts=[],cnt=0,m,s0=-1,pos=0;
   while((m=re.exec(v))){
     if(m[0]===""){re.lastIndex++;continue}
-    res+=v.slice(last,m.index)+(fReg?expandRep(m,rv):rv);last=m.index+m[0].length;cnt++;
+    if(s0<0){s0=m.index;pos=s0}
+    parts.push(v.slice(pos,m.index),fReg?expandRep(m,rv):rv);
+    pos=m.index+m[0].length;cnt++;
   }
-  res+=v.slice(last);
-  if(res===v)return;
+  if(s0<0)return;
+  var e0=pos,nw=parts.join(""),old=v.slice(s0,e0);
+  if(nw===old)return;
   var act=document.activeElement,top=ed.scrollTop,left=ed.scrollLeft;
-  ed.focus();ed.select();ins(res);
+  if(FOLDS.length)unfoldAll();
+  ed.focus();
+  if(Math.max(old.length,nw.length)<=BULK_LIMIT){
+    ed.setSelectionRange(s0,e0);ins(nw);          /* 小さい範囲: 今までどおり Ctrl+Z で戻せる */
+  }else{
+    ed.setRangeText(nw,s0,e0,"end");
+    ed.dispatchEvent(new Event("input"));
+    BU={s:s0,a:old,b:nw,applied:true,ver:editVer};bulkLabel();
+  }
   ed.scrollTop=top;ed.scrollLeft=left;syncScroll();
   if(act&&act!==ed)act.focus();
-  status(cnt+" 件を置換しました(Ctrl+Z で元に戻せます)");
+  status(cnt+" 件を置換しました(Ctrl+Z"+(BU&&BU.ver===editVer?" か「置換を戻す」":"")+" で元に戻せます)");
 }
 function openFind(toReplace){
   unfoldAll();   /* 検索中は折りたたみを全部開く */
